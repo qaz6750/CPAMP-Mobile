@@ -167,8 +167,9 @@ private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardS
         },
     )
     BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val compactLayout = maxWidth < 520.dp
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (maxWidth < 520.dp) {
+            if (compactLayout) {
                 cards.forEach { card -> card(Modifier.fillMaxWidth()) }
             } else {
                 cards.chunked(2).forEach { rowCards ->
