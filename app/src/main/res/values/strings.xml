@@ -1,4 +1,31 @@
 <resources>
     <string name="app_name">CPAMP Mobile</string>
+    <string name="nav_overview">Overview</string>
+    <string name="nav_traffic">Traffic</string>
+    <string name="nav_resources">Resources</string>
+    <string name="nav_system">System</string>
+    <string name="overview_title">Command center</string>
+    <string name="overview_subtitle">Your CPA gateway at a glance</string>
+    <string name="demo_offline">Not connected</string>
+    <string name="awaiting_server">Connect a server to load data</string>
+    <string name="metric_requests">Requests today</string>
+    <string name="metric_success">Success rate</string>
+    <string name="metric_tokens">Tokens today</string>
+    <string name="metric_cost">Estimated cost</string>
+    <string name="preview_trend">Traffic trend</string>
+    <string name="traffic_title">Request monitoring</string>
+    <string name="traffic_subtitle">Watch latency, failures and model usage</string>
+    <string name="preview_live">Live request stream</string>
+    <string name="preview_failures">Recent failures</string>
+    <string name="resources_title">Gateway resources</string>
+    <string name="resources_subtitle">Manage credentials and routing inputs</string>
+    <string name="resource_providers">Providers</string>
+    <string name="resource_auth_files">Auth files</string>
+    <string name="resource_api_keys">Client API keys</string>
+    <string name="system_title">Operations</string>
+    <string name="system_subtitle">Service health, logs and local preferences</string>
+    <string name="system_status">Manager status</string>
+    <string name="system_logs">Runtime logs</string>
+    <string name="system_servers">Saved servers</string>
+    <string name="connect_to_view">Connect to load current server data</string>
 </resources>
-
