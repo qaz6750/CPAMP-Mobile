@@ -30,8 +30,10 @@ data class MonitoringIncludeDto(
     val timeline: Boolean = true,
     @SerialName("model_share") val modelShare: Boolean = true,
     @SerialName("model_stats") val modelStats: Boolean = true,
+    @SerialName("credential_stats") val credentialStats: Boolean = false,
+    @SerialName("api_key_stats") val apiKeyStats: Boolean = false,
     @SerialName("recent_failures") val recentFailures: Int = 20,
-    @SerialName("events_page") val eventsPage: EventsPageRequestDto = EventsPageRequestDto(),
+    @SerialName("events_page") val eventsPage: EventsPageRequestDto? = EventsPageRequestDto(),
     val granularity: String = "auto",
 )
 
@@ -48,8 +50,47 @@ data class MonitoringResponseDto(
     val summary: MonitoringSummaryDto? = null,
     val timeline: List<MonitoringTimelineDto> = emptyList(),
     @SerialName("model_share") val modelShare: List<ModelShareDto> = emptyList(),
+    @SerialName("model_stats") val modelStats: List<ModelStatDto> = emptyList(),
+    @SerialName("api_key_stats") val apiKeyStats: List<ApiKeyStatDto> = emptyList(),
+    @SerialName("credential_stats") val credentialStats: List<CredentialStatDto> = emptyList(),
     @SerialName("recent_failures") val recentFailures: List<RecentFailureDto> = emptyList(),
     val events: EventsResponseDto? = null,
+)
+
+@Serializable
+data class ModelStatDto(
+    val model: String = "",
+    val calls: Long = 0,
+    @SerialName("success_calls") val successCalls: Long = 0,
+    @SerialName("failure_calls") val failureCalls: Long = 0,
+    @SerialName("success_rate") val successRate: Double = 0.0,
+    @SerialName("total_tokens") val totalTokens: Long = 0,
+    val cost: Double = 0.0,
+)
+
+@Serializable
+data class ApiKeyStatDto(
+    val id: String = "",
+    @SerialName("api_key_hash") val apiKeyHash: String = "",
+    @SerialName("account_snapshot") val accountSnapshot: String = "",
+    @SerialName("auth_label_snapshot") val authLabelSnapshot: String = "",
+    val calls: Long = 0,
+    @SerialName("success_rate") val successRate: Double = 0.0,
+    @SerialName("total_tokens") val totalTokens: Long = 0,
+    val cost: Double = 0.0,
+)
+
+@Serializable
+data class CredentialStatDto(
+    val id: String = "",
+    @SerialName("auth_file_snapshot") val authFileSnapshot: String = "",
+    @SerialName("auth_index") val authIndex: String = "",
+    @SerialName("account_snapshot") val accountSnapshot: String = "",
+    @SerialName("auth_label_snapshot") val authLabelSnapshot: String = "",
+    val calls: Long = 0,
+    @SerialName("success_rate") val successRate: Double = 0.0,
+    @SerialName("total_tokens") val totalTokens: Long = 0,
+    val cost: Double = 0.0,
 )
 
 @Serializable

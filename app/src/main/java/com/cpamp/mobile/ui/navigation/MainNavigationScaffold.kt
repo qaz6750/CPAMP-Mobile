@@ -53,6 +53,7 @@ fun MainNavigationScaffold(
                         AppDestination.entries.forEach { destination ->
                             NavigationBarItem(
                                 selected = destination == currentDestination,
+                                alwaysShowLabel = false,
                                 onClick = { onNavigate(destination) },
                                 icon = {
                                     Icon(

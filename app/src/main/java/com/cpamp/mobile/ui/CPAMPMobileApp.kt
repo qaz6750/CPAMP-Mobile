@@ -15,6 +15,7 @@ import com.cpamp.mobile.ui.dashboard.DashboardScreen
 import com.cpamp.mobile.ui.resources.ResourcesScreen
 import com.cpamp.mobile.ui.system.SystemScreen
 import com.cpamp.mobile.ui.monitoring.MonitoringScreen
+import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionViewModel
@@ -109,6 +110,7 @@ private fun ConnectedApp(
         ) {
             composable(AppDestination.Overview.route) { DashboardScreen(contentPadding) }
             composable(AppDestination.Traffic.route) { MonitoringScreen(contentPadding) }
+            composable(AppDestination.Usage.route) { UsageAnalyticsScreen(contentPadding) }
             composable(AppDestination.Resources.route) {
                 ResourcesScreen(contentPadding, hideAddresses = appearanceState.settings.hideAddresses)
             }
