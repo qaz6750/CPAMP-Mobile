@@ -2,6 +2,8 @@
 
 CPAMP Mobile is a native Android administration client for a configured CPA-Manager-Plus Manager Server. It is built with Kotlin, Jetpack Compose, Material 3, Hilt, Retrofit/OkHttp, Kotlin Serialization, Room, DataStore, and Android Keystore.
 
+Current version: **1.0.1**
+
 > [!IMPORTANT]
 > CPAMP Mobile is an independent, unofficial client. It is not affiliated with, endorsed by, or maintained by Seakee or the [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) project. CPA-Manager-Plus names and upstream project references identify interoperability only.
 
@@ -28,17 +30,20 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 | Area | First release |
 | --- | --- |
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
-| Overview | Health, daily requests, success rate, tokens, estimated cost, trends, and failures |
-| Monitoring | Lifecycle-aware request polling, time/status/search filters, details, and cached recent data |
+| Overview | Health, daily requests, success rate, tokens, estimated cost, and token/request trends with readable axes |
+| Monitoring | Manual refresh, time/status/search filters, request details, and privacy-safe cached recent data |
+| Usage | Manual token/request trends plus on-demand model, client API key, or credential rankings |
 | Providers | List and common add/edit/delete operations with unknown-field preservation |
 | Auth Files | List, enable/disable, import, edit, overwrite, and delete JSON files |
 | Quotas | View and refresh active quota cooldowns |
 | Client API Keys | Add, mask, and delete gateway client keys |
 | System | Manager/collector status, filtered paged logs, log clearing, and server management |
-| Security | Keystore AES-GCM, optional biometric/device-credential app lock, blocked screenshots, no backup |
-| Appearance | System/light/dark themes, dynamic color, Simplified Chinese and English |
+| Security | Keystore AES-GCM, optional biometric/device-credential app lock, configurable screenshot protection, no backup |
+| Appearance | Blue-and-white light theme, navy dark theme, optional dynamic color, Simplified Chinese and English |
 
 Destructive changes show the affected object and require confirmation. Switching servers cancels requests from the previous server and rebuilds screen state so cached data cannot cross profiles.
+
+All network-backed screens use explicit manual refresh. Monitoring requests only the visible summary and event page; Usage computes only the selected ranking; Resources loads only the selected category and provider type; System loads only the selected status or log section. Changing filters or categories never triggers a background request.
 
 ## Build
 
@@ -104,6 +109,7 @@ The workflow uploads debug and release APK artifacts. Its release artifact name 
 - Enabling app lock migrates ciphertext to a user-authenticated Keystore key; disabling it migrates back and removes the obsolete key.
 - Admin Keys are not written to Room, DataStore, saved-state Bundles, logs, crash uploads, or backups.
 - Monitoring cache is isolated by server profile and removes request identifiers, account labels, paths, and failure summaries.
+- Screenshots and recent-task previews are allowed by default and can be disabled from Settings.
 - The app includes no telemetry or third-party crash reporting.
 
 See [SECURITY.md](SECURITY.md) for the reporting process and security boundaries.
