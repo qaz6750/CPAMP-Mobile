@@ -1,0 +1,83 @@
+package com.cpamp.mobile.data.auth
+
+import com.cpamp.mobile.data.profile.ServerProfileStore
+import com.cpamp.mobile.domain.model.AuthenticatedSession
+import com.cpamp.mobile.domain.model.ServerProfile
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+@Singleton
+class SessionRepository @Inject constructor(
+    private val profileStore: ServerProfileStore,
+    private val connectionTester: ConnectionTester,
+) {
+    private val mutableSession = MutableStateFlow<AuthenticatedSession?>(null)
+    val session: StateFlow<AuthenticatedSession?> = mutableSession.asStateFlow()
+    val profiles = profileStore.profiles
+
+    suspend fun restore(): Result<AuthenticatedSession> = runCatching {
+        val stored = profileStore.snapshot()
+        val profile = stored.profiles.firstOrNull { it.id == stored.activeProfileId }
+            ?: error("NO_ACTIVE_PROFILE")
+        connect(profile)
+    }
+
+    suspend fun login(
+        name: String,
+        rawAddress: String,
+        adminKey: String,
+        allowCleartext: Boolean,
+    ): AuthenticatedSession {
+        val baseUrl = ConnectionAddress.normalize(rawAddress)
+        if (baseUrl.startsWith("http://") && !allowCleartext) {
+            throw IllegalArgumentException("CLEARTEXT_CONFIRMATION_REQUIRED")
+        }
+        val trimmedKey = adminKey.trim()
+        require(trimmedKey.isNotEmpty()) { "ADMIN_KEY_REQUIRED" }
+        val probe = connectionTester.test(baseUrl, trimmedKey)
+        val stored = profileStore.snapshot()
+        val existing = stored.profiles.firstOrNull { it.baseUrl.equals(baseUrl, ignoreCase = true) }
+        val profile = ServerProfile(
+            id = existing?.id ?: UUID.randomUUID().toString(),
+            name = name.trim().ifBlank { existing?.name ?: ConnectionAddress.defaultLabel(baseUrl) },
+            baseUrl = baseUrl,
+            lastConnectedAt = System.currentTimeMillis(),
+            serverVersion = probe.serverVersion ?: existing?.serverVersion,
+        )
+        profileStore.upsert(profile, trimmedKey)
+        return AuthenticatedSession(profile, trimmedKey, probe.service).also { mutableSession.value = it }
+    }
+
+    suspend fun switchTo(profileId: String): AuthenticatedSession {
+        val profile = profileStore.snapshot().profiles.firstOrNull { it.id == profileId }
+            ?: error("PROFILE_NOT_FOUND")
+        return connect(profile)
+    }
+
+    suspend fun delete(profileId: String) {
+        profileStore.delete(profileId)
+        if (mutableSession.value?.profile?.id == profileId) mutableSession.value = null
+    }
+
+    fun disconnect() {
+        mutableSession.value = null
+    }
+
+    private suspend fun connect(profile: ServerProfile): AuthenticatedSession {
+        val adminKey = profileStore.secret(profile.id)?.takeIf(String::isNotBlank)
+            ?: error("SAVED_KEY_UNAVAILABLE")
+        val probe = connectionTester.test(profile.baseUrl, adminKey)
+        val refreshed = profile.copy(
+            lastConnectedAt = System.currentTimeMillis(),
+            serverVersion = probe.serverVersion ?: profile.serverVersion,
+        )
+        profileStore.upsert(refreshed, adminKey)
+        profileStore.markActive(refreshed.id)
+        return AuthenticatedSession(refreshed, adminKey, probe.service).also { mutableSession.value = it }
+    }
+}
+
