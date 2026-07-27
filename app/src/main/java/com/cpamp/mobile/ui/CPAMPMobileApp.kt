@@ -3,6 +3,7 @@ package com.cpamp.mobile.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -12,7 +13,7 @@ import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
 import com.cpamp.mobile.ui.resources.ResourcesScreen
-import com.cpamp.mobile.ui.screens.SystemPreviewScreen
+import com.cpamp.mobile.ui.system.SystemScreen
 import com.cpamp.mobile.ui.monitoring.MonitoringScreen
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
@@ -36,6 +37,24 @@ fun CPAMPMobileApp(viewModel: SessionViewModel = hiltViewModel()) {
         return
     }
 
+    key(sessionState.session?.profile?.id) {
+        ConnectedApp(
+            sessionState = sessionState,
+            onSwitchServer = viewModel::switchTo,
+            onDeleteServer = viewModel::delete,
+            onDisconnect = viewModel::disconnect,
+        )
+    }
+}
+
+@Composable
+private fun ConnectedApp(
+    sessionState: com.cpamp.mobile.ui.auth.SessionUiState,
+    onSwitchServer: (String) -> Unit,
+    onDeleteServer: (String) -> Unit,
+    onDisconnect: () -> Unit,
+) {
+    val session = requireNotNull(sessionState.session)
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val current = AppDestination.fromRoute(backStackEntry?.destination?.route)
@@ -57,7 +76,16 @@ fun CPAMPMobileApp(viewModel: SessionViewModel = hiltViewModel()) {
             composable(AppDestination.Overview.route) { DashboardScreen(contentPadding) }
             composable(AppDestination.Traffic.route) { MonitoringScreen(contentPadding) }
             composable(AppDestination.Resources.route) { ResourcesScreen(contentPadding) }
-            composable(AppDestination.System.route) { SystemPreviewScreen(contentPadding) }
+            composable(AppDestination.System.route) {
+                SystemScreen(
+                    contentPadding = contentPadding,
+                    session = session,
+                    profiles = sessionState.profiles,
+                    onSwitchServer = onSwitchServer,
+                    onDeleteServer = onDeleteServer,
+                    onDisconnect = onDisconnect,
+                )
+            }
         }
     }
 }
