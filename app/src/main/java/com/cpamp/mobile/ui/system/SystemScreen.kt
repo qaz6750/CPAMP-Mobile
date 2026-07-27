@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
+import com.cpamp.mobile.data.settings.AppLanguage
+import com.cpamp.mobile.data.settings.AppTheme
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
@@ -55,6 +57,7 @@ import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.security.AppLockUiState
+import com.cpamp.mobile.ui.settings.AppearanceUiState
 
 @Composable
 fun SystemScreen(
@@ -67,6 +70,10 @@ fun SystemScreen(
     appLockState: AppLockUiState,
     onSetAppLockEnabled: (Boolean) -> Unit,
     onSetAppLockTimeout: (Int) -> Unit,
+    appearanceState: AppearanceUiState,
+    onSetTheme: (AppTheme) -> Unit,
+    onSetLanguage: (AppLanguage) -> Unit,
+    onSetDynamicColor: (Boolean) -> Unit,
     viewModel: SystemViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -197,6 +204,16 @@ fun SystemScreen(
                         )
                     }
                     item { EmptySystemCard(stringResource(R.string.security_privacy_summary)) }
+                }
+                SystemTab.Appearance -> {
+                    item {
+                        AppearanceSettingsCard(
+                            state = appearanceState,
+                            onSetTheme = onSetTheme,
+                            onSetLanguage = onSetLanguage,
+                            onSetDynamicColor = onSetDynamicColor,
+                        )
+                    }
                 }
             }
         }
@@ -416,6 +433,59 @@ private fun AppLockSettingsCard(
 }
 
 @Composable
+private fun AppearanceSettingsCard(
+    state: AppearanceUiState,
+    onSetTheme: (AppTheme) -> Unit,
+    onSetLanguage: (AppLanguage) -> Unit,
+    onSetDynamicColor: (Boolean) -> Unit,
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AppLanguage.entries.forEach { language ->
+                    FilterChip(
+                        selected = state.settings.language == language,
+                        onClick = { onSetLanguage(language) },
+                        label = { Text(stringResource(language.labelResource)) },
+                    )
+                }
+            }
+            Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AppTheme.entries.forEach { theme ->
+                    FilterChip(
+                        selected = state.settings.theme == theme,
+                        onClick = { onSetTheme(theme) },
+                        label = { Text(stringResource(theme.labelResource)) },
+                    )
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.dynamic_color), fontWeight = FontWeight.SemiBold)
+                    Text(
+                        stringResource(R.string.dynamic_color_help),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = state.settings.dynamicColor,
+                    onCheckedChange = onSetDynamicColor,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun EmptySystemCard(text: String) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))) {
         Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
@@ -455,4 +525,19 @@ private val SystemTab.labelResource: Int
         SystemTab.Logs -> R.string.system_logs
         SystemTab.Servers -> R.string.system_servers
         SystemTab.Security -> R.string.system_security
+        SystemTab.Appearance -> R.string.system_appearance
+    }
+
+private val AppLanguage.labelResource: Int
+    get() = when (this) {
+        AppLanguage.System -> R.string.follow_system
+        AppLanguage.SimplifiedChinese -> R.string.simplified_chinese
+        AppLanguage.English -> R.string.english
+    }
+
+private val AppTheme.labelResource: Int
+    get() = when (this) {
+        AppTheme.System -> R.string.follow_system
+        AppTheme.Light -> R.string.light_theme
+        AppTheme.Dark -> R.string.dark_theme
     }

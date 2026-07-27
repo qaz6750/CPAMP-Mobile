@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-enum class SystemTab { Status, Logs, Servers, Security }
+enum class SystemTab { Status, Logs, Servers, Security, Appearance }
 
 data class SystemUiState(
     val tab: SystemTab = SystemTab.Status,

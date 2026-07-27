@@ -19,12 +19,19 @@ import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionViewModel
 import com.cpamp.mobile.ui.security.AppLockUiState
+import com.cpamp.mobile.ui.settings.AppearanceUiState
+import com.cpamp.mobile.data.settings.AppLanguage
+import com.cpamp.mobile.data.settings.AppTheme
 
 @Composable
 fun CPAMPMobileApp(
     appLockState: AppLockUiState,
     onSetAppLockEnabled: (Boolean) -> Unit,
     onSetAppLockTimeout: (Int) -> Unit,
+    appearanceState: AppearanceUiState,
+    onSetTheme: (AppTheme) -> Unit,
+    onSetLanguage: (AppLanguage) -> Unit,
+    onSetDynamicColor: (Boolean) -> Unit,
     viewModel: SessionViewModel = hiltViewModel(),
 ) {
     val sessionState by viewModel.state.collectAsState()
@@ -52,6 +59,10 @@ fun CPAMPMobileApp(
             appLockState = appLockState,
             onSetAppLockEnabled = onSetAppLockEnabled,
             onSetAppLockTimeout = onSetAppLockTimeout,
+            appearanceState = appearanceState,
+            onSetTheme = onSetTheme,
+            onSetLanguage = onSetLanguage,
+            onSetDynamicColor = onSetDynamicColor,
         )
     }
 }
@@ -65,6 +76,10 @@ private fun ConnectedApp(
     appLockState: AppLockUiState,
     onSetAppLockEnabled: (Boolean) -> Unit,
     onSetAppLockTimeout: (Int) -> Unit,
+    appearanceState: AppearanceUiState,
+    onSetTheme: (AppTheme) -> Unit,
+    onSetLanguage: (AppLanguage) -> Unit,
+    onSetDynamicColor: (Boolean) -> Unit,
 ) {
     val session = requireNotNull(sessionState.session)
     val navController = rememberNavController()
@@ -99,6 +114,10 @@ private fun ConnectedApp(
                     appLockState = appLockState,
                     onSetAppLockEnabled = onSetAppLockEnabled,
                     onSetAppLockTimeout = onSetAppLockTimeout,
+                    appearanceState = appearanceState,
+                    onSetTheme = onSetTheme,
+                    onSetLanguage = onSetLanguage,
+                    onSetDynamicColor = onSetDynamicColor,
                 )
             }
         }
