@@ -13,7 +13,7 @@ import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
 import com.cpamp.mobile.ui.screens.ResourcesPreviewScreen
 import com.cpamp.mobile.ui.screens.SystemPreviewScreen
-import com.cpamp.mobile.ui.screens.TrafficPreviewScreen
+import com.cpamp.mobile.ui.monitoring.MonitoringScreen
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionViewModel
@@ -55,7 +55,7 @@ fun CPAMPMobileApp(viewModel: SessionViewModel = hiltViewModel()) {
             startDestination = AppDestination.Overview.route,
         ) {
             composable(AppDestination.Overview.route) { DashboardScreen(contentPadding) }
-            composable(AppDestination.Traffic.route) { TrafficPreviewScreen(contentPadding) }
+            composable(AppDestination.Traffic.route) { MonitoringScreen(contentPadding) }
             composable(AppDestination.Resources.route) { ResourcesPreviewScreen(contentPadding) }
             composable(AppDestination.System.route) { SystemPreviewScreen(contentPadding) }
         }
