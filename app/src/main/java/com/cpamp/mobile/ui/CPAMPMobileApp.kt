@@ -18,9 +18,15 @@ import com.cpamp.mobile.ui.monitoring.MonitoringScreen
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionViewModel
+import com.cpamp.mobile.ui.security.AppLockUiState
 
 @Composable
-fun CPAMPMobileApp(viewModel: SessionViewModel = hiltViewModel()) {
+fun CPAMPMobileApp(
+    appLockState: AppLockUiState,
+    onSetAppLockEnabled: (Boolean) -> Unit,
+    onSetAppLockTimeout: (Int) -> Unit,
+    viewModel: SessionViewModel = hiltViewModel(),
+) {
     val sessionState by viewModel.state.collectAsState()
     if (sessionState.initializing) {
         SessionLoadingScreen()
@@ -43,6 +49,9 @@ fun CPAMPMobileApp(viewModel: SessionViewModel = hiltViewModel()) {
             onSwitchServer = viewModel::switchTo,
             onDeleteServer = viewModel::delete,
             onDisconnect = viewModel::disconnect,
+            appLockState = appLockState,
+            onSetAppLockEnabled = onSetAppLockEnabled,
+            onSetAppLockTimeout = onSetAppLockTimeout,
         )
     }
 }
@@ -53,6 +62,9 @@ private fun ConnectedApp(
     onSwitchServer: (String) -> Unit,
     onDeleteServer: (String) -> Unit,
     onDisconnect: () -> Unit,
+    appLockState: AppLockUiState,
+    onSetAppLockEnabled: (Boolean) -> Unit,
+    onSetAppLockTimeout: (Int) -> Unit,
 ) {
     val session = requireNotNull(sessionState.session)
     val navController = rememberNavController()
@@ -84,6 +96,9 @@ private fun ConnectedApp(
                     onSwitchServer = onSwitchServer,
                     onDeleteServer = onDeleteServer,
                     onDisconnect = onDisconnect,
+                    appLockState = appLockState,
+                    onSetAppLockEnabled = onSetAppLockEnabled,
+                    onSetAppLockTimeout = onSetAppLockTimeout,
                 )
             }
         }

@@ -85,7 +85,7 @@ fun LoginScreen(
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var address by rememberSaveable { mutableStateOf("") }
-    var adminKey by rememberSaveable { mutableStateOf("") }
+    var adminKey by remember { mutableStateOf("") }
     var keyVisible by rememberSaveable { mutableStateOf(false) }
     var cleartextConfirmation by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<ServerProfile?>(null) }

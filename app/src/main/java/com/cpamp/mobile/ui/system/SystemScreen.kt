@@ -30,6 +30,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -53,6 +54,7 @@ import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.common.asTime
+import com.cpamp.mobile.ui.security.AppLockUiState
 
 @Composable
 fun SystemScreen(
@@ -62,6 +64,9 @@ fun SystemScreen(
     onSwitchServer: (String) -> Unit,
     onDeleteServer: (String) -> Unit,
     onDisconnect: () -> Unit,
+    appLockState: AppLockUiState,
+    onSetAppLockEnabled: (Boolean) -> Unit,
+    onSetAppLockTimeout: (Int) -> Unit,
     viewModel: SystemViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -182,6 +187,16 @@ fun SystemScreen(
                             Text(stringResource(R.string.disconnect), modifier = Modifier.padding(start = 8.dp))
                         }
                     }
+                }
+                SystemTab.Security -> {
+                    item {
+                        AppLockSettingsCard(
+                            state = appLockState,
+                            onSetEnabled = onSetAppLockEnabled,
+                            onSetTimeout = onSetAppLockTimeout,
+                        )
+                    }
+                    item { EmptySystemCard(stringResource(R.string.security_privacy_summary)) }
                 }
             }
         }
@@ -341,6 +356,66 @@ private fun ServerCard(
 }
 
 @Composable
+private fun AppLockSettingsCard(
+    state: AppLockUiState,
+    onSetEnabled: (Boolean) -> Unit,
+    onSetTimeout: (Int) -> Unit,
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.app_lock), fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.app_lock_help),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (state.mutating) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                } else {
+                    Switch(
+                        checked = state.enabled,
+                        onCheckedChange = onSetEnabled,
+                    )
+                }
+            }
+            if (state.enabled) {
+                Text(stringResource(R.string.lock_after), style = MaterialTheme.typography.labelLarge)
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    listOf(1, 5, 15, 60).forEach { minutes ->
+                        FilterChip(
+                            selected = state.timeoutMinutes == minutes,
+                            onClick = { onSetTimeout(minutes) },
+                            label = {
+                                Text(
+                                    if (minutes == 60) {
+                                        stringResource(R.string.one_hour)
+                                    } else {
+                                        stringResource(R.string.minutes_value, minutes)
+                                    },
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            if (state.error) {
+                Text(
+                    stringResource(R.string.security_change_failed),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun EmptySystemCard(text: String) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))) {
         Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
@@ -379,4 +454,5 @@ private val SystemTab.labelResource: Int
         SystemTab.Status -> R.string.system_status
         SystemTab.Logs -> R.string.system_logs
         SystemTab.Servers -> R.string.system_servers
+        SystemTab.Security -> R.string.system_security
     }

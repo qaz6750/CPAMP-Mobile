@@ -80,7 +80,7 @@ class SessionViewModel @Inject constructor(
 
     fun switchTo(profileId: String) {
         viewModelScope.launch {
-            mutableState.value = mutableState.value.copy(submitting = true, error = null)
+            mutableState.value = mutableState.value.copy(submitting = true, session = null, error = null)
             runCatching { repository.switchTo(profileId) }
                 .onSuccess { mutableState.value = mutableState.value.copy(submitting = false, session = it) }
                 .onFailure {
