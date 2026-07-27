@@ -113,6 +113,7 @@ data class MonitoringTimelineDto(
     val success: Long = 0,
     val failure: Long = 0,
     val tokens: Long = 0,
+    @SerialName("total_tokens") val totalTokens: Long = 0,
     val cost: Double = 0.0,
 )
 

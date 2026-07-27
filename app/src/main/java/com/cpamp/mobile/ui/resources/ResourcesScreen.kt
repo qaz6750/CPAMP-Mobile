@@ -886,7 +886,7 @@ private val ResourceTab.icon: androidx.compose.ui.graphics.vector.ImageVector
     }
 
 private fun ResourcesUiState.countFor(tab: ResourceTab): Int = when (tab) {
-    ResourceTab.Providers -> providers.values.sumOf(List<ProviderRecord>::size)
+    ResourceTab.Providers -> providers.values.sumOf { records -> records.size }
     ResourceTab.AuthFiles -> authFiles.size
     ResourceTab.Quotas -> quotas.size
     ResourceTab.ApiKeys -> apiKeys.size
