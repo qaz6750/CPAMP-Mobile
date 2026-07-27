@@ -1,33 +1,62 @@
-name: Android CI
+name: Android Pipeline
+run-name: >-
+  Android / ${{
+    github.event_name == 'pull_request' && format('PR #{0}', github.event.number) ||
+    startsWith(github.ref, 'refs/tags/v') && format('Release {0}', github.ref_name) ||
+    format('Debug {0}', github.ref_name)
+  }}
 
 on:
   push:
     branches: [main]
     tags: ['v*']
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-${{ github.ref }}
-  cancel-in-progress: true
+  group: >-
+    android-${{
+      github.event_name == 'pull_request' && format('pr-{0}', github.event.number) ||
+      startsWith(github.ref, 'refs/tags/v') && format('release-{0}', github.ref_name) ||
+      format('debug-{0}', github.ref)
+    }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/v') }}
 
 jobs:
   dependency-review:
+    name: PR / Dependency security
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
     steps:
-      - name: Check out source
+      - name: Check out pull request
         uses: actions/checkout@v4
 
       - name: Review dependency changes
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
+          fail-on-scopes: runtime
 
-  verify:
+      - name: Summarize dependency review
+        if: always()
+        run: |
+          {
+            echo "## PR dependency security"
+            echo "- Pull request: #${{ github.event.number }}"
+            echo "- Policy: reject new high or critical runtime vulnerabilities"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  debug:
+    name: Debug / Test, lint and APK
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -43,76 +72,81 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
 
-      - name: Prepare optional release signing
-        shell: bash
-        env:
-          KEYSTORE_BASE64: ${{ secrets.CPAMP_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.CPAMP_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.CPAMP_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.CPAMP_KEY_PASSWORD }}
-        run: |
-          configured=0
-          for value in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [[ -n "${!value}" ]]; then
-              configured=$((configured + 1))
-            fi
-          done
-          if [[ "$configured" -eq 0 ]]; then
-            echo "RELEASE_SIGNING=unsigned" >> "$GITHUB_ENV"
-            exit 0
-          fi
-          if [[ "$configured" -ne 4 ]]; then
-            echo "Release signing secrets must be configured together" >&2
-            exit 1
-          fi
-          key_path="$RUNNER_TEMP/cpamp-release.jks"
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$key_path"
-          echo "CPAMP_KEYSTORE_PATH=$key_path" >> "$GITHUB_ENV"
-          echo "CPAMP_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
-          echo "CPAMP_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
-          echo "CPAMP_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
-          echo "RELEASE_SIGNING=signed" >> "$GITHUB_ENV"
-
-      - name: Verify and build
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
+      - name: Run debug checks
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: cpamp-mobile-debug
+          name: debug-apk-${{ github.run_number }}-${{ github.sha }}
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 14
 
-      - name: Upload release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: cpamp-mobile-release-${{ env.RELEASE_SIGNING }}
-          path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
-
-      - name: Upload lint report
+      - name: Upload debug reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-lint-report
-          path: app/build/reports/lint-results-debug.html
-          if-no-files-found: ignore
+          name: debug-reports-${{ github.run_number }}-${{ github.sha }}
+          path: |
+            app/build/reports/lint-results-debug.html
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/test-results/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Summarize debug pipeline
+        if: always()
+        run: |
+          {
+            echo "## Debug validation"
+            echo "- Event: $GITHUB_EVENT_NAME"
+            echo "- Ref: $GITHUB_REF_NAME"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Tasks: unit tests, Debug lint, Debug APK"
+            echo "- Release publishing: disabled"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: verify
+    name: Release / Verify, sign and publish
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     permissions:
       contents: write
 
     steps:
-      - name: Check out source
+      - name: Check out tagged source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release tag and files
+        shell: bash
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use vMAJOR.MINOR.PATCH: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          tag_version="${GITHUB_REF_NAME#v}"
+          app_version="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)"
+          if [[ "$tag_version" != "$app_version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match versionName $app_version" >&2
+            exit 1
+          fi
+          release_notes="docs/release-notes/v${app_version}.md"
+          if [[ ! -f "$release_notes" ]]; then
+            echo "Release notes not found: $release_notes" >&2
+            exit 1
+          fi
+          echo "RELEASE_VERSION=$app_version" >> "$GITHUB_ENV"
+          echo "RELEASE_NOTES=$release_notes" >> "$GITHUB_ENV"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -122,9 +156,6 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-
-      - name: Ensure Gradle wrapper is executable
-        run: chmod +x ./gradlew
 
       - name: Require release signing
         shell: bash
@@ -140,49 +171,81 @@ jobs:
               exit 1
             fi
           done
+          echo "::add-mask::$KEYSTORE_PASSWORD"
+          echo "::add-mask::$KEY_ALIAS"
+          echo "::add-mask::$KEY_PASSWORD"
           key_path="$RUNNER_TEMP/cpamp-release.jks"
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$key_path"
+          chmod 600 "$key_path"
+          if [[ ! -s "$key_path" ]]; then
+            echo "Decoded keystore is empty" >&2
+            exit 1
+          fi
+          keytool -list \
+            -keystore "$key_path" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" > /dev/null
           echo "CPAMP_KEYSTORE_PATH=$key_path" >> "$GITHUB_ENV"
           echo "CPAMP_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
           echo "CPAMP_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
           echo "CPAMP_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
 
-      - name: Verify tag matches app version
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./gradlew
+
+      - name: Test and build signed release
+        run: ./gradlew testDebugUnitTest lintRelease assembleRelease --stacktrace
+
+      - name: Prepare versioned release assets
         shell: bash
         run: |
-          tag_version="${GITHUB_REF_NAME#v}"
-          app_version="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)"
-          if [[ "$tag_version" != "$app_version" ]]; then
-            echo "Tag $GITHUB_REF_NAME does not match versionName $app_version" >&2
-            exit 1
-          fi
-          echo "RELEASE_VERSION=$app_version" >> "$GITHUB_ENV"
-
-      - name: Build signed release APK
-        run: ./gradlew assembleRelease
-
-      - name: Prepare release assets and notes
-        shell: bash
-        run: |
-          source_apk="$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -print -quit)"
-          if [[ -z "$source_apk" ]]; then
-            echo "Signed release APK not found" >&2
+          mapfile -t release_apks < <(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f)
+          if [[ "${#release_apks[@]}" -ne 1 ]]; then
+            echo "Expected exactly one signed release APK, found ${#release_apks[@]}" >&2
             exit 1
           fi
           mkdir -p release-assets
           apk_name="cpamp-mobile-v${RELEASE_VERSION}.apk"
-          cp "$source_apk" "release-assets/$apk_name"
+          cp "${release_apks[0]}" "release-assets/$apk_name"
           (cd release-assets && sha256sum "$apk_name" > "$apk_name.sha256")
           apk_size="$(du -h "release-assets/$apk_name" | cut -f1)"
           apk_sha="$(cut -d' ' -f1 "release-assets/$apk_name.sha256")"
-          cp "docs/release-notes/v${RELEASE_VERSION}.md" release-body.md
+          previous_tag="$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$GITHUB_REF_NAME^" 2>/dev/null || true)"
+          cp "$RELEASE_NOTES" release-body.md
           {
-            printf '\n## Release integrity / 发布完整性\n\n'
-            printf -- '- Signed APK / 已签名 APK: `%s`\n' "$apk_name"
-            printf -- '- Size / 大小: `%s`\n' "$apk_size"
+            printf '\n## Download / 下载\n\n'
+            printf '| Platform / 平台 | Package / 安装包 | Size / 大小 |\n'
+            printf '| --- | --- | --- |\n'
+            printf '| Android 8.0+ | [`%s`](https://github.com/%s/releases/download/%s/%s) | `%s` |\n' \
+              "$apk_name" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME" "$apk_name" "$apk_size"
+            printf '\n> Use the APK asset above. The `.sha256` asset is provided for independent verification.\n'
+            printf '> 请下载上方 APK；同名 `.sha256` 文件可用于独立校验。\n'
+            printf '\n## Integrity / 完整性\n\n'
+            printf -- '- Signing / 签名: required and verified during CI\n'
             printf -- '- SHA-256: `%s`\n' "$apk_sha"
-            printf -- '- Full changelog / 完整变更: https://github.com/%s/compare/v1.0.1...%s\n' "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME"
+            if [[ -n "$previous_tag" ]]; then
+              printf -- '- Full Changelog / 完整变更: [%s...%s](https://github.com/%s/compare/%s...%s)\n' \
+                "$previous_tag" "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" "$previous_tag" "$GITHUB_REF_NAME"
+            fi
+            printf '\n<details>\n<summary>Build information / 构建信息</summary>\n\n'
+            printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
+            printf -- '- Workflow run: [#%s](https://github.com/%s/actions/runs/%s)\n' \
+              "$GITHUB_RUN_NUMBER" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf -- '- Gradle tasks: `testDebugUnitTest lintRelease assembleRelease`\n'
+            printf '\n</details>\n'
           } >> release-body.md
+
+      - name: Upload release diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-reports-${{ github.ref_name }}-${{ github.run_number }}
+          path: |
+            app/build/reports/lint-results-release.html
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/test-results/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -194,4 +257,18 @@ jobs:
             release-assets/cpamp-mobile-v${{ env.RELEASE_VERSION }}.apk.sha256
           fail_on_unmatched_files: true
           make_latest: true
+          draft: false
+          prerelease: false
+
+      - name: Summarize release pipeline
+        if: always()
+        run: |
+          {
+            echo "## Signed release"
+            echo "- Tag: \`$GITHUB_REF_NAME\`"
+            echo "- Version: \`${RELEASE_VERSION:-unresolved}\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Tasks: unit tests, Release lint, signed Release APK"
+            echo "- Assets: APK and SHA-256"
+          } >> "$GITHUB_STEP_SUMMARY"
 
