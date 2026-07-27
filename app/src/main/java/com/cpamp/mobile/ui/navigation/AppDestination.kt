@@ -2,11 +2,11 @@ package com.cpamp.mobile.ui.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cpamp.mobile.R
 
@@ -18,15 +18,13 @@ enum class AppDestination(
     Overview("overview", R.string.nav_overview, Icons.Outlined.GridView),
     Traffic("traffic", R.string.nav_traffic, Icons.Outlined.QueryStats),
     Usage("usage", R.string.nav_usage, Icons.Outlined.BarChart),
-    Resources("resources", R.string.nav_resources, Icons.Outlined.Dns),
-    System("system", R.string.nav_system, Icons.Outlined.Tune),
+    Operations("operations", R.string.nav_operations, Icons.Outlined.AdminPanelSettings),
+    Settings("settings", R.string.settings_title, Icons.Outlined.Settings),
     ;
 
     companion object {
-        fun fromRoute(route: String?): AppDestination = when (route) {
-            "settings" -> System
-            else -> entries.firstOrNull { it.route == route } ?: Overview
-        }
+        fun fromRoute(route: String?): AppDestination =
+            entries.firstOrNull { it.route == route } ?: Overview
     }
 }
 

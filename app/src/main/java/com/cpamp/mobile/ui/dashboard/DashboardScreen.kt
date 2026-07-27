@@ -41,6 +41,7 @@ import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AnalyticsTrendCard
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
@@ -52,6 +53,7 @@ import com.cpamp.mobile.ui.components.PageHeader
 @Composable
 fun DashboardScreen(
     contentPadding: PaddingValues,
+    hideAddresses: Boolean,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -76,8 +78,11 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             item {
+                val fallback = stringResource(R.string.nav_overview)
                 PageHeader(
-                    eyebrow = state.profile?.name ?: stringResource(R.string.app_name),
+                    eyebrow = state.profile?.let { profile ->
+                        safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)
+                    } ?: fallback,
                     title = stringResource(R.string.overview_title),
                     subtitle = stringResource(R.string.overview_subtitle),
                     trailing = {
@@ -110,7 +115,13 @@ fun DashboardScreen(
                     AnalyticsTrendCard(
                         title = stringResource(R.string.preview_trend),
                         points = data.trafficTimeline.map { point ->
-                            AnalyticsTrendPoint(point.bucketMs, point.calls, point.tokens)
+                            AnalyticsTrendPoint(
+                                timestampMs = point.bucketMs,
+                                requests = point.calls,
+                                tokens = point.tokens,
+                                success = point.success,
+                                failure = point.failure,
+                            )
                         },
                         emptyText = stringResource(R.string.no_traffic),
                     )

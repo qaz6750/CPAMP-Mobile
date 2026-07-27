@@ -4,8 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -67,7 +68,7 @@ fun MetricCard(
     compact: Boolean = false,
 ) {
     Card(
-        modifier = modifier.then(if (compact) Modifier.height(132.dp) else Modifier),
+        modifier = modifier.then(if (compact) Modifier.heightIn(min = 132.dp) else Modifier),
         shape = RoundedCornerShape(if (compact) 16.dp else 24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
@@ -75,34 +76,63 @@ fun MetricCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
-            modifier = Modifier.padding(if (compact) 13.dp else 20.dp),
+            modifier = Modifier.fillMaxWidth().padding(if (compact) 13.dp else 20.dp),
             verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 12.dp),
         ) {
-            Surface(
-                color = accent.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(12.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.padding(if (compact) 6.dp else 9.dp),
-                )
+                Surface(
+                    color = accent.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.padding(if (compact) 6.dp else 9.dp)
+                            .then(if (compact) Modifier.size(18.dp) else Modifier),
+                    )
+                }
+                if (compact) {
+                    Text(
+                        text = label,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                    )
+                }
             }
             Text(
                 text = value,
-                style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+                style = when {
+                    !compact -> MaterialTheme.typography.titleLarge
+                    value.length <= 8 -> MaterialTheme.typography.titleLarge
+                    else -> MaterialTheme.typography.titleMedium
+                },
                 fontWeight = FontWeight.Bold,
-                maxLines = 2,
+                maxLines = 1,
             )
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = label, style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
+            if (compact) {
                 Text(
                     text = supporting,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = if (compact) 1 else 2,
+                    maxLines = 2,
                 )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(text = label, style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        text = supporting,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                    )
+                }
             }
         }
     }

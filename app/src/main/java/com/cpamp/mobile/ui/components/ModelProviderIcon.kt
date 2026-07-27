@@ -1,8 +1,11 @@
 package com.cpamp.mobile.ui.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.annotation.DrawableRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -10,8 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cpamp.mobile.R
 
 @Composable
 fun ModelProviderIcon(model: String, modifier: Modifier = Modifier) {
@@ -22,20 +27,40 @@ fun ModelProviderIcon(model: String, modifier: Modifier = Modifier) {
         color = provider.color.copy(alpha = 0.14f),
         contentColor = provider.color,
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(provider.mark, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black)
+        androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+            when {
+                provider.icon != null -> Icon(
+                    painter = painterResource(provider.icon),
+                    contentDescription = provider.displayName,
+                    modifier = Modifier.size(21.dp),
+                )
+                provider == ModelProvider.Xai -> Text(
+                    text = "xAI",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                )
+                else -> Icon(
+                    imageVector = Icons.Outlined.AutoAwesome,
+                    contentDescription = provider.displayName,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }
 
-private enum class ModelProvider(val mark: String, val color: Color) {
-    OpenAi("O", Color(0xFF0F766E)),
-    Anthropic("A", Color(0xFF7C3AED)),
-    Google("G", Color(0xFF2563EB)),
-    Xai("X", Color(0xFF111827)),
-    DeepSeek("D", Color(0xFF1D4ED8)),
-    Qwen("Q", Color(0xFFB45309)),
-    Generic("AI", Color(0xFF356AE6));
+private enum class ModelProvider(
+    val displayName: String,
+    @DrawableRes val icon: Int?,
+    val color: Color,
+) {
+    OpenAi("OpenAI", R.drawable.ic_provider_openai, Color(0xFF111111)),
+    Anthropic("Anthropic", R.drawable.ic_provider_anthropic, Color(0xFF191919)),
+    Google("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4)),
+    Xai("xAI", null, Color(0xFF111111)),
+    DeepSeek("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6)),
+    Qwen("Qwen", R.drawable.ic_provider_qwen, Color(0xFF6950EF)),
+    Generic("AI model", null, Color(0xFF356AE6));
 
     companion object {
         fun fromModel(model: String): ModelProvider {

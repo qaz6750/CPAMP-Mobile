@@ -54,6 +54,7 @@ import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.BrandMark
 import com.cpamp.mobile.ui.components.ConnectionPill
+import com.cpamp.mobile.ui.common.safeServerName
 
 @Composable
 fun SessionLoadingScreen() {
@@ -254,10 +255,18 @@ fun LoginScreen(
     }
 
     pendingDelete?.let { profile ->
+        val fallback = stringResource(R.string.saved_servers)
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
             title = { Text(stringResource(R.string.delete_server_title)) },
-            text = { Text(stringResource(R.string.delete_server_body, profile.name)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.delete_server_body,
+                        safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback),
+                    ),
+                )
+            },
             confirmButton = {
                 Button(onClick = { onDeleteSaved(profile.id); pendingDelete = null }) {
                     Text(stringResource(R.string.delete))
@@ -278,6 +287,12 @@ private fun SavedProfileCard(
     onConnect: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val displayName = safeServerName(
+        profile.name,
+        profile.baseUrl,
+        hideAddress,
+        stringResource(R.string.saved_servers),
+    )
     Card(
         modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)),
@@ -288,7 +303,7 @@ private fun SavedProfileCard(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text(profile.name, fontWeight = FontWeight.SemiBold)
+                Text(displayName, fontWeight = FontWeight.SemiBold)
                 if (!hideAddress) {
                     Text(
                         profile.baseUrl,

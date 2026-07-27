@@ -17,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.ListAlt
 import androidx.compose.material.icons.outlined.MonitorHeart
@@ -55,6 +54,7 @@ import com.cpamp.mobile.ui.components.CategoryListRow
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.common.asTime
+import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.settings.AppearanceUiState
 
 @Composable
@@ -65,7 +65,6 @@ fun SystemScreen(
     onSwitchServer: (String) -> Unit,
     onDeleteServer: (String) -> Unit,
     onDisconnect: () -> Unit,
-    onOpenSettings: () -> Unit,
     appearanceState: AppearanceUiState,
     viewModel: SystemViewModel = hiltViewModel(),
 ) {
@@ -86,20 +85,15 @@ fun SystemScreen(
         ) {
             item {
                 PageHeader(
-                    eyebrow = stringResource(R.string.nav_system),
+                    eyebrow = stringResource(R.string.nav_operations),
                     title = stringResource(R.string.system_title),
                     subtitle = stringResource(R.string.system_subtitle),
                     trailing = {
-                        Row {
-                            IconButton(onClick = onOpenSettings) {
-                                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings_title))
-                            }
-                            IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
-                                if (state.loading) {
-                                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
-                                }
+                        IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
+                            if (state.loading) {
+                                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
                             }
                         }
                     },
@@ -209,9 +203,18 @@ fun SystemScreen(
         )
     }
     deleteProfile?.let { profile ->
+        val fallback = stringResource(R.string.system_servers)
         ConfirmSystemAction(
             title = stringResource(R.string.delete_server_title),
-            message = stringResource(R.string.delete_server_body, profile.name),
+            message = stringResource(
+                R.string.delete_server_body,
+                safeServerName(
+                    profile.name,
+                    profile.baseUrl,
+                    appearanceState.settings.hideAddresses,
+                    fallback,
+                ),
+            ),
             onDismiss = { deleteProfile = null },
             onConfirm = {
                 deleteProfile = null
@@ -223,10 +226,16 @@ fun SystemScreen(
 
 @Composable
 private fun ConnectionCard(session: AuthenticatedSession, hideAddress: Boolean) {
+    val displayName = safeServerName(
+        session.profile.name,
+        session.profile.baseUrl,
+        hideAddress,
+        stringResource(R.string.system_servers),
+    )
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(session.profile.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                Text(displayName, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
                 ConnectionPill(
                     label = stringResource(if (session.profile.usesCleartext) R.string.http_connection else R.string.https_connection),
                     secure = !session.profile.usesCleartext,
@@ -323,11 +332,17 @@ private fun ServerCard(
     onSwitch: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val displayName = safeServerName(
+        profile.name,
+        profile.baseUrl,
+        hideAddress,
+        stringResource(R.string.system_servers),
+    )
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
         Column(Modifier.fillMaxWidth().padding(17.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(profile.name, fontWeight = FontWeight.SemiBold)
+                    Text(displayName, fontWeight = FontWeight.SemiBold)
                     if (!hideAddress) {
                         Text(profile.baseUrl, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
@@ -406,6 +421,6 @@ private val SystemTab.icon: androidx.compose.ui.graphics.vector.ImageVector
 @Composable
 private fun SystemTab.supportingText(state: SystemUiState, profileCount: Int): String = when (this) {
     SystemTab.Status -> stringResource(if (state.status == null) R.string.manual_refresh_required else R.string.system_data_loaded)
-    SystemTab.Logs -> stringResource(R.string.resource_items_count, state.logs.size)
-    SystemTab.Servers -> stringResource(R.string.resource_items_count, profileCount)
+    SystemTab.Logs -> stringResource(R.string.item_count, state.logs.size)
+    SystemTab.Servers -> stringResource(R.string.item_count, profileCount)
 }

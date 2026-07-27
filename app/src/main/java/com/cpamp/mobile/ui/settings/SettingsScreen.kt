@@ -1,6 +1,10 @@
 package com.cpamp.mobile.ui.settings
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -8,38 +12,57 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.InstallMobile
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
+import com.cpamp.mobile.BuildConfig
 import com.cpamp.mobile.data.settings.AppLanguage
 import com.cpamp.mobile.data.settings.AppTheme
+import com.cpamp.mobile.data.update.AppUpdateState
+import com.cpamp.mobile.data.update.UpdateError
+import com.cpamp.mobile.data.update.UpdateStatus
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.security.AppLockUiState
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun SettingsScreen(
     contentPadding: PaddingValues,
     appLockState: AppLockUiState,
     appearanceState: AppearanceUiState,
-    onBack: () -> Unit,
     onSetAppLockEnabled: (Boolean) -> Unit,
     onSetAppLockTimeout: (Int) -> Unit,
     onSetTheme: (AppTheme) -> Unit,
@@ -47,7 +70,18 @@ fun SettingsScreen(
     onSetDynamicColor: (Boolean) -> Unit,
     onSetAllowScreenshots: (Boolean) -> Unit,
     onSetHideAddresses: (Boolean) -> Unit,
+    updateViewModel: AppUpdateViewModel = hiltViewModel(),
 ) {
+    val updateState by updateViewModel.state.collectAsStateWithLifecycle()
+    var showUpstreamLicense by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) updateViewModel.refreshDownloadStatus()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     AppBackground {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -60,14 +94,9 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Outlined.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                    Column(Modifier.padding(start = 6.dp)) {
-                        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-                        Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                Column {
+                    Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             item {
@@ -154,6 +183,14 @@ fun SettingsScreen(
                 }
             }
             item {
+                UpdateSettingsCard(
+                    state = updateState,
+                    onCheck = updateViewModel::checkForUpdates,
+                    onDownload = updateViewModel::downloadUpdate,
+                    onOpenSourceLicenses = { showUpstreamLicense = true },
+                )
+            }
+            item {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))) {
                     Text(
                         stringResource(R.string.security_privacy_summary),
@@ -165,6 +202,133 @@ fun SettingsScreen(
             }
         }
     }
+    if (showUpstreamLicense) {
+        val context = LocalContext.current
+        val upstreamLicense = remember(context) {
+            context.resources.openRawResource(R.raw.cpa_manager_plus_license)
+                .bufferedReader().use { it.readText() }
+        }
+        AlertDialog(
+            onDismissRequest = { showUpstreamLicense = false },
+            title = { Text(stringResource(R.string.open_source_licenses)) },
+            text = {
+                Text(
+                    upstreamLicense,
+                    modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showUpstreamLicense = false }) {
+                    Text(stringResource(R.string.dismiss))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun UpdateSettingsCard(
+    state: AppUpdateState,
+    onCheck: () -> Unit,
+    onDownload: () -> Unit,
+    onOpenSourceLicenses: () -> Unit,
+) {
+    val context = LocalContext.current
+    SettingsCard(stringResource(R.string.about_updates)) {
+        Text(
+            stringResource(R.string.current_version, BuildConfig.VERSION_NAME),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        state.release?.let { release ->
+            Text(
+                stringResource(R.string.latest_version, release.tagName.removePrefix("v")),
+                fontWeight = FontWeight.SemiBold,
+            )
+            release.publishedAt?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            release.body?.takeIf(String::isNotBlank)?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Text(updateStatusText(state), style = MaterialTheme.typography.bodySmall, color = statusColor(state))
+        when (state.status) {
+            UpdateStatus.Available -> Button(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Outlined.Download, contentDescription = null)
+                Text(stringResource(R.string.download_update), modifier = Modifier.padding(start = 8.dp))
+            }
+            UpdateStatus.ReadyToInstall -> Button(
+                onClick = { state.installUri?.let { context.installUpdate(it) } },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Outlined.InstallMobile, contentDescription = null)
+                Text(stringResource(R.string.install_update), modifier = Modifier.padding(start = 8.dp))
+            }
+            else -> Button(
+                onClick = onCheck,
+                enabled = state.status !in setOf(UpdateStatus.Checking, UpdateStatus.Downloading, UpdateStatus.Verifying),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (state.status == UpdateStatus.Checking) {
+                    CircularProgressIndicator(Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Outlined.Refresh, contentDescription = null)
+                }
+                Text(stringResource(R.string.check_for_updates), modifier = Modifier.padding(start = 8.dp))
+            }
+        }
+        TextButton(onClick = onOpenSourceLicenses, modifier = Modifier.align(Alignment.End)) {
+            Text(stringResource(R.string.open_source_licenses))
+        }
+    }
+}
+
+@Composable
+private fun updateStatusText(state: AppUpdateState): String = when (state.status) {
+    UpdateStatus.Idle -> stringResource(R.string.update_manual_check)
+    UpdateStatus.Checking -> stringResource(R.string.update_checking)
+    UpdateStatus.NoRelease -> stringResource(R.string.update_no_release)
+    UpdateStatus.UpToDate -> stringResource(R.string.update_up_to_date)
+    UpdateStatus.Available -> stringResource(R.string.update_available)
+    UpdateStatus.Downloading -> state.progressPercent?.let { stringResource(R.string.update_downloading_percent, it) }
+        ?: stringResource(R.string.update_downloading)
+    UpdateStatus.Verifying -> stringResource(R.string.update_verifying)
+    UpdateStatus.ReadyToInstall -> stringResource(R.string.update_ready)
+    UpdateStatus.Failed -> stringResource(
+        when (state.error) {
+            UpdateError.RateLimited -> R.string.update_rate_limited
+            UpdateError.InvalidRelease -> R.string.update_invalid_release
+            UpdateError.Checksum -> R.string.update_checksum_failed
+            UpdateError.Signature -> R.string.update_signature_failed
+            else -> R.string.update_failed
+        },
+    )
+}
+
+@Composable
+private fun statusColor(state: AppUpdateState) = when (state.status) {
+    UpdateStatus.Failed -> MaterialTheme.colorScheme.error
+    UpdateStatus.Available, UpdateStatus.ReadyToInstall -> MaterialTheme.colorScheme.primary
+    else -> MaterialTheme.colorScheme.onSurfaceVariant
+}
+
+private fun android.content.Context.installUpdate(uri: Uri) {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+        !packageManager.canRequestPackageInstalls()
+    ) {
+        startActivity(
+            Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:$packageName"),
+            ),
+        )
+        return
+    }
+    startActivity(
+        Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        },
+    )
 }
 
 @Composable

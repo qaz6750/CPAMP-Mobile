@@ -12,7 +12,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
-import com.cpamp.mobile.ui.resources.ResourcesScreen
 import com.cpamp.mobile.ui.system.SystemScreen
 import com.cpamp.mobile.ui.monitoring.MonitoringScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
@@ -109,13 +108,14 @@ private fun ConnectedApp(
             navController = navController,
             startDestination = AppDestination.Overview.route,
         ) {
-            composable(AppDestination.Overview.route) { DashboardScreen(contentPadding) }
-            composable(AppDestination.Traffic.route) { MonitoringScreen(contentPadding) }
-            composable(AppDestination.Usage.route) { UsageAnalyticsScreen(contentPadding) }
-            composable(AppDestination.Resources.route) {
-                ResourcesScreen(contentPadding, hideAddresses = appearanceState.settings.hideAddresses)
+            composable(AppDestination.Overview.route) {
+                DashboardScreen(contentPadding, hideAddresses = appearanceState.settings.hideAddresses)
             }
-            composable(AppDestination.System.route) {
+            composable(AppDestination.Traffic.route) {
+                MonitoringScreen(contentPadding, hideAddresses = appearanceState.settings.hideAddresses)
+            }
+            composable(AppDestination.Usage.route) { UsageAnalyticsScreen(contentPadding) }
+            composable(AppDestination.Operations.route) {
                 SystemScreen(
                     contentPadding = contentPadding,
                     session = session,
@@ -123,16 +123,14 @@ private fun ConnectedApp(
                     onSwitchServer = onSwitchServer,
                     onDeleteServer = onDeleteServer,
                     onDisconnect = onDisconnect,
-                    onOpenSettings = { navController.navigate("settings") },
                     appearanceState = appearanceState,
                 )
             }
-            composable("settings") {
+            composable(AppDestination.Settings.route) {
                 SettingsScreen(
                     contentPadding = contentPadding,
                     appLockState = appLockState,
                     appearanceState = appearanceState,
-                    onBack = navController::popBackStack,
                     onSetAppLockEnabled = onSetAppLockEnabled,
                     onSetAppLockTimeout = onSetAppLockTimeout,
                     onSetTheme = onSetTheme,

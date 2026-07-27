@@ -1,5 +1,6 @@
 package com.cpamp.mobile.data.remote
 
+import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import java.util.concurrent.TimeUnit
@@ -35,11 +36,11 @@ class SessionApiClientFactoryTest {
     fun `injects bearer authorization without changing request body`() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        factory.api(session()).replaceApiKeys(listOf("client-secret"))
+        factory.api(session()).monitoring(monitoringRequest())
 
         val request = server.takeRequest(1, TimeUnit.SECONDS)!!
         assertEquals("Bearer admin-secret", request.getHeader("Authorization"))
-        assertEquals("[\"client-secret\"]", request.body.readUtf8())
+        assertEquals(true, request.body.readUtf8().contains("\"from_ms\":1"))
     }
 
     @Test
@@ -57,7 +58,7 @@ class SessionApiClientFactoryTest {
         server.enqueue(MockResponse().setResponseCode(503).setBody("{}"))
 
         assertThrows(HttpException::class.java) {
-            runBlocking { factory.api(session()).replaceApiKeys(listOf("client-secret")) }
+            runBlocking { factory.api(session()).monitoring(monitoringRequest()) }
         }
         assertEquals(1, server.requestCount)
     }
@@ -86,5 +87,12 @@ class SessionApiClientFactoryTest {
         ),
         adminKey = key,
         service = "cpamp-manager",
+    )
+
+    private fun monitoringRequest() = MonitoringRequestDto(
+        fromMs = 1,
+        toMs = 2,
+        nowMs = 2,
+        timeZone = "UTC",
     )
 }

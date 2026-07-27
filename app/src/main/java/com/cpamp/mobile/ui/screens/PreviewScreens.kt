@@ -13,11 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DataUsage
-import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Speed
-import androidx.compose.material.icons.outlined.Storage
-import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -115,22 +112,9 @@ fun TrafficPreviewScreen(contentPadding: PaddingValues) = PreviewListScreen(
 )
 
 @Composable
-fun ResourcesPreviewScreen(contentPadding: PaddingValues) = PreviewListScreen(
-    contentPadding = contentPadding,
-    eyebrow = stringResource(R.string.nav_resources),
-    title = stringResource(R.string.resources_title),
-    subtitle = stringResource(R.string.resources_subtitle),
-    rows = listOf(
-        stringResource(R.string.resource_providers),
-        stringResource(R.string.resource_auth_files),
-        stringResource(R.string.resource_api_keys),
-    ),
-)
-
-@Composable
 fun SystemPreviewScreen(contentPadding: PaddingValues) = PreviewListScreen(
     contentPadding = contentPadding,
-    eyebrow = stringResource(R.string.nav_system),
+    eyebrow = stringResource(R.string.nav_operations),
     title = stringResource(R.string.system_title),
     subtitle = stringResource(R.string.system_subtitle),
     rows = listOf(

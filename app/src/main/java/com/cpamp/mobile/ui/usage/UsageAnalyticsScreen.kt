@@ -1,5 +1,6 @@
 package com.cpamp.mobile.ui.usage
 
+import android.content.Intent
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DataUsage
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Token
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,9 +32,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,6 +62,18 @@ fun UsageAnalyticsScreen(
     viewModel: UsageAnalyticsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    LaunchedEffect(state.shareUri) {
+        state.shareUri?.let { uri ->
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/png"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_usage)))
+            viewModel.consumeShare()
+        }
+    }
     AppBackground {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -75,11 +91,20 @@ fun UsageAnalyticsScreen(
                     title = stringResource(R.string.usage_title),
                     subtitle = stringResource(R.string.usage_subtitle),
                     trailing = {
-                        IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
-                            if (state.loading) {
-                                CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
+                        Row {
+                            IconButton(onClick = viewModel::share, enabled = !state.loading && !state.sharing) {
+                                if (state.sharing) {
+                                    CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.share_usage))
+                                }
+                            }
+                            IconButton(onClick = viewModel::refresh, enabled = !state.loading && !state.sharing) {
+                                if (state.loading) {
+                                    CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
+                                }
                             }
                         }
                     },
@@ -101,6 +126,9 @@ fun UsageAnalyticsScreen(
             }
             if (state.error) {
                 item { UsageNotice(stringResource(R.string.usage_request_failed)) }
+            }
+            if (state.shareError) {
+                item { UsageNotice(stringResource(R.string.share_usage_failed)) }
             }
             val response = state.response
             if (response == null && !state.loading) {
@@ -171,6 +199,10 @@ fun UsageAnalyticsScreen(
                                 timestampMs = point.bucketMs,
                                 requests = point.calls,
                                 tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
+                                bucketEndMs = point.bucketEndMs,
+                                success = point.success,
+                                failure = point.failure,
+                                cost = point.cost,
                             )
                         },
                         emptyText = stringResource(R.string.no_traffic),
@@ -236,7 +268,7 @@ private val CredentialStatDto.displayName: String
 
 private val UsageWindow.labelResource: Int
     get() = when (this) {
-        UsageWindow.Day -> R.string.last_24_hours
+        UsageWindow.Day -> R.string.today
         UsageWindow.Week -> R.string.last_7_days
         UsageWindow.Month -> R.string.last_30_days
     }

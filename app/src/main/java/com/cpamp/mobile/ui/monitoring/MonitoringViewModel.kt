@@ -27,12 +27,11 @@ enum class TrafficWindow(val durationMs: Long) {
 }
 
 data class TrafficFilter(
-    val search: String = "",
     val failedOnly: Boolean = false,
     val window: TrafficWindow = TrafficWindow.Day,
 ) {
     val cacheable: Boolean
-        get() = search.isBlank() && !failedOnly && window == TrafficWindow.Day
+        get() = !failedOnly && window == TrafficWindow.Day
 }
 
 data class MonitoringUiState(
@@ -76,11 +75,6 @@ class MonitoringViewModel @Inject constructor(
         }
     }
 
-    fun setSearch(value: String) {
-        filter.value = filter.value.copy(search = value.take(120))
-        mutableState.value = mutableState.value.copy(filter = filter.value)
-    }
-
     fun setFailedOnly(value: Boolean) {
         filter.value = filter.value.copy(failedOnly = value)
         mutableState.value = mutableState.value.copy(filter = filter.value)
@@ -109,7 +103,6 @@ class MonitoringViewModel @Inject constructor(
             toMs = now,
             nowMs = now,
             timeZone = ZoneId.systemDefault().id,
-            searchQuery = currentFilter.search.trim(),
             filters = MonitoringFiltersDto(failedOnly = currentFilter.failedOnly),
             include = MonitoringIncludeDto(
                 summary = true,

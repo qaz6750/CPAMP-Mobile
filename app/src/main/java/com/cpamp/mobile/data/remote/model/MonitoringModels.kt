@@ -9,7 +9,6 @@ data class MonitoringRequestDto(
     @SerialName("to_ms") val toMs: Long,
     @SerialName("now_ms") val nowMs: Long,
     @SerialName("time_zone") val timeZone: String,
-    @SerialName("search_query") val searchQuery: String = "",
     val filters: MonitoringFiltersDto = MonitoringFiltersDto(),
     val include: MonitoringIncludeDto = MonitoringIncludeDto(),
 )
@@ -108,6 +107,7 @@ data class MonitoringSummaryDto(
 @Serializable
 data class MonitoringTimelineDto(
     @SerialName("bucket_ms") val bucketMs: Long = 0,
+    @SerialName("bucket_end_ms") val bucketEndMs: Long? = null,
     val label: String = "",
     val calls: Long = 0,
     val success: Long = 0,

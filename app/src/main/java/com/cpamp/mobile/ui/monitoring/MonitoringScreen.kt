@@ -22,7 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Toll
 import androidx.compose.material3.Card
@@ -35,7 +35,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,6 +56,7 @@ import com.cpamp.mobile.ui.common.SensitiveText
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.PageHeader
 
@@ -64,6 +64,7 @@ import com.cpamp.mobile.ui.components.PageHeader
 @Composable
 fun MonitoringScreen(
     contentPadding: PaddingValues,
+    hideAddresses: Boolean,
     viewModel: MonitoringViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -81,8 +82,11 @@ fun MonitoringScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
+                val fallback = stringResource(R.string.nav_traffic)
                 PageHeader(
-                    eyebrow = state.profile?.name ?: stringResource(R.string.nav_traffic),
+                    eyebrow = state.profile?.let { profile ->
+                        safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)
+                    } ?: fallback,
                     title = stringResource(R.string.traffic_title),
                     subtitle = stringResource(R.string.traffic_subtitle),
                     trailing = {
@@ -99,15 +103,6 @@ fun MonitoringScreen(
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))) {
                     Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedTextField(
-                            value = state.filter.search,
-                            onValueChange = viewModel::setSearch,
-                            modifier = Modifier.fillMaxWidth(),
-                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                            label = { Text(stringResource(R.string.search_requests)) },
-                            placeholder = { Text(stringResource(R.string.search_requests_hint)) },
-                            singleLine = true,
-                        )
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             TrafficWindow.entries.forEach { window ->
                                 FilterChip(
@@ -206,7 +201,7 @@ fun MonitoringScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Outlined.ReceiptLong, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Text(stringResource(R.string.no_matching_requests), fontWeight = FontWeight.SemiBold)
                             Text(
                                 stringResource(R.string.adjust_filters),
