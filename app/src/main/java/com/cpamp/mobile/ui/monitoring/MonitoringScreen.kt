@@ -3,18 +3,21 @@ package com.cpamp.mobile.ui.monitoring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ErrorOutline
@@ -33,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -95,39 +97,46 @@ fun MonitoringScreen(
                 )
             }
             item {
-                OutlinedTextField(
-                    value = state.filter.search,
-                    onValueChange = viewModel::setSearch,
-                    modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
-                    label = { Text(stringResource(R.string.search_requests)) },
-                    placeholder = { Text(stringResource(R.string.search_requests_hint)) },
-                    singleLine = true,
-                )
-            }
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TrafficWindow.entries.forEach { window ->
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = state.filter.search,
+                            onValueChange = viewModel::setSearch,
+                            modifier = Modifier.fillMaxWidth(),
+                            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
+                            label = { Text(stringResource(R.string.search_requests)) },
+                            placeholder = { Text(stringResource(R.string.search_requests_hint)) },
+                            singleLine = true,
+                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TrafficWindow.entries.forEach { window ->
+                                FilterChip(
+                                    selected = state.filter.window == window,
+                                    onClick = { viewModel.setWindow(window) },
+                                    label = { Text(stringResource(window.labelResource())) },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(
-                                selected = state.filter.window == window,
-                                onClick = { viewModel.setWindow(window) },
-                                label = { Text(stringResource(window.labelResource())) },
+                                selected = !state.filter.failedOnly,
+                                onClick = { viewModel.setFailedOnly(false) },
+                                label = { Text(stringResource(R.string.all_requests)) },
+                            )
+                            FilterChip(
+                                selected = state.filter.failedOnly,
+                                onClick = { viewModel.setFailedOnly(true) },
+                                label = { Text(stringResource(R.string.failed_only)) },
+                                leadingIcon = { Icon(Icons.Outlined.ErrorOutline, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                            )
+                            Text(
+                                stringResource(R.string.refresh_after_filter),
+                                modifier = Modifier.align(Alignment.CenterVertically),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
-                            selected = !state.filter.failedOnly,
-                            onClick = { viewModel.setFailedOnly(false) },
-                            label = { Text(stringResource(R.string.all_requests)) },
-                        )
-                        FilterChip(
-                            selected = state.filter.failedOnly,
-                            onClick = { viewModel.setFailedOnly(true) },
-                            label = { Text(stringResource(R.string.failed_only)) },
-                            leadingIcon = { Icon(Icons.Outlined.ErrorOutline, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        )
                     }
                 }
             }
@@ -245,7 +254,7 @@ private fun CompactMetric(
     modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.height(96.dp).padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -260,16 +269,19 @@ private fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Surface(
-                modifier = Modifier.size(10.dp),
-                shape = CircleShape,
-                color = if (event.failed) MaterialTheme.colorScheme.error else SUCCESS_COLOR,
-            ) {}
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(
+                modifier = Modifier.width(5.dp).fillMaxHeight().background(
+                    color = if (event.failed) MaterialTheme.colorScheme.error else SUCCESS_COLOR,
+                    shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp),
+                ),
+            )
+            Column(
+                modifier = Modifier.weight(1f).padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
                         event.model.ifBlank { stringResource(R.string.unknown_model) },
@@ -288,9 +300,9 @@ private fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(event.totalTokens.compactNumber() + " tok", style = MaterialTheme.typography.labelSmall)
-                    event.latencyMs?.let { Text("$it ms", style = MaterialTheme.typography.labelSmall) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.event_tokens_value, event.totalTokens.compactNumber()), style = MaterialTheme.typography.labelSmall)
+                    event.latencyMs?.let { Text(stringResource(R.string.event_latency_value, it), style = MaterialTheme.typography.labelSmall) }
                     event.failStatusCode?.let { Text("HTTP $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error) }
                 }
             }

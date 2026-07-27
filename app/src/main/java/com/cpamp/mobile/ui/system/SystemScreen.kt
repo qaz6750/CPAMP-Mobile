@@ -1,6 +1,5 @@
 package com.cpamp.mobile.ui.system
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -20,12 +18,14 @@ import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.ListAlt
+import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +51,7 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.CategoryListRow
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.common.asTime
@@ -105,15 +106,14 @@ fun SystemScreen(
                 )
             }
             item {
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
+                Column {
                     SystemTab.entries.forEach { tab ->
-                        FilterChip(
+                        CategoryListRow(
+                            title = stringResource(tab.labelResource),
+                            supporting = tab.supportingText(state, profiles.size),
+                            icon = tab.icon,
                             selected = state.tab == tab,
                             onClick = { viewModel.selectTab(tab) },
-                            label = { Text(stringResource(tab.labelResource)) },
                         )
                     }
                 }
@@ -395,3 +395,17 @@ private val SystemTab.labelResource: Int
         SystemTab.Logs -> R.string.system_logs
         SystemTab.Servers -> R.string.system_servers
     }
+
+private val SystemTab.icon: androidx.compose.ui.graphics.vector.ImageVector
+    get() = when (this) {
+        SystemTab.Status -> Icons.Outlined.MonitorHeart
+        SystemTab.Logs -> Icons.Outlined.ListAlt
+        SystemTab.Servers -> Icons.Outlined.Dns
+    }
+
+@Composable
+private fun SystemTab.supportingText(state: SystemUiState, profileCount: Int): String = when (this) {
+    SystemTab.Status -> stringResource(if (state.status == null) R.string.manual_refresh_required else R.string.system_data_loaded)
+    SystemTab.Logs -> stringResource(R.string.resource_items_count, state.logs.size)
+    SystemTab.Servers -> stringResource(R.string.resource_items_count, profileCount)
+}

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -24,6 +23,9 @@ import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Dns
+import androidx.compose.material.icons.outlined.HourglassBottom
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -71,6 +73,7 @@ import com.cpamp.mobile.data.resources.ProviderDraft
 import com.cpamp.mobile.data.resources.ProviderRecord
 import com.cpamp.mobile.data.resources.ProviderSection
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.CategoryListRow
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.common.asTime
@@ -125,12 +128,14 @@ fun ResourcesScreen(
                 )
             }
             item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(ResourceTab.entries) { tab ->
-                        FilterChip(
+                Column {
+                    ResourceTab.entries.forEach { tab ->
+                        CategoryListRow(
+                            title = stringResource(tab.labelResource),
+                            supporting = stringResource(R.string.resource_items_count, state.countFor(tab)),
+                            icon = tab.icon,
                             selected = state.tab == tab,
                             onClick = { viewModel.selectTab(tab) },
-                            label = { Text(stringResource(tab.labelResource)) },
                         )
                     }
                 }
@@ -145,31 +150,43 @@ fun ResourcesScreen(
                     }
                 }
             } else if (state.tab == ResourceTab.Providers) {
-                ProviderSection.entries.forEach { section ->
-                    item(key = "header:${section.wireName}") {
-                        SectionHeader(
-                            title = section.title,
-                            count = state.providers[section].orEmpty().size,
-                            actionLabel = stringResource(R.string.add_provider),
-                            onAction = { viewModel.openProviderEditor(section) },
-                            enabled = !state.mutating,
-                        )
-                    }
-                    val records = state.providers[section].orEmpty()
-                    if (records.isEmpty()) {
-                        item(key = "empty:${section.wireName}") {
-                            EmptyResourceCard(stringResource(R.string.no_provider_configured, section.title))
-                        }
-                    } else {
-                        items(records, key = ProviderRecord::identity) { record ->
-                            ProviderCard(
-                                record = record,
-                                hideAddress = hideAddresses,
-                                enabled = !state.mutating,
-                                onEdit = { viewModel.openProviderEditor(section, record) },
-                                onDelete = { pendingAction = PendingResourceAction.DeleteProvider(record) },
+                item {
+                    Column {
+                        ProviderSection.entries.forEach { section ->
+                            CategoryListRow(
+                                title = section.title,
+                                supporting = stringResource(R.string.resource_items_count, state.providers[section].orEmpty().size),
+                                icon = Icons.Outlined.Dns,
+                                selected = state.providerSection == section,
+                                onClick = { viewModel.selectProviderSection(section) },
                             )
                         }
+                    }
+                }
+                val section = state.providerSection
+                item(key = "header:${section.wireName}") {
+                    SectionHeader(
+                        title = section.title,
+                        count = state.providers[section].orEmpty().size,
+                        actionLabel = stringResource(R.string.add_provider),
+                        onAction = { viewModel.openProviderEditor(section) },
+                        enabled = !state.mutating,
+                    )
+                }
+                val records = state.providers[section].orEmpty()
+                if (records.isEmpty()) {
+                    item(key = "empty:${section.wireName}") {
+                        EmptyResourceCard(stringResource(R.string.no_provider_configured, section.title))
+                    }
+                } else {
+                    items(records, key = ProviderRecord::identity) { record ->
+                        ProviderCard(
+                            record = record,
+                            hideAddress = hideAddresses,
+                            enabled = !state.mutating,
+                            onEdit = { viewModel.openProviderEditor(section, record) },
+                            onDelete = { pendingAction = PendingResourceAction.DeleteProvider(record) },
+                        )
                     }
                 }
             } else if (state.tab == ResourceTab.AuthFiles) {
@@ -859,4 +876,19 @@ private val ResourceTab.labelResource: Int
         ResourceTab.Quotas -> R.string.resource_quotas
         ResourceTab.ApiKeys -> R.string.resource_api_keys
     }
+
+private val ResourceTab.icon: androidx.compose.ui.graphics.vector.ImageVector
+    get() = when (this) {
+        ResourceTab.Providers -> Icons.Outlined.Dns
+        ResourceTab.AuthFiles -> Icons.Outlined.Description
+        ResourceTab.Quotas -> Icons.Outlined.HourglassBottom
+        ResourceTab.ApiKeys -> Icons.Outlined.Key
+    }
+
+private fun ResourcesUiState.countFor(tab: ResourceTab): Int = when (tab) {
+    ResourceTab.Providers -> providers.values.sumOf(List<ProviderRecord>::size)
+    ResourceTab.AuthFiles -> authFiles.size
+    ResourceTab.Quotas -> quotas.size
+    ResourceTab.ApiKeys -> apiKeys.size
+}
 

@@ -1,9 +1,7 @@
 package com.cpamp.mobile.ui.dashboard
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Api
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DataUsage
 import androidx.compose.material.icons.outlined.Payments
@@ -32,13 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,14 +37,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.TopModelDto
-import com.cpamp.mobile.data.remote.model.TrafficPointDto
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AnalyticsTrendCard
+import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.MetricCard
+import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
 
 @Composable
@@ -113,7 +106,15 @@ fun DashboardScreen(
             }
             summary?.let { data ->
                 item { DashboardMetrics(data) }
-                item { TrafficCard(data.trafficTimeline) }
+                item {
+                    AnalyticsTrendCard(
+                        title = stringResource(R.string.preview_trend),
+                        points = data.trafficTimeline.map { point ->
+                            AnalyticsTrendPoint(point.bucketMs, point.calls, point.tokens)
+                        },
+                        emptyText = stringResource(R.string.no_traffic),
+                    )
+                }
                 if (data.topModelsToday.isNotEmpty()) {
                     item { Text(stringResource(R.string.top_models), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
                     items(data.topModelsToday, key = TopModelDto::model) { TopModelRow(it) }
@@ -133,6 +134,7 @@ private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardS
                 supporting = stringResource(R.string.rpm_value, data.rolling30m.rpm),
                 icon = Icons.Outlined.DataUsage,
                 modifier = modifier,
+                compact = true,
             )
         },
         { modifier ->
@@ -143,6 +145,7 @@ private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardS
                 icon = Icons.Outlined.CheckCircle,
                 modifier = modifier,
                 accent = MaterialTheme.colorScheme.tertiary,
+                compact = true,
             )
         },
         { modifier ->
@@ -152,6 +155,7 @@ private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardS
                 supporting = stringResource(R.string.tpm_value, data.rolling30m.tpm),
                 icon = Icons.Outlined.Speed,
                 modifier = modifier,
+                compact = true,
             )
         },
         { modifier ->
@@ -163,20 +167,14 @@ private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardS
                 icon = Icons.Outlined.Payments,
                 modifier = modifier,
                 accent = MaterialTheme.colorScheme.secondary,
+                compact = true,
             )
         },
     )
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val compactLayout = maxWidth < 520.dp
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (compactLayout) {
-                cards.forEach { card -> card(Modifier.fillMaxWidth()) }
-            } else {
-                cards.chunked(2).forEach { rowCards ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        rowCards.forEach { card -> card(Modifier.weight(1f)) }
-                    }
-                }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        cards.chunked(2).forEach { rowCards ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowCards.forEach { card -> card(Modifier.weight(1f)) }
             }
         }
     }
@@ -201,49 +199,6 @@ private fun DashboardNotice(state: DashboardUiState) {
 }
 
 @Composable
-private fun TrafficCard(points: List<TrafficPointDto>) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(stringResource(R.string.preview_trend), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            if (points.isEmpty() || points.maxOfOrNull(TrafficPointDto::calls) == 0L) {
-                Box(Modifier.fillMaxWidth().height(140.dp), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.no_traffic), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            } else {
-                val description = stringResource(R.string.traffic_chart_description, points.sumOf(TrafficPointDto::calls))
-                val lineColor = MaterialTheme.colorScheme.primary
-                val gridColor = MaterialTheme.colorScheme.outlineVariant
-                Canvas(
-                    modifier = Modifier.fillMaxWidth().height(160.dp).semantics { contentDescription = description },
-                ) {
-                    val max = points.maxOf(TrafficPointDto::calls).coerceAtLeast(1).toFloat()
-                    repeat(4) { row ->
-                        val y = size.height * row / 3f
-                        drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
-                    }
-                    val path = Path()
-                    points.forEachIndexed { index, point ->
-                        val x = if (points.size == 1) 0f else size.width * index / (points.size - 1f)
-                        val y = size.height - (size.height * point.calls / max)
-                        if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                    }
-                    drawPath(path, lineColor, style = Stroke(width = 5f, cap = StrokeCap.Round))
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    listOf(points.first(), points[points.lastIndex / 2], points.last()).forEach { point ->
-                        Text(
-                            point.bucketMs.asTime(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun TopModelRow(model: TopModelDto) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
         Row(
@@ -251,7 +206,7 @@ private fun TopModelRow(model: TopModelDto) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Icon(Icons.Outlined.Api, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            ModelProviderIcon(model.model)
             Column(modifier = Modifier.weight(1f)) {
                 Text(model.model, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(

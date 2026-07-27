@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -63,18 +64,19 @@ fun MetricCard(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     accent: Color = MaterialTheme.colorScheme.primary,
+    compact: Boolean = false,
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        modifier = modifier.then(if (compact) Modifier.height(132.dp) else Modifier),
+        shape = RoundedCornerShape(if (compact) 16.dp else 24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(if (compact) 13.dp else 20.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 12.dp),
         ) {
             Surface(
                 color = accent.copy(alpha = 0.12f),
@@ -84,22 +86,22 @@ fun MetricCard(
                     imageVector = icon,
                     contentDescription = null,
                     tint = accent,
-                    modifier = Modifier.padding(9.dp),
+                    modifier = Modifier.padding(if (compact) 6.dp else 9.dp),
                 )
             }
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleLarge,
+                style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
             )
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = label, style = MaterialTheme.typography.labelLarge)
+                Text(text = label, style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
                 Text(
                     text = supporting,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = if (compact) 1 else 2,
                 )
             }
         }

@@ -1,6 +1,5 @@
 package com.cpamp.mobile.ui.usage
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,10 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,16 +43,14 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.ApiKeyStatDto
 import com.cpamp.mobile.data.remote.model.CredentialStatDto
 import com.cpamp.mobile.data.remote.model.ModelStatDto
-import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
-import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AnalyticsTrendCard
+import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.PageHeader
-
-private enum class RankingTab { Models, ApiKeys, Credentials }
 
 @Composable
 fun UsageAnalyticsScreen(
@@ -65,8 +58,6 @@ fun UsageAnalyticsScreen(
     viewModel: UsageAnalyticsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var rankingTab = androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(RankingTab.Models) }
-
     AppBackground {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -138,6 +129,7 @@ fun UsageAnalyticsScreen(
                                 supporting = summary.successRate.asPercent(),
                                 icon = Icons.Outlined.DataUsage,
                                 modifier = Modifier.weight(1f),
+                                compact = true,
                             )
                             MetricCard(
                                 label = stringResource(R.string.usage_tokens),
@@ -145,6 +137,7 @@ fun UsageAnalyticsScreen(
                                 supporting = stringResource(R.string.usage_success_rate),
                                 icon = Icons.Outlined.Token,
                                 modifier = Modifier.weight(1f),
+                                compact = true,
                             )
                         }
                     }
@@ -156,6 +149,7 @@ fun UsageAnalyticsScreen(
                                 supporting = stringResource(R.string.usage_estimated),
                                 icon = Icons.Outlined.Payments,
                                 modifier = Modifier.weight(1f),
+                                compact = true,
                             )
                             MetricCard(
                                 label = stringResource(R.string.usage_success),
@@ -164,70 +158,47 @@ fun UsageAnalyticsScreen(
                                 icon = Icons.Outlined.CheckCircle,
                                 modifier = Modifier.weight(1f),
                                 accent = MaterialTheme.colorScheme.tertiary,
+                                compact = true,
                             )
                         }
                     }
                 }
-                item { UsageTimeline(response.timeline) }
+                item {
+                    AnalyticsTrendCard(
+                        title = stringResource(R.string.usage_trend),
+                        points = response.timeline.map { point ->
+                            AnalyticsTrendPoint(
+                                timestampMs = point.bucketMs,
+                                requests = point.calls,
+                                tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
+                            )
+                        },
+                        emptyText = stringResource(R.string.no_traffic),
+                    )
+                }
                 item {
                     Row(
                         modifier = Modifier.horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        RankingTab.entries.forEach { tab ->
+                        UsageRanking.entries.forEach { tab ->
                             FilterChip(
-                                selected = rankingTab.value == tab,
-                                onClick = { rankingTab.value = tab },
+                                selected = state.ranking == tab,
+                                onClick = { viewModel.setRanking(tab) },
                                 label = { Text(stringResource(tab.labelResource)) },
                             )
                         }
                     }
                 }
-                when (rankingTab.value) {
-                    RankingTab.Models -> items(response.modelStats.sortedByDescending(ModelStatDto::calls).take(10)) {
+                when (state.ranking) {
+                    UsageRanking.Models -> items(response.modelStats.sortedByDescending(ModelStatDto::calls).take(10)) {
                         RankingRow(it.model, it.calls, it.totalTokens, it.cost, it.successRate)
                     }
-                    RankingTab.ApiKeys -> items(response.apiKeyStats.sortedByDescending(ApiKeyStatDto::calls).take(10)) {
+                    UsageRanking.ApiKeys -> items(response.apiKeyStats.sortedByDescending(ApiKeyStatDto::calls).take(10)) {
                         RankingRow(it.displayName, it.calls, it.totalTokens, it.cost, it.successRate)
                     }
-                    RankingTab.Credentials -> items(response.credentialStats.sortedByDescending(CredentialStatDto::calls).take(10)) {
+                    UsageRanking.Credentials -> items(response.credentialStats.sortedByDescending(CredentialStatDto::calls).take(10)) {
                         RankingRow(it.displayName, it.calls, it.totalTokens, it.cost, it.successRate)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun UsageTimeline(points: List<MonitoringTimelineDto>) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.usage_trend), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            if (points.isEmpty()) {
-                Box(Modifier.fillMaxWidth().height(140.dp), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.no_traffic), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            } else {
-                val lineColor = MaterialTheme.colorScheme.primary
-                val gridColor = MaterialTheme.colorScheme.outlineVariant
-                Canvas(Modifier.fillMaxWidth().height(150.dp)) {
-                    val maximum = points.maxOf(MonitoringTimelineDto::calls).coerceAtLeast(1).toFloat()
-                    repeat(4) { row ->
-                        val y = size.height * row / 3f
-                        drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1f)
-                    }
-                    val path = Path()
-                    points.forEachIndexed { index, point ->
-                        val x = if (points.size == 1) 0f else size.width * index / (points.size - 1f)
-                        val y = size.height - size.height * point.calls / maximum
-                        if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                    }
-                    drawPath(path, lineColor, style = Stroke(width = 5f, cap = StrokeCap.Round))
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    listOf(points.first(), points[points.lastIndex / 2], points.last()).forEach {
-                        Text(it.bucketMs.asTime(), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -270,9 +241,9 @@ private val UsageWindow.labelResource: Int
         UsageWindow.Month -> R.string.last_30_days
     }
 
-private val RankingTab.labelResource: Int
+private val UsageRanking.labelResource: Int
     get() = when (this) {
-        RankingTab.Models -> R.string.usage_models
-        RankingTab.ApiKeys -> R.string.usage_api_keys
-        RankingTab.Credentials -> R.string.usage_credentials
+        UsageRanking.Models -> R.string.usage_models
+        UsageRanking.ApiKeys -> R.string.usage_api_keys
+        UsageRanking.Credentials -> R.string.usage_credentials
     }

@@ -41,6 +41,9 @@
     <string name="resource_auth_files">Auth files</string>
     <string name="resource_quotas">Quotas</string>
     <string name="resource_api_keys">Client API keys</string>
+    <string name="resource_items_count">%1$d items</string>
+    <string name="manual_refresh_required">Tap refresh to load</string>
+    <string name="system_data_loaded">Current data loaded</string>
     <string name="system_title">Operations</string>
     <string name="system_subtitle">Service health, logs and local preferences</string>
     <string name="settings_title">Settings</string>
@@ -153,6 +156,10 @@
     <string name="request_failed">Request failed</string>
     <string name="no_traffic">No traffic recorded today</string>
     <string name="traffic_chart_description">Traffic trend with %1$d total requests</string>
+    <string name="trend_tokens">Tokens</string>
+    <string name="trend_requests">Requests</string>
+    <string name="token_trend_description">Token trend with %1$d total tokens</string>
+    <string name="request_trend_description">Request trend with %1$d total requests</string>
     <string name="model_usage">%1$d calls · %2$s tokens</string>
     <string name="cached_data_notice">Showing cached data from %1$s while reconnecting.</string>
     <string name="dashboard_unauthorized">The saved Admin Key was rejected. Reconnect from Saved servers.</string>
@@ -170,7 +177,10 @@
     <string name="request_events">Request events</string>
     <string name="event_count">%1$d total</string>
     <string name="no_matching_requests">No matching requests</string>
-    <string name="adjust_filters">Try another time range or remove a filter.</string>
+    <string name="adjust_filters">Adjust the filters, then tap refresh.</string>
+    <string name="refresh_after_filter">Tap refresh to apply</string>
+    <string name="event_tokens_value">%1$s tokens</string>
+    <string name="event_latency_value">%1$d ms</string>
     <string name="monitoring_rate_limited">The analytics service is busy. The current results remain visible.</string>
     <string name="monitoring_timeout">Monitoring timed out. Tap refresh to try again.</string>
     <string name="monitoring_offline">Live monitoring is unavailable. Cached results remain visible where available.</string>

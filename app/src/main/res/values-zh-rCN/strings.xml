@@ -41,6 +41,9 @@
     <string name="resource_auth_files">认证文件</string>
     <string name="resource_quotas">配额</string>
     <string name="resource_api_keys">客户端 API Key</string>
+    <string name="resource_items_count">%1$d 项</string>
+    <string name="manual_refresh_required">点击刷新加载</string>
+    <string name="system_data_loaded">已加载当前数据</string>
     <string name="system_title">系统运维</string>
     <string name="system_subtitle">服务健康、日志和本地设置</string>
     <string name="settings_title">设置</string>
@@ -153,6 +156,10 @@
     <string name="request_failed">请求失败</string>
     <string name="no_traffic">今日暂无流量记录</string>
     <string name="traffic_chart_description">流量趋势，共 %1$d 个请求</string>
+    <string name="trend_tokens">Token</string>
+    <string name="trend_requests">请求</string>
+    <string name="token_trend_description">Token 趋势，共 %1$d Token</string>
+    <string name="request_trend_description">请求趋势，共 %1$d 个请求</string>
     <string name="model_usage">%1$d 次调用 · %2$s Token</string>
     <string name="cached_data_notice">重新连接期间显示缓存数据，缓存时间为 %1$s。</string>
     <string name="dashboard_unauthorized">已保存的 Admin Key 被拒绝，请从已保存服务器重新连接。</string>
@@ -170,7 +177,10 @@
     <string name="request_events">请求事件</string>
     <string name="event_count">共 %1$d 条</string>
     <string name="no_matching_requests">没有匹配的请求</string>
-    <string name="adjust_filters">请尝试其他时间范围或移除筛选条件。</string>
+    <string name="adjust_filters">调整筛选条件后，请点击刷新。</string>
+    <string name="refresh_after_filter">点击刷新应用</string>
+    <string name="event_tokens_value">%1$s Token</string>
+    <string name="event_latency_value">%1$d ms</string>
     <string name="monitoring_rate_limited">分析服务当前繁忙，继续显示现有结果。</string>
     <string name="monitoring_timeout">监控请求超时，请点击刷新重试。</string>
     <string name="monitoring_offline">实时监控不可用，将尽可能继续显示缓存结果。</string>
