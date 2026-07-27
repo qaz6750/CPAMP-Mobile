@@ -3,6 +3,7 @@ package com.cpamp.mobile.data.auth
 import com.cpamp.mobile.data.profile.ServerProfileStore
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
+import com.cpamp.mobile.data.remote.SessionApiClientFactory
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class SessionRepository @Inject constructor(
     private val profileStore: ServerProfileStore,
     private val connectionTester: ConnectionTester,
+    private val apiClientFactory: SessionApiClientFactory,
 ) {
     private val mutableSession = MutableStateFlow<AuthenticatedSession?>(null)
     val session: StateFlow<AuthenticatedSession?> = mutableSession.asStateFlow()
@@ -59,15 +61,18 @@ class SessionRepository @Inject constructor(
     }
 
     suspend fun delete(profileId: String) {
+        apiClientFactory.invalidate()
         profileStore.delete(profileId)
         if (mutableSession.value?.profile?.id == profileId) mutableSession.value = null
     }
 
     fun disconnect() {
+        apiClientFactory.invalidate()
         mutableSession.value = null
     }
 
     private suspend fun connect(profile: ServerProfile): AuthenticatedSession {
+        apiClientFactory.invalidate()
         val adminKey = profileStore.secret(profile.id)?.takeIf(String::isNotBlank)
             ?: error("SAVED_KEY_UNAVAILABLE")
         val probe = connectionTester.test(profile.baseUrl, adminKey)
@@ -80,4 +85,3 @@ class SessionRepository @Inject constructor(
         return AuthenticatedSession(refreshed, adminKey, probe.service).also { mutableSession.value = it }
     }
 }
-
