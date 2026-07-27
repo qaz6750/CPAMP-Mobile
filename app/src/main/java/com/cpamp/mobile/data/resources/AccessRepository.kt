@@ -21,7 +21,7 @@ class AccessRepository @Inject constructor(
 
     suspend fun loadApiKeys(session: AuthenticatedSession): List<ClientApiKey> =
         remoteCall { clientFactory.api(session).apiKeys().apiKeys }
-            .mapIndexed { index, value -> ClientApiKey(index, maskSecret(value)) }
+            .mapIndexed { index, value -> ClientApiKey(index, maskClientApiKey(value)) }
 
     suspend fun addApiKey(session: AuthenticatedSession, value: String) {
         val normalized = value.trim()
@@ -37,9 +37,10 @@ class AccessRepository @Inject constructor(
         remoteCall { clientFactory.api(session).deleteApiKey(index) }
     }
 
-    private fun maskSecret(value: String): String = when {
-        value.isEmpty() -> "empty"
-        value.length <= 8 -> "••••••••"
-        else -> "${value.take(4)}••••${value.takeLast(4)}"
-    }
+}
+
+internal fun maskClientApiKey(value: String): String = when {
+    value.isEmpty() -> "empty"
+    value.length <= 8 -> "••••••••"
+    else -> "${value.take(4)}••••${value.takeLast(4)}"
 }

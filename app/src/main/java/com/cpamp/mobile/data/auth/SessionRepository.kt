@@ -1,6 +1,7 @@
 package com.cpamp.mobile.data.auth
 
 import com.cpamp.mobile.data.profile.ServerProfileStore
+import com.cpamp.mobile.data.cache.CacheDao
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.data.remote.SessionApiClientFactory
@@ -16,6 +17,7 @@ class SessionRepository @Inject constructor(
     private val profileStore: ServerProfileStore,
     private val connectionTester: ConnectionTester,
     private val apiClientFactory: SessionApiClientFactory,
+    private val cacheDao: CacheDao,
 ) {
     private val mutableSession = MutableStateFlow<AuthenticatedSession?>(null)
     val session: StateFlow<AuthenticatedSession?> = mutableSession.asStateFlow()
@@ -63,6 +65,7 @@ class SessionRepository @Inject constructor(
     suspend fun delete(profileId: String) {
         apiClientFactory.invalidate()
         profileStore.delete(profileId)
+        cacheDao.deleteProfile(profileId)
         if (mutableSession.value?.profile?.id == profileId) mutableSession.value = null
     }
 
