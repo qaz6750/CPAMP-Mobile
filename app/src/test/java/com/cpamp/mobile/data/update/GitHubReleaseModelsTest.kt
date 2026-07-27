@@ -2,7 +2,6 @@ package com.cpamp.mobile.data.update
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,7 +26,7 @@ class GitHubReleaseModelsTest {
             ),
         )
 
-        assertEquals("1.0.4", assertNotNull(release.releaseAssets()).version)
+        assertEquals("1.0.4", requireNotNull(release.releaseAssets()).version)
         assertNull(release.copy(prerelease = true).releaseAssets())
         assertNull(release.copy(assets = release.assets.dropLast(1)).releaseAssets())
         assertNull(

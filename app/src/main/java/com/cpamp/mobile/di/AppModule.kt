@@ -43,7 +43,7 @@ object AppModule {
         context,
         CPAMPCacheDatabase::class.java,
         "cpamp_cache.db",
-    ).fallbackToDestructiveMigration().build()
+    ).fallbackToDestructiveMigration(dropAllTables = false).build()
 
     @Provides
     fun provideCacheDao(database: CPAMPCacheDatabase): CacheDao = database.cacheDao()

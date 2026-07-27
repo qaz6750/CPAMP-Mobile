@@ -1,6 +1,7 @@
 package com.cpamp.mobile.data.security
 
 import android.content.Context
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -111,7 +112,15 @@ class AndroidKeystoreSecretStore @Inject constructor(
                 .setRandomizedEncryptionRequired(true)
             if (requireAuthentication) {
                 builder.setUserAuthenticationRequired(true)
-                    .setUserAuthenticationValidityDurationSeconds(KEY_AUTHENTICATION_SECONDS)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    builder.setUserAuthenticationParameters(
+                        KEY_AUTHENTICATION_SECONDS,
+                        KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL,
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    builder.setUserAuthenticationValidityDurationSeconds(KEY_AUTHENTICATION_SECONDS)
+                }
             }
             init(builder.build())
             generateKey()

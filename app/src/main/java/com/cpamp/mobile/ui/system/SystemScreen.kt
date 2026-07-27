@@ -14,11 +14,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ListAlt
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.DeleteOutline
-import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Dns
-import androidx.compose.material.icons.outlined.ListAlt
 import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -182,7 +182,7 @@ fun SystemScreen(
                     }
                     item {
                         Button(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.Outlined.Logout, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
                             Text(stringResource(R.string.disconnect), modifier = Modifier.padding(start = 8.dp))
                         }
                     }
@@ -414,7 +414,7 @@ private val SystemTab.labelResource: Int
 private val SystemTab.icon: androidx.compose.ui.graphics.vector.ImageVector
     get() = when (this) {
         SystemTab.Status -> Icons.Outlined.MonitorHeart
-        SystemTab.Logs -> Icons.Outlined.ListAlt
+        SystemTab.Logs -> Icons.AutoMirrored.Outlined.ListAlt
         SystemTab.Servers -> Icons.Outlined.Dns
     }
 
