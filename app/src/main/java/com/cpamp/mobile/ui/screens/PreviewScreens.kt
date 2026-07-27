@@ -163,11 +163,7 @@ private fun PreviewPanel(title: String) {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Icon(
-                imageVector = when {
-                    title.contains("Key", true) || title.contains("密钥") -> Icons.Outlined.Key
-                    title.contains("status", true) || title.contains("状态") -> Icons.Outlined.Sync
-                    else -> Icons.Outlined.Storage
-                },
+                imageVector = Icons.Outlined.DataUsage,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
             )
