@@ -37,6 +37,7 @@ class DashboardRepository @Inject constructor(
             clientFactory.api(session).dashboard(
                 todayStartMs = todayStartMs,
                 nowMs = nowMs,
+                recentFailures = 0,
             )
         }
         val cacheSafeSummary = summary.copy(recentFailures = emptyList())

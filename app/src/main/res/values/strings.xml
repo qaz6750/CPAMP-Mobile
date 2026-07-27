@@ -172,7 +172,7 @@
     <string name="no_matching_requests">No matching requests</string>
     <string name="adjust_filters">Try another time range or remove a filter.</string>
     <string name="monitoring_rate_limited">The analytics service is busy. The current results remain visible.</string>
-    <string name="monitoring_timeout">Live monitoring timed out. It will retry while this screen is open.</string>
+    <string name="monitoring_timeout">Monitoring timed out. Tap refresh to try again.</string>
     <string name="monitoring_offline">Live monitoring is unavailable. Cached results remain visible where available.</string>
     <string name="request_details">Request details</string>
     <string name="detail_status">Status</string>

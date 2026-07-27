@@ -172,7 +172,7 @@
     <string name="no_matching_requests">没有匹配的请求</string>
     <string name="adjust_filters">请尝试其他时间范围或移除筛选条件。</string>
     <string name="monitoring_rate_limited">分析服务当前繁忙，继续显示现有结果。</string>
-    <string name="monitoring_timeout">实时监控超时，本页面保持打开时将自动重试。</string>
+    <string name="monitoring_timeout">监控请求超时，请点击刷新重试。</string>
     <string name="monitoring_offline">实时监控不可用，将尽可能继续显示缓存结果。</string>
     <string name="request_details">请求详情</string>
     <string name="detail_status">状态</string>

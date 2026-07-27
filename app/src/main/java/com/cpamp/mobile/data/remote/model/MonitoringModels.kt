@@ -32,7 +32,7 @@ data class MonitoringIncludeDto(
     @SerialName("model_stats") val modelStats: Boolean = true,
     @SerialName("credential_stats") val credentialStats: Boolean = false,
     @SerialName("api_key_stats") val apiKeyStats: Boolean = false,
-    @SerialName("recent_failures") val recentFailures: Int = 20,
+    @SerialName("recent_failures") val recentFailures: Int = 0,
     @SerialName("events_page") val eventsPage: EventsPageRequestDto? = EventsPageRequestDto(),
     val granularity: String = "auto",
 )
