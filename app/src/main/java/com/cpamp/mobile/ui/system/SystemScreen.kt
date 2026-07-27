@@ -74,6 +74,8 @@ fun SystemScreen(
     onSetTheme: (AppTheme) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
     onSetDynamicColor: (Boolean) -> Unit,
+    onSetAllowScreenshots: (Boolean) -> Unit,
+    onSetHideAddresses: (Boolean) -> Unit,
     viewModel: SystemViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -134,7 +136,7 @@ fun SystemScreen(
             }
             when (state.tab) {
                 SystemTab.Status -> {
-                    item { ConnectionCard(session) }
+                    item { ConnectionCard(session, appearanceState.settings.hideAddresses) }
                     item { ManagerStatusCard(state) }
                     item { CollectorStatusCard(state) }
                 }
@@ -184,6 +186,7 @@ fun SystemScreen(
                         ServerCard(
                             profile = profile,
                             active = profile.id == session.profile.id,
+                            hideAddress = appearanceState.settings.hideAddresses,
                             onSwitch = { onSwitchServer(profile.id) },
                             onDelete = { deleteProfile = profile },
                         )
@@ -212,6 +215,8 @@ fun SystemScreen(
                             onSetTheme = onSetTheme,
                             onSetLanguage = onSetLanguage,
                             onSetDynamicColor = onSetDynamicColor,
+                            onSetAllowScreenshots = onSetAllowScreenshots,
+                            onSetHideAddresses = onSetHideAddresses,
                         )
                     }
                 }
@@ -244,7 +249,7 @@ fun SystemScreen(
 }
 
 @Composable
-private fun ConnectionCard(session: AuthenticatedSession) {
+private fun ConnectionCard(session: AuthenticatedSession, hideAddress: Boolean) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -254,7 +259,9 @@ private fun ConnectionCard(session: AuthenticatedSession) {
                     secure = !session.profile.usesCleartext,
                 )
             }
-            Text(session.profile.baseUrl, style = MaterialTheme.typography.bodySmall)
+            if (!hideAddress) {
+                Text(session.profile.baseUrl, style = MaterialTheme.typography.bodySmall)
+            }
             Text(
                 stringResource(R.string.last_connected, session.profile.lastConnectedAt.asTime()),
                 style = MaterialTheme.typography.bodySmall,
@@ -339,6 +346,7 @@ private fun LogLine(line: String) {
 private fun ServerCard(
     profile: ServerProfile,
     active: Boolean,
+    hideAddress: Boolean,
     onSwitch: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -347,7 +355,9 @@ private fun ServerCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(profile.name, fontWeight = FontWeight.SemiBold)
-                    Text(profile.baseUrl, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (!hideAddress) {
+                        Text(profile.baseUrl, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                 }
                 ConnectionPill(
                     label = stringResource(
@@ -438,6 +448,8 @@ private fun AppearanceSettingsCard(
     onSetTheme: (AppTheme) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
     onSetDynamicColor: (Boolean) -> Unit,
+    onSetAllowScreenshots: (Boolean) -> Unit,
+    onSetHideAddresses: (Boolean) -> Unit,
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -481,7 +493,35 @@ private fun AppearanceSettingsCard(
                     onCheckedChange = onSetDynamicColor,
                 )
             }
+            SettingSwitchRow(
+                title = stringResource(R.string.allow_screenshots),
+                help = stringResource(R.string.allow_screenshots_help),
+                checked = state.settings.allowScreenshots,
+                onCheckedChange = onSetAllowScreenshots,
+            )
+            SettingSwitchRow(
+                title = stringResource(R.string.hide_addresses),
+                help = stringResource(R.string.hide_addresses_help),
+                checked = state.settings.hideAddresses,
+                onCheckedChange = onSetHideAddresses,
+            )
         }
+    }
+}
+
+@Composable
+private fun SettingSwitchRow(
+    title: String,
+    help: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(help, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

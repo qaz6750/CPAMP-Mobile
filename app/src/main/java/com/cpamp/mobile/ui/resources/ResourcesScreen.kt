@@ -87,6 +87,7 @@ private sealed interface PendingResourceAction {
 @Composable
 fun ResourcesScreen(
     contentPadding: PaddingValues,
+    hideAddresses: Boolean,
     viewModel: ResourcesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -163,6 +164,7 @@ fun ResourcesScreen(
                         items(records, key = ProviderRecord::identity) { record ->
                             ProviderCard(
                                 record = record,
+                                hideAddress = hideAddresses,
                                 enabled = !state.mutating,
                                 onEdit = { viewModel.openProviderEditor(section, record) },
                                 onDelete = { pendingAction = PendingResourceAction.DeleteProvider(record) },
@@ -372,6 +374,7 @@ private fun SectionHeader(
 @Composable
 private fun ProviderCard(
     record: ProviderRecord,
+    hideAddress: Boolean,
     enabled: Boolean,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -411,7 +414,7 @@ private fun ProviderCard(
                     }
                 }
                 val details = listOfNotNull(
-                    record.baseUrl.takeIf(String::isNotBlank),
+                    record.baseUrl.takeIf { !hideAddress && it.isNotBlank() },
                     record.prefix.takeIf(String::isNotBlank)?.let { stringResource(R.string.prefix_value, it) },
                     record.priority?.let { stringResource(R.string.priority_value, it) },
                 ).joinToString(" · ")

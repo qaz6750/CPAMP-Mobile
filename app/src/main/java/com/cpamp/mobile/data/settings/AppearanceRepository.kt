@@ -24,6 +24,8 @@ data class AppearanceSettings(
     val theme: AppTheme = AppTheme.System,
     val language: AppLanguage = AppLanguage.System,
     val dynamicColor: Boolean = true,
+    val allowScreenshots: Boolean = true,
+    val hideAddresses: Boolean = false,
 )
 
 @Singleton
@@ -36,6 +38,8 @@ class AppearanceRepository @Inject constructor(
             language = preferences[LANGUAGE]?.let { runCatching { AppLanguage.valueOf(it) }.getOrNull() }
                 ?: AppLanguage.System,
             dynamicColor = preferences[DYNAMIC_COLOR] ?: true,
+            allowScreenshots = preferences[ALLOW_SCREENSHOTS] ?: true,
+            hideAddresses = preferences[HIDE_ADDRESSES] ?: false,
         )
     }
 
@@ -51,9 +55,19 @@ class AppearanceRepository @Inject constructor(
         context.appearanceDataStore.edit { it[DYNAMIC_COLOR] = enabled }
     }
 
+    suspend fun setAllowScreenshots(enabled: Boolean) {
+        context.appearanceDataStore.edit { it[ALLOW_SCREENSHOTS] = enabled }
+    }
+
+    suspend fun setHideAddresses(enabled: Boolean) {
+        context.appearanceDataStore.edit { it[HIDE_ADDRESSES] = enabled }
+    }
+
     private companion object {
         val THEME = stringPreferencesKey("theme")
         val LANGUAGE = stringPreferencesKey("language")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+        val ALLOW_SCREENSHOTS = booleanPreferencesKey("allow_screenshots")
+        val HIDE_ADDRESSES = booleanPreferencesKey("hide_addresses")
     }
 }

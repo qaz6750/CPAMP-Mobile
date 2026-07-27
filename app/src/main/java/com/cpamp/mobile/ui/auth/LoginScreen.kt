@@ -78,6 +78,7 @@ fun SessionLoadingScreen() {
 @Composable
 fun LoginScreen(
     state: SessionUiState,
+    hideAddresses: Boolean,
     onLogin: (String, String, String, Boolean) -> Unit,
     onConnectSaved: (String) -> Unit,
     onDeleteSaved: (String) -> Unit,
@@ -225,6 +226,7 @@ fun LoginScreen(
                 items(state.profiles, key = ServerProfile::id) { profile ->
                     SavedProfileCard(
                         profile = profile,
+                        hideAddress = hideAddresses,
                         busy = state.submitting,
                         onConnect = { onConnectSaved(profile.id) },
                         onDelete = { pendingDelete = profile },
@@ -271,6 +273,7 @@ fun LoginScreen(
 @Composable
 private fun SavedProfileCard(
     profile: ServerProfile,
+    hideAddress: Boolean,
     busy: Boolean,
     onConnect: () -> Unit,
     onDelete: () -> Unit,
@@ -286,11 +289,13 @@ private fun SavedProfileCard(
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text(profile.name, fontWeight = FontWeight.SemiBold)
-                Text(
-                    profile.baseUrl,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (!hideAddress) {
+                    Text(
+                        profile.baseUrl,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 ConnectionPill(
                     label = stringResource(if (profile.usesCleartext) R.string.http_connection else R.string.https_connection),
                     secure = !profile.usesCleartext,

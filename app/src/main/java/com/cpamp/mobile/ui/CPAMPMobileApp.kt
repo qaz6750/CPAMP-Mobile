@@ -32,6 +32,8 @@ fun CPAMPMobileApp(
     onSetTheme: (AppTheme) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
     onSetDynamicColor: (Boolean) -> Unit,
+    onSetAllowScreenshots: (Boolean) -> Unit,
+    onSetHideAddresses: (Boolean) -> Unit,
     viewModel: SessionViewModel = hiltViewModel(),
 ) {
     val sessionState by viewModel.state.collectAsState()
@@ -42,6 +44,7 @@ fun CPAMPMobileApp(
     if (sessionState.session == null) {
         LoginScreen(
             state = sessionState,
+            hideAddresses = appearanceState.settings.hideAddresses,
             onLogin = viewModel::login,
             onConnectSaved = viewModel::switchTo,
             onDeleteSaved = viewModel::delete,
@@ -63,6 +66,8 @@ fun CPAMPMobileApp(
             onSetTheme = onSetTheme,
             onSetLanguage = onSetLanguage,
             onSetDynamicColor = onSetDynamicColor,
+            onSetAllowScreenshots = onSetAllowScreenshots,
+            onSetHideAddresses = onSetHideAddresses,
         )
     }
 }
@@ -80,6 +85,8 @@ private fun ConnectedApp(
     onSetTheme: (AppTheme) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
     onSetDynamicColor: (Boolean) -> Unit,
+    onSetAllowScreenshots: (Boolean) -> Unit,
+    onSetHideAddresses: (Boolean) -> Unit,
 ) {
     val session = requireNotNull(sessionState.session)
     val navController = rememberNavController()
@@ -102,7 +109,9 @@ private fun ConnectedApp(
         ) {
             composable(AppDestination.Overview.route) { DashboardScreen(contentPadding) }
             composable(AppDestination.Traffic.route) { MonitoringScreen(contentPadding) }
-            composable(AppDestination.Resources.route) { ResourcesScreen(contentPadding) }
+            composable(AppDestination.Resources.route) {
+                ResourcesScreen(contentPadding, hideAddresses = appearanceState.settings.hideAddresses)
+            }
             composable(AppDestination.System.route) {
                 SystemScreen(
                     contentPadding = contentPadding,
@@ -118,6 +127,8 @@ private fun ConnectedApp(
                     onSetTheme = onSetTheme,
                     onSetLanguage = onSetLanguage,
                     onSetDynamicColor = onSetDynamicColor,
+                    onSetAllowScreenshots = onSetAllowScreenshots,
+                    onSetHideAddresses = onSetHideAddresses,
                 )
             }
         }

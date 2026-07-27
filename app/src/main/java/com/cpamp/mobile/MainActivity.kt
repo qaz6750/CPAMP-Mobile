@@ -30,12 +30,18 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         setContent {
             val appearanceViewModel: AppearanceViewModel = hiltViewModel()
             val appearance by appearanceViewModel.state.collectAsState()
             val settings = appearance.settings
+            LaunchedEffect(settings.allowScreenshots) {
+                if (settings.allowScreenshots) {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                } else {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                }
+            }
             LaunchedEffect(settings.language) {
                 val locales = LocaleListCompat.forLanguageTags(settings.language.languageTag)
                 if (AppCompatDelegate.getApplicationLocales() != locales) {
@@ -102,6 +108,8 @@ class MainActivity : AppCompatActivity() {
                 onSetTheme = appearanceViewModel::setTheme,
                 onSetLanguage = appearanceViewModel::setLanguage,
                 onSetDynamicColor = appearanceViewModel::setDynamicColor,
+                onSetAllowScreenshots = appearanceViewModel::setAllowScreenshots,
+                onSetHideAddresses = appearanceViewModel::setHideAddresses,
             )
         }
     }

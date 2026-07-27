@@ -43,4 +43,12 @@ class AppearanceViewModel @Inject constructor(
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch { repository.setDynamicColor(enabled) }
     }
+
+    fun setAllowScreenshots(enabled: Boolean) {
+        viewModelScope.launch { repository.setAllowScreenshots(enabled) }
+    }
+
+    fun setHideAddresses(enabled: Boolean) {
+        viewModelScope.launch { repository.setHideAddresses(enabled) }
+    }
 }
