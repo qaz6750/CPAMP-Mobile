@@ -7,9 +7,6 @@ import com.cpamp.mobile.domain.model.AuthenticatedSession
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonArray
@@ -63,20 +60,15 @@ class ProviderRepository @Inject constructor(
 ) {
     private val sectionLocks = ConcurrentHashMap<ProviderSection, Mutex>()
 
-    suspend fun loadAll(session: AuthenticatedSession): Map<ProviderSection, List<ProviderRecord>> =
-        coroutineScope {
-            ProviderSection.entries.map { section ->
-                async {
-                    val payload = try {
-                        remoteCall { clientFactory.api(session).getDynamic(managementPath(section.wireName)) }
-                    } catch (_: RemoteFailure.NotFound) {
-                        JsonArray(emptyList())
-                    }
-                    section to extractList(payload, section).mapNotNull { it as? JsonObject }
-                        .mapIndexed { index, raw -> raw.toProviderRecord(section, index) }
-                }
-            }.awaitAll().toMap()
+    suspend fun load(session: AuthenticatedSession, section: ProviderSection): List<ProviderRecord> {
+        val payload = try {
+            remoteCall { clientFactory.api(session).getDynamic(managementPath(section.wireName)) }
+        } catch (_: RemoteFailure.NotFound) {
+            JsonArray(emptyList())
         }
+        return extractList(payload, section).mapNotNull { it as? JsonObject }
+            .mapIndexed { index, raw -> raw.toProviderRecord(section, index) }
+    }
 
     suspend fun save(
         session: AuthenticatedSession,

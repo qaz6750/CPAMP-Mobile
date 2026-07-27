@@ -15,7 +15,6 @@ import com.cpamp.mobile.data.resources.ProviderRepository
 import com.cpamp.mobile.data.resources.ProviderSection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +37,7 @@ data class AuthFileEditorState(
 
 data class ResourcesUiState(
     val tab: ResourceTab = ResourceTab.Providers,
+    val providerSection: ProviderSection = ProviderSection.Gemini,
     val providers: Map<ProviderSection, List<ProviderRecord>> = emptyMap(),
     val authFiles: List<AuthFileDto> = emptyList(),
     val quotas: List<QuotaCooldownDto> = emptyList(),
@@ -64,32 +64,36 @@ class ResourcesViewModel @Inject constructor(
         mutableState.value = mutableState.value.copy(tab = tab)
     }
 
+    fun selectProviderSection(section: ProviderSection) {
+        mutableState.value = mutableState.value.copy(providerSection = section)
+    }
+
     fun refresh() {
+        if (mutableState.value.loading || mutableState.value.mutating) return
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
             mutableState.value = mutableState.value.copy(loading = true, error = null)
-            val providers = async { runCatching { providerRepository.loadAll(session) } }
-            val authFiles = async { runCatching { authFilesRepository.list(session) } }
-            val quotas = async { runCatching { accessRepository.loadQuotas(session) } }
-            val apiKeys = async { runCatching { accessRepository.loadApiKeys(session) } }
-            val providerResult = providers.await()
-            val authResult = authFiles.await()
-            val quotaResult = quotas.await()
-            val apiKeyResult = apiKeys.await()
-            mutableState.value = mutableState.value.copy(
-                providers = providerResult.getOrElse { mutableState.value.providers },
-                authFiles = authResult.getOrElse { mutableState.value.authFiles },
-                quotas = quotaResult.getOrElse { mutableState.value.quotas },
-                apiKeys = apiKeyResult.getOrElse { mutableState.value.apiKeys },
-                loading = false,
-                error = listOfNotNull(
-                    providerResult.exceptionOrNull(),
-                    authResult.exceptionOrNull(),
-                    quotaResult.exceptionOrNull(),
-                    apiKeyResult.exceptionOrNull(),
-                )
-                    .firstOrNull()?.safeMessage(),
-            )
+            val current = mutableState.value
+            runCatching {
+                when (current.tab) {
+                    ResourceTab.Providers -> providerRepository.load(session, current.providerSection)
+                    ResourceTab.AuthFiles -> authFilesRepository.list(session)
+                    ResourceTab.Quotas -> accessRepository.loadQuotas(session)
+                    ResourceTab.ApiKeys -> accessRepository.loadApiKeys(session)
+                }
+            }.onSuccess { result ->
+                mutableState.value = when (current.tab) {
+                    ResourceTab.Providers -> mutableState.value.copy(
+                        providers = mutableState.value.providers + (current.providerSection to (result as List<ProviderRecord>)),
+                        loading = false,
+                    )
+                    ResourceTab.AuthFiles -> mutableState.value.copy(authFiles = result as List<AuthFileDto>, loading = false)
+                    ResourceTab.Quotas -> mutableState.value.copy(quotas = result as List<QuotaCooldownDto>, loading = false)
+                    ResourceTab.ApiKeys -> mutableState.value.copy(apiKeys = result as List<ClientApiKey>, loading = false)
+                }
+            }.onFailure { error ->
+                mutableState.value = mutableState.value.copy(loading = false, error = error.safeMessage())
+            }
         }
     }
 
@@ -267,9 +271,12 @@ class ResourcesViewModel @Inject constructor(
     fun addApiKey(value: String) {
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutateAccess {
-                accessRepository.addApiKey(session, value)
-                "API_KEY_ADDED"
+            mutate {
+                val key = accessRepository.addApiKey(session, value)
+                mutableState.value = mutableState.value.copy(
+                    apiKeys = mutableState.value.apiKeys + key,
+                    message = "API_KEY_ADDED",
+                )
             }
         }
     }
@@ -277,9 +284,13 @@ class ResourcesViewModel @Inject constructor(
     fun deleteApiKey(key: ClientApiKey) {
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutateAccess {
+            mutate {
                 accessRepository.deleteApiKey(session, key.index)
-                "API_KEY_DELETED"
+                mutableState.value = mutableState.value.copy(
+                    apiKeys = mutableState.value.apiKeys.filterNot { it.index == key.index }
+                        .mapIndexed { index, item -> item.copy(index = index) },
+                    message = "API_KEY_DELETED",
+                )
             }
         }
     }
@@ -291,23 +302,6 @@ class ResourcesViewModel @Inject constructor(
     private suspend fun mutate(block: suspend () -> Unit) {
         mutableState.value = mutableState.value.copy(mutating = true, error = null, message = null)
         runCatching { block() }
-            .onFailure { error ->
-                mutableState.value = mutableState.value.copy(error = error.safeMessage())
-            }
-        mutableState.value = mutableState.value.copy(mutating = false)
-    }
-
-    private suspend fun mutateAccess(block: suspend () -> String) {
-        mutableState.value = mutableState.value.copy(mutating = true, error = null, message = null)
-        runCatching { block() }
-            .onSuccess { message ->
-                val session = sessionRepository.session.value
-                val keys = session?.let { runCatching { accessRepository.loadApiKeys(it) }.getOrNull() }
-                mutableState.value = mutableState.value.copy(
-                    apiKeys = keys ?: mutableState.value.apiKeys,
-                    message = message,
-                )
-            }
             .onFailure { error ->
                 mutableState.value = mutableState.value.copy(error = error.safeMessage())
             }

@@ -61,6 +61,7 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun refresh() {
+        if (mutableState.value.loading || mutableState.value.refreshing) return
         viewModelScope.launch { refreshInternal() }
     }
 

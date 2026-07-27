@@ -21,9 +21,12 @@ enum class UsageWindow(val durationMs: Long) {
     Month(30 * 24 * 60 * 60 * 1000L),
 }
 
+enum class UsageRanking { Models, ApiKeys, Credentials }
+
 data class UsageAnalyticsUiState(
     val response: MonitoringResponseDto? = null,
     val window: UsageWindow = UsageWindow.Week,
+    val ranking: UsageRanking = UsageRanking.Models,
     val loading: Boolean = false,
     val error: Boolean = false,
 )
@@ -40,9 +43,15 @@ class UsageAnalyticsViewModel @Inject constructor(
         mutableState.value = mutableState.value.copy(window = window)
     }
 
+    fun setRanking(ranking: UsageRanking) {
+        mutableState.value = mutableState.value.copy(ranking = ranking)
+    }
+
     fun refresh() {
+        if (mutableState.value.loading) return
         val session = sessionRepository.session.value ?: return
         val window = mutableState.value.window
+        val ranking = mutableState.value.ranking
         viewModelScope.launch {
             mutableState.value = mutableState.value.copy(loading = true, error = false)
             val now = System.currentTimeMillis()
@@ -52,17 +61,16 @@ class UsageAnalyticsViewModel @Inject constructor(
                 nowMs = now,
                 timeZone = ZoneId.systemDefault().id,
                 include = MonitoringIncludeDto(
-                    modelShare = false,
-                    modelStats = true,
-                    credentialStats = true,
-                    apiKeyStats = true,
-                    recentFailures = 0,
-                    eventsPage = null,
+                    summary = true,
+                    timeline = true,
+                    modelStats = ranking == UsageRanking.Models,
+                    credentialStats = ranking == UsageRanking.Credentials,
+                    apiKeyStats = ranking == UsageRanking.ApiKeys,
                 ),
             )
             runCatching { monitoringRepository.refresh(session, request, cacheResult = false) }
                 .onSuccess { response ->
-                    if (mutableState.value.window == window) {
+                    if (mutableState.value.window == window && mutableState.value.ranking == ranking) {
                         mutableState.value = mutableState.value.copy(response = response, loading = false)
                     }
                 }

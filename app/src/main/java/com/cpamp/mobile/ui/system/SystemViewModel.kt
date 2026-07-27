@@ -8,7 +8,6 @@ import com.cpamp.mobile.data.remote.model.ManagerStatusDto
 import com.cpamp.mobile.data.system.SystemRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,22 +51,31 @@ class SystemViewModel @Inject constructor(
     }
 
     fun refresh() {
+        if (mutableState.value.loading || mutableState.value.loadingMore || mutableState.value.mutating) return
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
             mutableState.value = mutableState.value.copy(loading = true, error = null, message = null)
-            val snapshot = async { runCatching { repository.status(session) } }
-            val logs = async { runCatching { repository.logs(session) } }
-            val snapshotResult = snapshot.await()
-            val logsResult = logs.await()
-            mutableState.value = mutableState.value.copy(
-                info = snapshotResult.getOrNull()?.info ?: mutableState.value.info,
-                status = snapshotResult.getOrNull()?.status ?: mutableState.value.status,
-                logs = logsResult.getOrNull()?.lines ?: mutableState.value.logs,
-                nextCursor = logsResult.getOrNull()?.nextCursor,
-                loading = false,
-                error = listOfNotNull(snapshotResult.exceptionOrNull(), logsResult.exceptionOrNull())
-                    .firstOrNull()?.let { "SYSTEM_REQUEST_FAILED" },
-            )
+            when (mutableState.value.tab) {
+                SystemTab.Status -> runCatching { repository.status(session) }
+                    .onSuccess { snapshot ->
+                        mutableState.value = mutableState.value.copy(
+                            info = snapshot.info,
+                            status = snapshot.status,
+                            loading = false,
+                        )
+                    }
+                    .onFailure { mutableState.value = mutableState.value.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
+                SystemTab.Logs -> runCatching { repository.logs(session) }
+                    .onSuccess { page ->
+                        mutableState.value = mutableState.value.copy(
+                            logs = page.lines,
+                            nextCursor = page.nextCursor,
+                            loading = false,
+                        )
+                    }
+                    .onFailure { mutableState.value = mutableState.value.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
+                SystemTab.Servers -> mutableState.value = mutableState.value.copy(loading = false)
+            }
         }
     }
 

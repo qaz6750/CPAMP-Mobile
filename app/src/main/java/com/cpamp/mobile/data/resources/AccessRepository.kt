@@ -23,13 +23,14 @@ class AccessRepository @Inject constructor(
         remoteCall { clientFactory.api(session).apiKeys().apiKeys }
             .mapIndexed { index, value -> ClientApiKey(index, maskClientApiKey(value)) }
 
-    suspend fun addApiKey(session: AuthenticatedSession, value: String) {
+    suspend fun addApiKey(session: AuthenticatedSession, value: String): ClientApiKey {
         val normalized = value.trim()
         require(normalized.length in 8..4096) { "API_KEY_INVALID" }
         val api = clientFactory.api(session)
         val current = remoteCall { api.apiKeys().apiKeys }
         require(normalized !in current) { "API_KEY_DUPLICATE" }
         remoteCall { api.replaceApiKeys(current + normalized) }
+        return ClientApiKey(current.size, maskClientApiKey(normalized))
     }
 
     suspend fun deleteApiKey(session: AuthenticatedSession, index: Int) {

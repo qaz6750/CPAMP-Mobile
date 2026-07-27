@@ -9,6 +9,7 @@ import com.cpamp.mobile.data.remote.model.MonitoringFiltersDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
+import com.cpamp.mobile.data.remote.model.EventsPageRequestDto
 import com.cpamp.mobile.domain.model.ServerProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.ZoneId
@@ -91,6 +92,7 @@ class MonitoringViewModel @Inject constructor(
     }
 
     fun refresh() {
+        if (mutableState.value.loading || mutableState.value.refreshing) return
         viewModelScope.launch { refreshInternal(filter.value) }
     }
 
@@ -109,7 +111,10 @@ class MonitoringViewModel @Inject constructor(
             timeZone = ZoneId.systemDefault().id,
             searchQuery = currentFilter.search.trim(),
             filters = MonitoringFiltersDto(failedOnly = currentFilter.failedOnly),
-            include = MonitoringIncludeDto(),
+            include = MonitoringIncludeDto(
+                summary = true,
+                eventsPage = EventsPageRequestDto(limit = 50),
+            ),
         )
         runCatching {
             monitoringRepository.refresh(session, request, cacheResult = currentFilter.cacheable)

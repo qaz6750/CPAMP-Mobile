@@ -25,15 +25,15 @@ data class MonitoringFiltersDto(
 
 @Serializable
 data class MonitoringIncludeDto(
-    val summary: Boolean = true,
+    val summary: Boolean = false,
     @SerialName("summary_profile") val summaryProfile: String = "compact",
-    val timeline: Boolean = true,
-    @SerialName("model_share") val modelShare: Boolean = true,
-    @SerialName("model_stats") val modelStats: Boolean = true,
+    val timeline: Boolean = false,
+    @SerialName("model_share") val modelShare: Boolean = false,
+    @SerialName("model_stats") val modelStats: Boolean = false,
     @SerialName("credential_stats") val credentialStats: Boolean = false,
     @SerialName("api_key_stats") val apiKeyStats: Boolean = false,
     @SerialName("recent_failures") val recentFailures: Int = 0,
-    @SerialName("events_page") val eventsPage: EventsPageRequestDto? = EventsPageRequestDto(),
+    @SerialName("events_page") val eventsPage: EventsPageRequestDto? = null,
     val granularity: String = "auto",
 )
 
