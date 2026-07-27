@@ -46,7 +46,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.TopModelDto
 import com.cpamp.mobile.data.remote.model.TrafficPointDto
-import com.cpamp.mobile.ui.common.LifecyclePollingEffect
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
@@ -62,7 +61,6 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    LifecyclePollingEffect(viewModel::setActive)
 
     AppBackground {
         if (state.loading && state.summary == null) {

@@ -11,7 +11,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +38,6 @@ class DashboardViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(DashboardUiState())
     val state: StateFlow<DashboardUiState> = mutableState.asStateFlow()
-    private val active = MutableStateFlow(false)
     private val refreshMutex = Mutex()
 
     init {
@@ -49,7 +47,7 @@ class DashboardViewModel @Inject constructor(
                     mutableState.value = DashboardUiState(loading = false)
                     return@collectLatest
                 }
-                mutableState.value = DashboardUiState(profile = session.profile)
+                mutableState.value = DashboardUiState(profile = session.profile, loading = false)
                 dashboardRepository.cached(session.profile.id)?.let { cached ->
                     mutableState.value = mutableState.value.copy(
                         summary = cached.summary,
@@ -58,20 +56,8 @@ class DashboardViewModel @Inject constructor(
                         updatedAt = cached.updatedAt,
                     )
                 }
-                while (true) {
-                    if (active.value) {
-                        refreshInternal()
-                        delay(POLL_INTERVAL_MS)
-                    } else {
-                        delay(INACTIVE_CHECK_MS)
-                    }
-                }
             }
         }
-    }
-
-    fun setActive(value: Boolean) {
-        active.value = value
     }
 
     fun refresh() {
@@ -113,10 +99,6 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    private companion object {
-        const val POLL_INTERVAL_MS = 15_000L
-        const val INACTIVE_CHECK_MS = 500L
-    }
 }
 
 private fun Throwable.toDashboardError(): DashboardError = when (this) {

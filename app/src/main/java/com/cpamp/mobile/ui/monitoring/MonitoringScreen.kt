@@ -51,7 +51,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.RequestEventDto
-import com.cpamp.mobile.ui.common.LifecyclePollingEffect
 import com.cpamp.mobile.ui.common.SensitiveText
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
@@ -67,7 +66,6 @@ fun MonitoringScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var selectedEvent by remember { mutableStateOf<RequestEventDto?>(null) }
-    LifecyclePollingEffect(viewModel::setActive)
 
     AppBackground {
         LazyColumn(

@@ -23,7 +23,7 @@ data class SystemUiState(
     val logs: List<String> = emptyList(),
     val nextCursor: String? = null,
     val logFilter: String = "",
-    val loading: Boolean = true,
+    val loading: Boolean = false,
     val loadingMore: Boolean = false,
     val mutating: Boolean = false,
     val error: String? = null,
@@ -42,8 +42,6 @@ class SystemViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(SystemUiState())
     val state: StateFlow<SystemUiState> = mutableState.asStateFlow()
-
-    init { refresh() }
 
     fun selectTab(tab: SystemTab) {
         mutableState.value = mutableState.value.copy(tab = tab)

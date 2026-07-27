@@ -42,7 +42,7 @@ data class ResourcesUiState(
     val authFiles: List<AuthFileDto> = emptyList(),
     val quotas: List<QuotaCooldownDto> = emptyList(),
     val apiKeys: List<ClientApiKey> = emptyList(),
-    val loading: Boolean = true,
+    val loading: Boolean = false,
     val mutating: Boolean = false,
     val error: String? = null,
     val message: String? = null,
@@ -59,8 +59,6 @@ class ResourcesViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(ResourcesUiState())
     val state: StateFlow<ResourcesUiState> = mutableState.asStateFlow()
-
-    init { refresh() }
 
     fun selectTab(tab: ResourceTab) {
         mutableState.value = mutableState.value.copy(tab = tab)
@@ -145,7 +143,12 @@ class ResourcesViewModel @Inject constructor(
             val session = sessionRepository.session.value ?: return@launch
             mutate {
                 providerRepository.delete(session, record.section, record.identity)
-                mutableState.value = mutableState.value.copy(message = "PROVIDER_DELETED")
+                mutableState.value = mutableState.value.copy(
+                    providers = mutableState.value.providers.toMutableMap().apply {
+                        put(record.section, get(record.section).orEmpty().filterNot { it.identity == record.identity })
+                    },
+                    message = "PROVIDER_DELETED",
+                )
             }
         }
     }
@@ -155,7 +158,12 @@ class ResourcesViewModel @Inject constructor(
             val session = sessionRepository.session.value ?: return@launch
             mutate {
                 authFilesRepository.setDisabled(session, file.name, disabled)
-                mutableState.value = mutableState.value.copy(message = "AUTH_FILE_UPDATED")
+                mutableState.value = mutableState.value.copy(
+                    authFiles = mutableState.value.authFiles.map {
+                        if (it.name == file.name) it.copy(disabled = disabled) else it
+                    },
+                    message = "AUTH_FILE_UPDATED",
+                )
             }
         }
     }
@@ -165,7 +173,10 @@ class ResourcesViewModel @Inject constructor(
             val session = sessionRepository.session.value ?: return@launch
             mutate {
                 authFilesRepository.delete(session, file.name)
-                mutableState.value = mutableState.value.copy(message = "AUTH_FILE_DELETED")
+                mutableState.value = mutableState.value.copy(
+                    authFiles = mutableState.value.authFiles.filterNot { it.name == file.name },
+                    message = "AUTH_FILE_DELETED",
+                )
             }
         }
     }
@@ -284,7 +295,6 @@ class ResourcesViewModel @Inject constructor(
                 mutableState.value = mutableState.value.copy(error = error.safeMessage())
             }
         mutableState.value = mutableState.value.copy(mutating = false)
-        refresh()
     }
 
     private suspend fun mutateAccess(block: suspend () -> String) {
