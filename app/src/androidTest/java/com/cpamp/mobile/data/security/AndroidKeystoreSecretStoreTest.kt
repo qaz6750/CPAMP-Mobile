@@ -24,7 +24,7 @@ class AndroidKeystoreSecretStoreTest {
         val storedValues = context.getSharedPreferences(
             "cpamp_encrypted_secrets_v1",
             Context.MODE_PRIVATE,
-        ).all.values.map(String::valueOf)
+        ).all.values.map { value -> value.toString() }
         assertFalse(storedValues.any { it.contains(secret) })
         assertEquals(secret, store.get(profileId))
 
