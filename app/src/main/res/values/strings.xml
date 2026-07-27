@@ -21,6 +21,7 @@
     <string name="resources_subtitle">Manage credentials and routing inputs</string>
     <string name="resource_providers">Providers</string>
     <string name="resource_auth_files">Auth files</string>
+    <string name="resource_quotas">Quotas</string>
     <string name="resource_api_keys">Client API keys</string>
     <string name="system_title">Operations</string>
     <string name="system_subtitle">Service health, logs and local preferences</string>
@@ -167,5 +168,23 @@
     <string name="auth_file_updated">Authentication file status updated.</string>
     <string name="auth_file_deleted">Authentication file deleted.</string>
     <string name="auth_file_saved">Authentication file uploaded.</string>
+    <string name="no_quota_cooldowns">No active quota cooldowns. All reported accounts are currently available.</string>
+    <string name="unknown_account">Unknown account</string>
+    <string name="cooldown">Cooldown</string>
+    <string name="quota_recovers_at">Expected recovery at %1$s</string>
+    <string name="quota_reason">Reason: %1$s</string>
+    <string name="add_api_key">Add client API key</string>
+    <string name="add_api_key_title">Add client API key</string>
+    <string name="client_api_key">Client API key</string>
+    <string name="client_api_key_number">Client key #%1$d</string>
+    <string name="api_key_security_help">The full key is sent once and is never retained in app state after this editor closes.</string>
+    <string name="no_api_keys">No client API keys are configured.</string>
+    <string name="delete_api_key_title">Delete client API key?</string>
+    <string name="delete_api_key_body">%1$s will immediately stop authorizing client requests. This action cannot be undone.</string>
+    <string name="error_api_key_invalid">Enter a client API key containing at least 8 characters.</string>
+    <string name="error_api_key_duplicate">This client API key already exists.</string>
+    <string name="error_api_key_changed">The API key list changed. Refresh and try again.</string>
+    <string name="api_key_added">Client API key added.</string>
+    <string name="api_key_deleted">Client API key deleted.</string>
     <string name="resource_request_failed">The resource request failed. Refresh and try again.</string>
 </resources>

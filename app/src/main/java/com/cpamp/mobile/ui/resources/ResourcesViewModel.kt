@@ -5,7 +5,10 @@ import androidx.lifecycle.viewModelScope
 import android.net.Uri
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.remote.model.AuthFileDto
+import com.cpamp.mobile.data.remote.model.QuotaCooldownDto
+import com.cpamp.mobile.data.resources.AccessRepository
 import com.cpamp.mobile.data.resources.AuthFilesRepository
+import com.cpamp.mobile.data.resources.ClientApiKey
 import com.cpamp.mobile.data.resources.ProviderDraft
 import com.cpamp.mobile.data.resources.ProviderRecord
 import com.cpamp.mobile.data.resources.ProviderRepository
@@ -18,7 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-enum class ResourceTab { Providers, AuthFiles }
+enum class ResourceTab { Providers, AuthFiles, Quotas, ApiKeys }
 
 data class ProviderEditorState(
     val section: ProviderSection,
@@ -37,6 +40,8 @@ data class ResourcesUiState(
     val tab: ResourceTab = ResourceTab.Providers,
     val providers: Map<ProviderSection, List<ProviderRecord>> = emptyMap(),
     val authFiles: List<AuthFileDto> = emptyList(),
+    val quotas: List<QuotaCooldownDto> = emptyList(),
+    val apiKeys: List<ClientApiKey> = emptyList(),
     val loading: Boolean = true,
     val mutating: Boolean = false,
     val error: String? = null,
@@ -50,6 +55,7 @@ class ResourcesViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val providerRepository: ProviderRepository,
     private val authFilesRepository: AuthFilesRepository,
+    private val accessRepository: AccessRepository,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(ResourcesUiState())
     val state: StateFlow<ResourcesUiState> = mutableState.asStateFlow()
@@ -66,13 +72,24 @@ class ResourcesViewModel @Inject constructor(
             mutableState.value = mutableState.value.copy(loading = true, error = null)
             val providers = async { runCatching { providerRepository.loadAll(session) } }
             val authFiles = async { runCatching { authFilesRepository.list(session) } }
+            val quotas = async { runCatching { accessRepository.loadQuotas(session) } }
+            val apiKeys = async { runCatching { accessRepository.loadApiKeys(session) } }
             val providerResult = providers.await()
             val authResult = authFiles.await()
+            val quotaResult = quotas.await()
+            val apiKeyResult = apiKeys.await()
             mutableState.value = mutableState.value.copy(
                 providers = providerResult.getOrElse { mutableState.value.providers },
                 authFiles = authResult.getOrElse { mutableState.value.authFiles },
+                quotas = quotaResult.getOrElse { mutableState.value.quotas },
+                apiKeys = apiKeyResult.getOrElse { mutableState.value.apiKeys },
                 loading = false,
-                error = listOfNotNull(providerResult.exceptionOrNull(), authResult.exceptionOrNull())
+                error = listOfNotNull(
+                    providerResult.exceptionOrNull(),
+                    authResult.exceptionOrNull(),
+                    quotaResult.exceptionOrNull(),
+                    apiKeyResult.exceptionOrNull(),
+                )
                     .firstOrNull()?.safeMessage(),
             )
         }
@@ -236,6 +253,26 @@ class ResourcesViewModel @Inject constructor(
         }
     }
 
+    fun addApiKey(value: String) {
+        viewModelScope.launch {
+            val session = sessionRepository.session.value ?: return@launch
+            mutateAccess {
+                accessRepository.addApiKey(session, value)
+                "API_KEY_ADDED"
+            }
+        }
+    }
+
+    fun deleteApiKey(key: ClientApiKey) {
+        viewModelScope.launch {
+            val session = sessionRepository.session.value ?: return@launch
+            mutateAccess {
+                accessRepository.deleteApiKey(session, key.index)
+                "API_KEY_DELETED"
+            }
+        }
+    }
+
     fun clearNotice() {
         mutableState.value = mutableState.value.copy(error = null, message = null)
     }
@@ -250,11 +287,29 @@ class ResourcesViewModel @Inject constructor(
         refresh()
     }
 
+    private suspend fun mutateAccess(block: suspend () -> String) {
+        mutableState.value = mutableState.value.copy(mutating = true, error = null, message = null)
+        runCatching { block() }
+            .onSuccess { message ->
+                val session = sessionRepository.session.value
+                val keys = session?.let { runCatching { accessRepository.loadApiKeys(it) }.getOrNull() }
+                mutableState.value = mutableState.value.copy(
+                    apiKeys = keys ?: mutableState.value.apiKeys,
+                    message = message,
+                )
+            }
+            .onFailure { error ->
+                mutableState.value = mutableState.value.copy(error = error.safeMessage())
+            }
+        mutableState.value = mutableState.value.copy(mutating = false)
+    }
+
     private fun Throwable.safeMessage(): String = when (message) {
         "PROVIDER_CHANGED" -> "PROVIDER_CHANGED"
         "PROVIDER_NAME_REQUIRED", "PROVIDER_URL_REQUIRED", "PROVIDER_KEY_REQUIRED" -> message.orEmpty()
         "AUTH_FILE_TOO_LARGE", "AUTH_FILE_NAME_INVALID", "AUTH_FILE_JSON_INVALID",
         "AUTH_FILE_READ_FAILED" -> message.orEmpty()
+        "API_KEY_INVALID", "API_KEY_DUPLICATE", "API_KEY_CHANGED" -> message.orEmpty()
         else -> "RESOURCE_REQUEST_FAILED"
     }
 

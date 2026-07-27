@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -64,17 +65,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.AuthFileDto
+import com.cpamp.mobile.data.remote.model.QuotaCooldownDto
+import com.cpamp.mobile.data.resources.ClientApiKey
 import com.cpamp.mobile.data.resources.ProviderDraft
 import com.cpamp.mobile.data.resources.ProviderRecord
 import com.cpamp.mobile.data.resources.ProviderSection
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.PageHeader
+import com.cpamp.mobile.ui.common.asTime
 
 private sealed interface PendingResourceAction {
     data class DeleteProvider(val record: ProviderRecord) : PendingResourceAction
     data class SetAuthFileDisabled(val file: AuthFileDto, val disabled: Boolean) : PendingResourceAction
     data class DeleteAuthFile(val file: AuthFileDto) : PendingResourceAction
+    data class DeleteApiKey(val key: ClientApiKey) : PendingResourceAction
     data object OverwriteAuthFile : PendingResourceAction
 }
 
@@ -86,6 +91,7 @@ fun ResourcesScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var pendingAction by remember { mutableStateOf<PendingResourceAction?>(null) }
+    var showApiKeyEditor by remember { mutableStateOf(false) }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(viewModel::importAuthFile)
     }
@@ -118,17 +124,14 @@ fun ResourcesScreen(
                 )
             }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = state.tab == ResourceTab.Providers,
-                        onClick = { viewModel.selectTab(ResourceTab.Providers) },
-                        label = { Text(stringResource(R.string.resource_providers)) },
-                    )
-                    FilterChip(
-                        selected = state.tab == ResourceTab.AuthFiles,
-                        onClick = { viewModel.selectTab(ResourceTab.AuthFiles) },
-                        label = { Text(stringResource(R.string.resource_auth_files)) },
-                    )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(ResourceTab.entries) { tab ->
+                        FilterChip(
+                            selected = state.tab == tab,
+                            onClick = { viewModel.selectTab(tab) },
+                            label = { Text(stringResource(tab.labelResource)) },
+                        )
+                    }
                 }
             }
             if (state.error != null || state.message != null) {
@@ -167,7 +170,7 @@ fun ResourcesScreen(
                         }
                     }
                 }
-            } else {
+            } else if (state.tab == ResourceTab.AuthFiles) {
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -206,6 +209,34 @@ fun ResourcesScreen(
                         )
                     }
                 }
+            } else if (state.tab == ResourceTab.Quotas) {
+                if (state.quotas.isEmpty()) {
+                    item { EmptyResourceCard(stringResource(R.string.no_quota_cooldowns)) }
+                } else {
+                    items(state.quotas) { quota -> QuotaCard(quota) }
+                }
+            } else {
+                item {
+                    Button(
+                        onClick = { showApiKeyEditor = true },
+                        enabled = !state.mutating,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Outlined.Add, contentDescription = null)
+                        Text(stringResource(R.string.add_api_key), modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+                if (state.apiKeys.isEmpty()) {
+                    item { EmptyResourceCard(stringResource(R.string.no_api_keys)) }
+                } else {
+                    items(state.apiKeys, key = ClientApiKey::index) { key ->
+                        ApiKeyCard(
+                            key = key,
+                            enabled = !state.mutating,
+                            onDelete = { pendingAction = PendingResourceAction.DeleteApiKey(key) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -237,6 +268,17 @@ fun ResourcesScreen(
         )
     }
 
+    if (showApiKeyEditor) {
+        ApiKeyEditorSheet(
+            saving = state.mutating,
+            onDismiss = { showApiKeyEditor = false },
+            onSave = { value ->
+                viewModel.addApiKey(value)
+                showApiKeyEditor = false
+            },
+        )
+    }
+
     pendingAction?.let { action ->
         val title: String
         val message: String
@@ -262,6 +304,11 @@ fun ResourcesScreen(
                 message = stringResource(R.string.delete_auth_file_body, action.file.name)
                 destructive = true
             }
+            is PendingResourceAction.DeleteApiKey -> {
+                title = stringResource(R.string.delete_api_key_title)
+                message = stringResource(R.string.delete_api_key_body, action.key.maskedValue)
+                destructive = true
+            }
             PendingResourceAction.OverwriteAuthFile -> {
                 title = stringResource(R.string.overwrite_auth_file_title)
                 message = stringResource(
@@ -283,6 +330,7 @@ fun ResourcesScreen(
                         viewModel.setAuthFileDisabled(action.file, action.disabled)
                     }
                     is PendingResourceAction.DeleteAuthFile -> viewModel.deleteAuthFile(action.file)
+                    is PendingResourceAction.DeleteApiKey -> viewModel.deleteApiKey(action.key)
                     PendingResourceAction.OverwriteAuthFile -> viewModel.saveAuthFile()
                 }
                 pendingAction = null
@@ -421,6 +469,113 @@ private fun AuthFileCard(
                 }
                 IconButton(onClick = onDelete, enabled = enabled) {
                     Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.delete))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuotaCard(quota: QuotaCooldownDto) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
+        Column(Modifier.fillMaxWidth().padding(17.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    quota.authFileName.ifBlank { quota.owner.ifBlank { stringResource(R.string.unknown_account) } },
+                    modifier = Modifier.weight(1f),
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                ConnectionPill(label = stringResource(R.string.cooldown), secure = false)
+            }
+            Text(
+                listOf(quota.provider, quota.windowKind).filter(String::isNotBlank).joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                stringResource(R.string.quota_recovers_at, quota.recoverAtMs.asTime()),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (quota.reasonCode.isNotBlank()) {
+                Text(
+                    stringResource(R.string.quota_reason, quota.reasonCode),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApiKeyCard(key: ClientApiKey, enabled: Boolean, onDelete: () -> Unit) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(17.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(Icons.Outlined.Key, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.client_api_key_number, key.index + 1), fontWeight = FontWeight.SemiBold)
+                Text(key.maskedValue, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+            }
+            IconButton(onClick = onDelete, enabled = enabled) {
+                Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.delete))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ApiKeyEditorSheet(
+    saving: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var value by remember { mutableStateOf("") }
+    var visible by remember { mutableStateOf(false) }
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 44.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Text(stringResource(R.string.add_api_key_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(R.string.api_key_security_help),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it.take(4096) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.client_api_key)) },
+                visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { visible = !visible }) {
+                        Icon(
+                            if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                            contentDescription = stringResource(if (visible) R.string.hide_key else R.string.show_key),
+                        )
+                    }
+                },
+                singleLine = true,
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.cancel))
+                }
+                Button(
+                    onClick = { onSave(value) },
+                    enabled = !saving && value.isNotBlank(),
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(stringResource(R.string.save))
                 }
             }
         }
@@ -686,6 +841,19 @@ private fun String.resourceMessage(): String = when (this) {
     "AUTH_FILE_UPDATED" -> stringResource(R.string.auth_file_updated)
     "AUTH_FILE_DELETED" -> stringResource(R.string.auth_file_deleted)
     "AUTH_FILE_SAVED" -> stringResource(R.string.auth_file_saved)
+    "API_KEY_INVALID" -> stringResource(R.string.error_api_key_invalid)
+    "API_KEY_DUPLICATE" -> stringResource(R.string.error_api_key_duplicate)
+    "API_KEY_CHANGED" -> stringResource(R.string.error_api_key_changed)
+    "API_KEY_ADDED" -> stringResource(R.string.api_key_added)
+    "API_KEY_DELETED" -> stringResource(R.string.api_key_deleted)
     else -> stringResource(R.string.resource_request_failed)
 }
+
+private val ResourceTab.labelResource: Int
+    get() = when (this) {
+        ResourceTab.Providers -> R.string.resource_providers
+        ResourceTab.AuthFiles -> R.string.resource_auth_files
+        ResourceTab.Quotas -> R.string.resource_quotas
+        ResourceTab.ApiKeys -> R.string.resource_api_keys
+    }
 
