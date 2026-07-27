@@ -3,6 +3,7 @@ package com.cpamp.mobile.ui.dashboard
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -111,77 +112,68 @@ fun DashboardScreen(
                 item { DashboardNotice(state) }
             }
             summary?.let { data ->
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        MetricCard(
-                            label = stringResource(R.string.metric_requests),
-                            value = data.today.totalCalls.compactNumber(),
-                            supporting = stringResource(R.string.rpm_value, data.rolling30m.rpm),
-                            icon = Icons.Outlined.DataUsage,
-                            modifier = Modifier.weight(1f),
-                        )
-                        MetricCard(
-                            label = stringResource(R.string.metric_success),
-                            value = data.today.successRate.asPercent(),
-                            supporting = stringResource(R.string.failed_value, data.today.failureCalls),
-                            icon = Icons.Outlined.CheckCircle,
-                            modifier = Modifier.weight(1f),
-                            accent = MaterialTheme.colorScheme.tertiary,
-                        )
-                    }
-                }
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        MetricCard(
-                            label = stringResource(R.string.metric_tokens),
-                            value = data.today.totalTokens.compactNumber(),
-                            supporting = stringResource(R.string.tpm_value, data.rolling30m.tpm),
-                            icon = Icons.Outlined.Speed,
-                            modifier = Modifier.weight(1f),
-                        )
-                        MetricCard(
-                            label = stringResource(R.string.metric_cost),
-                            value = data.today.totalCost.asCost(),
-                            supporting = data.today.averageLatencyMs?.let {
-                                stringResource(R.string.latency_value, it)
-                            } ?: stringResource(R.string.no_latency),
-                            icon = Icons.Outlined.Payments,
-                            modifier = Modifier.weight(1f),
-                            accent = MaterialTheme.colorScheme.secondary,
-                        )
-                    }
-                }
+                item { DashboardMetrics(data) }
                 item { TrafficCard(data.trafficTimeline) }
                 if (data.topModelsToday.isNotEmpty()) {
                     item { Text(stringResource(R.string.top_models), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
                     items(data.topModelsToday, key = TopModelDto::model) { TopModelRow(it) }
                 }
-                if (data.recentFailures.isNotEmpty()) {
-                    item { Text(stringResource(R.string.recent_failures), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
-                    items(data.recentFailures, key = { "${it.timestampMs}:${it.model}:${it.endpoint}" }) { failure ->
-                        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f))) {
-                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(failure.model.ifBlank { stringResource(R.string.unknown_model) }, fontWeight = FontWeight.SemiBold)
-                                    Text(failure.timestampMs.asTime(), style = MaterialTheme.typography.labelMedium)
-                                }
-                                Text(
-                                    listOfNotNull(
-                                        failure.failStatusCode?.toString(),
-                                        failure.failSummary.takeIf(String::isNotBlank),
-                                    ).joinToString(" · ").ifBlank { stringResource(R.string.request_failed) },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardSummaryDto) {
+    val cards: List<@Composable (Modifier) -> Unit> = listOf(
+        { modifier ->
+            MetricCard(
+                label = stringResource(R.string.metric_requests),
+                value = data.today.totalCalls.compactNumber(),
+                supporting = stringResource(R.string.rpm_value, data.rolling30m.rpm),
+                icon = Icons.Outlined.DataUsage,
+                modifier = modifier,
+            )
+        },
+        { modifier ->
+            MetricCard(
+                label = stringResource(R.string.metric_success),
+                value = data.today.successRate.asPercent(),
+                supporting = stringResource(R.string.failed_value, data.today.failureCalls),
+                icon = Icons.Outlined.CheckCircle,
+                modifier = modifier,
+                accent = MaterialTheme.colorScheme.tertiary,
+            )
+        },
+        { modifier ->
+            MetricCard(
+                label = stringResource(R.string.metric_tokens),
+                value = data.today.totalTokens.compactNumber(),
+                supporting = stringResource(R.string.tpm_value, data.rolling30m.tpm),
+                icon = Icons.Outlined.Speed,
+                modifier = modifier,
+            )
+        },
+        { modifier ->
+            MetricCard(
+                label = stringResource(R.string.metric_cost),
+                value = data.today.totalCost.asCost(),
+                supporting = data.today.averageLatencyMs?.let { stringResource(R.string.latency_value, it) }
+                    ?: stringResource(R.string.no_latency),
+                icon = Icons.Outlined.Payments,
+                modifier = modifier,
+                accent = MaterialTheme.colorScheme.secondary,
+            )
+        },
+    )
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (maxWidth < 520.dp) {
+                cards.forEach { card -> card(Modifier.fillMaxWidth()) }
+            } else {
+                cards.chunked(2).forEach { rowCards ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        rowCards.forEach { card -> card(Modifier.weight(1f)) }
                     }
                 }
             }
@@ -235,6 +227,15 @@ private fun TrafficCard(points: List<TrafficPointDto>) {
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                     }
                     drawPath(path, lineColor, style = Stroke(width = 5f, cap = StrokeCap.Round))
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    listOf(points.first(), points[points.lastIndex / 2], points.last()).forEach { point ->
+                        Text(
+                            point.bucketMs.asTime(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
