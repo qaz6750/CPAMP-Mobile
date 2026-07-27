@@ -2,7 +2,7 @@
 
 CPAMP Mobile is a native Android administration client for a configured CPA-Manager-Plus Manager Server. It is built with Kotlin, Jetpack Compose, Material 3, Hilt, Retrofit/OkHttp, Kotlin Serialization, Room, DataStore, and Android Keystore.
 
-Current version: **1.0.1**
+Current version: **1.0.4**
 
 > [!IMPORTANT]
 > CPAMP Mobile is an independent, unofficial client. It is not affiliated with, endorsed by, or maintained by Seakee or the [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) project. CPA-Manager-Plus names and upstream project references identify interoperability only.
@@ -30,20 +30,21 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 | Area | First release |
 | --- | --- |
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
-| Overview | Health, daily requests, success rate, tokens, estimated cost, and token/request trends with readable axes |
-| Monitoring | Manual refresh, time/status/search filters, request details, and privacy-safe cached recent data |
-| Usage | Manual token/request trends plus on-demand model, client API key, or credential rankings |
-| Providers | List and common add/edit/delete operations with unknown-field preservation |
-| Auth Files | List, enable/disable, import, edit, overwrite, and delete JSON files |
-| Quotas | View and refresh active quota cooldowns |
-| Client API Keys | Add, mask, and delete gateway client keys |
-| System | Manager/collector status, filtered paged logs, log clearing, and server management |
+| Overview | Health, daily requests, success rate, tokens, estimated cost, interactive token/request trends, and real provider marks |
+| Monitoring | Manual refresh, time/status filters, request details, and privacy-safe cached recent data |
+| Usage | Interactive usage buckets, on-demand rankings, and privacy-safe Today/7-day/30-day share images |
+| Operations | Manager/collector status, filtered paged logs, log clearing, and saved-server management |
+| Settings | App lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
 | Security | Keystore AES-GCM, optional biometric/device-credential app lock, configurable screenshot protection, no backup |
 | Appearance | Blue-and-white light theme, navy dark theme, optional dynamic color, Simplified Chinese and English |
 
 Destructive changes show the affected object and require confirmation. Switching servers cancels requests from the previous server and rebuilds screen state so cached data cannot cross profiles.
 
-All network-backed screens use explicit manual refresh. Monitoring requests only the visible summary and event page; Usage computes only the selected ranking; Resources loads only the selected category and provider type; System loads only the selected status or log section. Changing filters or categories never triggers a background request.
+All Manager Server network screens use explicit manual refresh. Monitoring requests only the visible summary and event page; Usage computes only the selected ranking; Operations loads only the selected status or log section. Changing filters or categories never triggers a background request. A share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
+
+The app does not manage providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
+
+Update checks occur only when the user taps **Check for updates**. Releases are read from this repository's public GitHub Releases API with no embedded GitHub token and no Manager Admin Key. The system Download Manager downloads the APK, then the app verifies the published SHA-256 and requires the APK signing certificate to match the installed app before opening the Android installer.
 
 ## Build
 
@@ -103,6 +104,8 @@ CPAMP_KEY_PASSWORD
 
 The workflow uploads debug and release APK artifacts. Its release artifact name explicitly includes `signed` or `unsigned`. Pull requests also run GitHub Dependency Review and reject newly introduced high-severity vulnerable dependencies.
 
+Tags matching `v*` create a GitHub Release only when all signing secrets are present. The tag must match `versionName`; the release contains a deterministically named signed APK and its SHA-256 file. Missing or partial signing configuration blocks the release instead of publishing an unsigned installer.
+
 ## Security and privacy
 
 - Admin Keys are encrypted separately from server metadata with Android Keystore AES-GCM.
@@ -110,13 +113,15 @@ The workflow uploads debug and release APK artifacts. Its release artifact name 
 - Admin Keys are not written to Room, DataStore, saved-state Bundles, logs, crash uploads, or backups.
 - Monitoring cache is isolated by server profile and removes request identifiers, account labels, paths, and failure summaries.
 - Screenshots and recent-task previews are allowed by default and can be disabled from Settings.
+- Shared usage images contain aggregate requests, success rate, tokens, cost, timeline and top-model data only. They exclude server names, addresses, keys, credentials and account labels.
+- In-app updates accept only HTTPS assets with fixed release names, a matching SHA-256, and the installed application's signing identity. Android still requires explicit installer confirmation.
 - The app includes no telemetry or third-party crash reporting.
 
 See [SECURITY.md](SECURITY.md) for the reporting process and security boundaries.
 
 ## First-release boundaries
 
-The first release does not support lightweight mode, OAuth login flows, plugin stores, raw YAML editing, model price management, inspection automation, backup migration, usage import/export, or Manager Server initial setup. “Account management” refers to Providers, Auth Files, quotas, and their server-reported status; the app does not invent a separate user system.
+The app does not support lightweight mode, OAuth login flows, provider/auth-file/client-key management, plugin stores, raw YAML editing, model price management, inspection automation, backup migration, usage import/export, or Manager Server initial setup.
 
 ## License and attribution
 
@@ -124,4 +129,4 @@ CPAMP Mobile source code is licensed under the [MIT License](LICENSE). Third-par
 
 [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) is the upstream interoperable server project: "A self-hosted CPA / CLIProxyAPI management panel and AI gateway observability dashboard for requests, usage, cost, quota, failures, and account health." It is available under the MIT License, Copyright (c) 2026 Seakee. CPA-Manager-Plus is not bundled with this application.
 
-No source code or protected visual assets are copied from reference mobile clients. Public architecture and mobile information-design ideas are implemented independently.
+Public Manager Server API contracts are implemented independently. The complete upstream MIT notice and provider-mark sources are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [LICENSE_COMPLIANCE.md](LICENSE_COMPLIANCE.md); the upstream notice is also available offline inside the app.
