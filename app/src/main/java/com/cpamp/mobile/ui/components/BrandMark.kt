@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -23,16 +23,13 @@ fun BrandMark(modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(14.dp))
             .background(
                 Brush.linearGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.tertiary,
-                    ),
+                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer),
                 ),
             ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Rounded.AutoAwesome,
+            imageVector = Icons.Outlined.Dns,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier.size(24.dp),

@@ -2,10 +2,13 @@ package com.cpamp.mobile.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Evergreen = Color(0xFF166B5C)
-val Mint = Color(0xFF9DDFC9)
-val Ink = Color(0xFF10201C)
-val Mist = Color(0xFFF2F7F5)
-val Night = Color(0xFF091A17)
-val Amber = Color(0xFFF1B24A)
+val BrandBlue = Color(0xFF2161D8)
+val BrandBlueLight = Color(0xFFDCE8FF)
+val BrandBlueBright = Color(0xFF8EB4FF)
+val Sky = Color(0xFFEEF5FF)
+val White = Color(0xFFFFFFFF)
+val Ink = Color(0xFF14213A)
+val Navy = Color(0xFF09162D)
+val NavySurface = Color(0xFF11213E)
+val Success = Color(0xFF16835B)
 

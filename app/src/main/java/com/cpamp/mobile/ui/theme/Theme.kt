@@ -11,29 +11,44 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val LightColors = lightColorScheme(
-    primary = Evergreen,
-    onPrimary = Mist,
-    primaryContainer = Mint,
+    primary = BrandBlue,
+    onPrimary = White,
+    primaryContainer = BrandBlueLight,
     onPrimaryContainer = Ink,
-    background = Mist,
+    secondary = ColorTokens.Secondary,
+    tertiary = Success,
+    background = Sky,
     onBackground = Ink,
-    surface = ColorTokens.SurfaceLight,
+    surface = White,
+    surfaceVariant = ColorTokens.SurfaceVariantLight,
+    outlineVariant = ColorTokens.OutlineLight,
     error = ColorTokens.Error,
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Mint,
-    onPrimary = Night,
-    primaryContainer = Evergreen,
-    background = Night,
-    onBackground = Mist,
-    surface = ColorTokens.SurfaceDark,
+    primary = BrandBlueBright,
+    onPrimary = Navy,
+    primaryContainer = ColorTokens.PrimaryContainerDark,
+    secondary = ColorTokens.SecondaryDark,
+    tertiary = ColorTokens.SuccessDark,
+    background = Navy,
+    onBackground = ColorTokens.OnDark,
+    surface = NavySurface,
+    surfaceVariant = ColorTokens.SurfaceVariantDark,
+    outlineVariant = ColorTokens.OutlineDark,
     error = ColorTokens.ErrorDark,
 )
 
 private object ColorTokens {
-    val SurfaceLight = androidx.compose.ui.graphics.Color(0xFFFAFDFC)
-    val SurfaceDark = androidx.compose.ui.graphics.Color(0xFF10231F)
+    val Secondary = androidx.compose.ui.graphics.Color(0xFF536785)
+    val SecondaryDark = androidx.compose.ui.graphics.Color(0xFFB9C8E5)
+    val PrimaryContainerDark = androidx.compose.ui.graphics.Color(0xFF173B78)
+    val SurfaceVariantLight = androidx.compose.ui.graphics.Color(0xFFE7EFFC)
+    val SurfaceVariantDark = androidx.compose.ui.graphics.Color(0xFF192C4B)
+    val OutlineLight = androidx.compose.ui.graphics.Color(0xFFC7D5EA)
+    val OutlineDark = androidx.compose.ui.graphics.Color(0xFF344B70)
+    val OnDark = androidx.compose.ui.graphics.Color(0xFFEAF1FF)
+    val SuccessDark = androidx.compose.ui.graphics.Color(0xFF63D9A8)
     val Error = androidx.compose.ui.graphics.Color(0xFFBA1A1A)
     val ErrorDark = androidx.compose.ui.graphics.Color(0xFFFFB4AB)
 }

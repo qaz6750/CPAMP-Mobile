@@ -23,7 +23,7 @@ enum class AppLanguage(val languageTag: String) {
 data class AppearanceSettings(
     val theme: AppTheme = AppTheme.System,
     val language: AppLanguage = AppLanguage.System,
-    val dynamicColor: Boolean = true,
+    val dynamicColor: Boolean = false,
     val allowScreenshots: Boolean = true,
     val hideAddresses: Boolean = false,
 )
@@ -37,7 +37,7 @@ class AppearanceRepository @Inject constructor(
             theme = preferences[THEME]?.let { runCatching { AppTheme.valueOf(it) }.getOrNull() } ?: AppTheme.System,
             language = preferences[LANGUAGE]?.let { runCatching { AppLanguage.valueOf(it) }.getOrNull() }
                 ?: AppLanguage.System,
-            dynamicColor = preferences[DYNAMIC_COLOR] ?: true,
+            dynamicColor = preferences[DYNAMIC_COLOR] ?: false,
             allowScreenshots = preferences[ALLOW_SCREENSHOTS] ?: true,
             hideAddresses = preferences[HIDE_ADDRESSES] ?: false,
         )
