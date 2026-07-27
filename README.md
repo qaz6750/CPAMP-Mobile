@@ -3,7 +3,7 @@
 CPAMP Mobile is a native Android administration client for a configured CPA-Manager-Plus Manager Server. It is built with Kotlin, Jetpack Compose, Material 3, Hilt, Retrofit/OkHttp, Kotlin Serialization, Room, DataStore, and Android Keystore.
 
 > [!IMPORTANT]
-> CPAMP Mobile is an independent, unofficial client. It is not affiliated with, endorsed by, or maintained by seakee or the CPA-Manager-Plus project. CPA-Manager-Plus names and upstream project references identify interoperability only.
+> CPAMP Mobile is an independent, unofficial client. It is not affiliated with, endorsed by, or maintained by Seakee or the [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) project. CPA-Manager-Plus names and upstream project references identify interoperability only.
 
 ## Server requirements
 
@@ -115,5 +115,7 @@ The first release does not support lightweight mode, OAuth login flows, plugin s
 ## License and attribution
 
 CPAMP Mobile source code is licensed under the [MIT License](LICENSE). Third-party dependency attribution is listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+[CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) is the upstream interoperable server project: "A self-hosted CPA / CLIProxyAPI management panel and AI gateway observability dashboard for requests, usage, cost, quota, failures, and account health." It is available under the MIT License, Copyright (c) 2026 Seakee. CPA-Manager-Plus is not bundled with this application.
 
 No source code or protected visual assets are copied from reference mobile clients. Public architecture and mobile information-design ideas are implemented independently.

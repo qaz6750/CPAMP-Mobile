@@ -11,7 +11,20 @@ CPAMP Mobile uses open-source Android and JVM libraries. Dependency versions are
 | Retrofit | Square | Apache License 2.0 |
 | OkHttp and MockWebServer | Square | Apache License 2.0 |
 | JUnit 4 | JUnit contributors | Eclipse Public License 1.0 |
+| [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) | Seakee | MIT License |
 
 This notice is informational and does not replace the license text distributed by each dependency. Release distributors are responsible for preserving notices required by the exact resolved dependency set.
 
-CPA-Manager-Plus is an upstream interoperable server project and is not bundled into this application. CPAMP Mobile is not affiliated with or endorsed by seakee or CPA-Manager-Plus.
+## CPA-Manager-Plus
+
+[CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) is "A self-hosted CPA / CLIProxyAPI management panel and AI gateway observability dashboard for requests, usage, cost, quota, failures, and account health."
+
+CPA-Manager-Plus is licensed under the MIT License:
+
+```text
+Copyright (c) 2026 Seakee
+```
+
+The complete upstream license is available in the [CPA-Manager-Plus repository](https://github.com/seakee/CPA-Manager-Plus/blob/main/LICENSE).
+
+CPA-Manager-Plus is an upstream interoperable server project and is not bundled into this application. CPAMP Mobile is an independent, unofficial client and is not affiliated with or endorsed by Seakee or CPA-Manager-Plus.
