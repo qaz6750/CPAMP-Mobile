@@ -10,7 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
-import com.cpamp.mobile.ui.screens.OverviewPreviewScreen
+import com.cpamp.mobile.ui.dashboard.DashboardScreen
 import com.cpamp.mobile.ui.screens.ResourcesPreviewScreen
 import com.cpamp.mobile.ui.screens.SystemPreviewScreen
 import com.cpamp.mobile.ui.screens.TrafficPreviewScreen
@@ -54,7 +54,7 @@ fun CPAMPMobileApp(viewModel: SessionViewModel = hiltViewModel()) {
             navController = navController,
             startDestination = AppDestination.Overview.route,
         ) {
-            composable(AppDestination.Overview.route) { OverviewPreviewScreen(contentPadding) }
+            composable(AppDestination.Overview.route) { DashboardScreen(contentPadding) }
             composable(AppDestination.Traffic.route) { TrafficPreviewScreen(contentPadding) }
             composable(AppDestination.Resources.route) { ResourcesPreviewScreen(contentPadding) }
             composable(AppDestination.System.route) { SystemPreviewScreen(contentPadding) }

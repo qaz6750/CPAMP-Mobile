@@ -2,6 +2,11 @@ package com.cpamp.mobile.di
 
 import com.cpamp.mobile.data.security.AndroidKeystoreSecretStore
 import com.cpamp.mobile.data.security.SecretStore
+import android.content.Context
+import androidx.room.Room
+import com.cpamp.mobile.data.cache.CPAMPCacheDatabase
+import com.cpamp.mobile.data.cache.CacheDao
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -29,5 +34,17 @@ object AppModule {
         isLenient = false
         encodeDefaults = true
     }
-}
 
+    @Provides
+    @Singleton
+    fun provideCacheDatabase(
+        @ApplicationContext context: Context,
+    ): CPAMPCacheDatabase = Room.databaseBuilder(
+        context,
+        CPAMPCacheDatabase::class.java,
+        "cpamp_cache.db",
+    ).fallbackToDestructiveMigration().build()
+
+    @Provides
+    fun provideCacheDao(database: CPAMPCacheDatabase): CacheDao = database.cacheDao()
+}

@@ -63,4 +63,22 @@
     <string name="error_server">The server returned an unexpected response.</string>
     <string name="error_saved_key">The saved key can no longer be decrypted. Forget this server and add it again.</string>
     <string name="error_unknown">Could not connect. Check the server and try again.</string>
+    <string name="refresh">Refresh</string>
+    <string name="rpm_value">%.1f requests/min · last 30 min</string>
+    <string name="tpm_value">%.0f tokens/min · last 30 min</string>
+    <string name="failed_value">%1$d failed today</string>
+    <string name="latency_value">%.0f ms average latency</string>
+    <string name="no_latency">No latency sample</string>
+    <string name="top_models">Top models today</string>
+    <string name="recent_failures">Recent failures</string>
+    <string name="unknown_model">Unknown model</string>
+    <string name="request_failed">Request failed</string>
+    <string name="no_traffic">No traffic recorded today</string>
+    <string name="traffic_chart_description">Traffic trend with %1$d total requests</string>
+    <string name="model_usage">%1$d calls · %2$s tokens</string>
+    <string name="cached_data_notice">Showing cached data from %1$s while reconnecting.</string>
+    <string name="dashboard_unauthorized">The saved Admin Key was rejected. Reconnect from Saved servers.</string>
+    <string name="dashboard_rate_limited">The Manager Server is busy. Cached data remains visible.</string>
+    <string name="dashboard_timeout">The refresh timed out. Cached data remains visible.</string>
+    <string name="dashboard_offline">Live data is temporarily unavailable. The last successful data remains visible.</string>
 </resources>
