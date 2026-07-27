@@ -14,6 +14,7 @@ import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
 import com.cpamp.mobile.data.remote.model.QuotaCooldownsDto
 import kotlinx.serialization.json.JsonElement
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -57,6 +58,9 @@ interface CPAMPApi {
     @POST("v0/management/auth-files")
     suspend fun uploadAuthFile(@Part file: MultipartBody.Part): JsonElement
 
+    @GET("v0/management/auth-files/download")
+    suspend fun downloadAuthFile(@Query("name") name: String): ResponseBody
+
     @GET("v0/management/api-keys")
     suspend fun apiKeys(): ApiKeysDto
 
@@ -88,10 +92,12 @@ interface CPAMPApi {
     @PUT
     suspend fun putDynamic(@Url relativeUrl: String, @Body body: JsonElement): JsonElement
 
+    @PUT
+    suspend fun putDynamicUnit(@Url relativeUrl: String, @Body body: JsonElement)
+
     @PATCH
     suspend fun patchDynamic(@Url relativeUrl: String, @Body body: JsonElement): JsonElement
 
     @DELETE
     suspend fun deleteDynamic(@Url relativeUrl: String): JsonElement
 }
-

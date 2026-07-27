@@ -11,7 +11,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
-import com.cpamp.mobile.ui.screens.ResourcesPreviewScreen
+import com.cpamp.mobile.ui.resources.ResourcesScreen
 import com.cpamp.mobile.ui.screens.SystemPreviewScreen
 import com.cpamp.mobile.ui.monitoring.MonitoringScreen
 import com.cpamp.mobile.ui.auth.LoginScreen
@@ -56,7 +56,7 @@ fun CPAMPMobileApp(viewModel: SessionViewModel = hiltViewModel()) {
         ) {
             composable(AppDestination.Overview.route) { DashboardScreen(contentPadding) }
             composable(AppDestination.Traffic.route) { MonitoringScreen(contentPadding) }
-            composable(AppDestination.Resources.route) { ResourcesPreviewScreen(contentPadding) }
+            composable(AppDestination.Resources.route) { ResourcesScreen(contentPadding) }
             composable(AppDestination.System.route) { SystemPreviewScreen(contentPadding) }
         }
     }
