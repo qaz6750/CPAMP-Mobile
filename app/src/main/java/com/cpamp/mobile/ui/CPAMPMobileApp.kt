@@ -21,6 +21,7 @@ import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionViewModel
 import com.cpamp.mobile.ui.security.AppLockUiState
 import com.cpamp.mobile.ui.settings.AppearanceUiState
+import com.cpamp.mobile.ui.settings.SettingsScreen
 import com.cpamp.mobile.data.settings.AppLanguage
 import com.cpamp.mobile.data.settings.AppTheme
 
@@ -122,10 +123,18 @@ private fun ConnectedApp(
                     onSwitchServer = onSwitchServer,
                     onDeleteServer = onDeleteServer,
                     onDisconnect = onDisconnect,
+                    onOpenSettings = { navController.navigate("settings") },
+                    appearanceState = appearanceState,
+                )
+            }
+            composable("settings") {
+                SettingsScreen(
+                    contentPadding = contentPadding,
                     appLockState = appLockState,
+                    appearanceState = appearanceState,
+                    onBack = navController::popBackStack,
                     onSetAppLockEnabled = onSetAppLockEnabled,
                     onSetAppLockTimeout = onSetAppLockTimeout,
-                    appearanceState = appearanceState,
                     onSetTheme = onSetTheme,
                     onSetLanguage = onSetLanguage,
                     onSetDynamicColor = onSetDynamicColor,

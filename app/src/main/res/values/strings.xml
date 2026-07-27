@@ -43,6 +43,9 @@
     <string name="resource_api_keys">Client API keys</string>
     <string name="system_title">Operations</string>
     <string name="system_subtitle">Service health, logs and local preferences</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Privacy, security and appearance</string>
+    <string name="back">Back</string>
     <string name="system_status">Manager status</string>
     <string name="system_logs">Runtime logs</string>
     <string name="system_servers">Saved servers</string>
@@ -93,7 +96,7 @@
     <string name="minutes_value">%1$d min</string>
     <string name="one_hour">1 hour</string>
     <string name="security_change_failed">The security change could not be completed. Existing encrypted keys were preserved.</string>
-    <string name="security_privacy_summary">Screenshots and recent-task previews are blocked. Backups are disabled. CPAMP Mobile contains no telemetry or third-party crash upload.</string>
+    <string name="security_privacy_summary">Backups are disabled. Screenshot protection follows your setting. CPAMP Mobile contains no telemetry or third-party crash upload.</string>
     <string name="app_locked_title">CPAMP Mobile is locked</string>
     <string name="app_locked_body">Authenticate with biometrics or your device credential to decrypt saved server keys.</string>
     <string name="app_unlock_failed">Authentication did not complete. Saved server keys remain encrypted.</string>

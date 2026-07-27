@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,15 +48,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
-import com.cpamp.mobile.data.settings.AppLanguage
-import com.cpamp.mobile.data.settings.AppTheme
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.common.asTime
-import com.cpamp.mobile.ui.security.AppLockUiState
 import com.cpamp.mobile.ui.settings.AppearanceUiState
 
 @Composable
@@ -67,15 +64,8 @@ fun SystemScreen(
     onSwitchServer: (String) -> Unit,
     onDeleteServer: (String) -> Unit,
     onDisconnect: () -> Unit,
-    appLockState: AppLockUiState,
-    onSetAppLockEnabled: (Boolean) -> Unit,
-    onSetAppLockTimeout: (Int) -> Unit,
+    onOpenSettings: () -> Unit,
     appearanceState: AppearanceUiState,
-    onSetTheme: (AppTheme) -> Unit,
-    onSetLanguage: (AppLanguage) -> Unit,
-    onSetDynamicColor: (Boolean) -> Unit,
-    onSetAllowScreenshots: (Boolean) -> Unit,
-    onSetHideAddresses: (Boolean) -> Unit,
     viewModel: SystemViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -99,11 +89,16 @@ fun SystemScreen(
                     title = stringResource(R.string.system_title),
                     subtitle = stringResource(R.string.system_subtitle),
                     trailing = {
-                        IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
-                            if (state.loading) {
-                                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
+                        Row {
+                            IconButton(onClick = onOpenSettings) {
+                                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings_title))
+                            }
+                            IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
+                                if (state.loading) {
+                                    CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
+                                }
                             }
                         }
                     },
@@ -196,28 +191,6 @@ fun SystemScreen(
                             Icon(Icons.Outlined.Logout, contentDescription = null)
                             Text(stringResource(R.string.disconnect), modifier = Modifier.padding(start = 8.dp))
                         }
-                    }
-                }
-                SystemTab.Security -> {
-                    item {
-                        AppLockSettingsCard(
-                            state = appLockState,
-                            onSetEnabled = onSetAppLockEnabled,
-                            onSetTimeout = onSetAppLockTimeout,
-                        )
-                    }
-                    item { EmptySystemCard(stringResource(R.string.security_privacy_summary)) }
-                }
-                SystemTab.Appearance -> {
-                    item {
-                        AppearanceSettingsCard(
-                            state = appearanceState,
-                            onSetTheme = onSetTheme,
-                            onSetLanguage = onSetLanguage,
-                            onSetDynamicColor = onSetDynamicColor,
-                            onSetAllowScreenshots = onSetAllowScreenshots,
-                            onSetHideAddresses = onSetHideAddresses,
-                        )
                     }
                 }
             }
@@ -383,149 +356,6 @@ private fun ServerCard(
 }
 
 @Composable
-private fun AppLockSettingsCard(
-    state: AppLockUiState,
-    onSetEnabled: (Boolean) -> Unit,
-    onSetTimeout: (Int) -> Unit,
-) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.app_lock), fontWeight = FontWeight.Bold)
-                    Text(
-                        stringResource(R.string.app_lock_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (state.mutating) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                } else {
-                    Switch(
-                        checked = state.enabled,
-                        onCheckedChange = onSetEnabled,
-                    )
-                }
-            }
-            if (state.enabled) {
-                Text(stringResource(R.string.lock_after), style = MaterialTheme.typography.labelLarge)
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    listOf(1, 5, 15, 60).forEach { minutes ->
-                        FilterChip(
-                            selected = state.timeoutMinutes == minutes,
-                            onClick = { onSetTimeout(minutes) },
-                            label = {
-                                Text(
-                                    if (minutes == 60) {
-                                        stringResource(R.string.one_hour)
-                                    } else {
-                                        stringResource(R.string.minutes_value, minutes)
-                                    },
-                                )
-                            },
-                        )
-                    }
-                }
-            }
-            if (state.error) {
-                Text(
-                    stringResource(R.string.security_change_failed),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AppearanceSettingsCard(
-    state: AppearanceUiState,
-    onSetTheme: (AppTheme) -> Unit,
-    onSetLanguage: (AppLanguage) -> Unit,
-    onSetDynamicColor: (Boolean) -> Unit,
-    onSetAllowScreenshots: (Boolean) -> Unit,
-    onSetHideAddresses: (Boolean) -> Unit,
-) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(stringResource(R.string.language), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                AppLanguage.entries.forEach { language ->
-                    FilterChip(
-                        selected = state.settings.language == language,
-                        onClick = { onSetLanguage(language) },
-                        label = { Text(stringResource(language.labelResource)) },
-                    )
-                }
-            }
-            Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                AppTheme.entries.forEach { theme ->
-                    FilterChip(
-                        selected = state.settings.theme == theme,
-                        onClick = { onSetTheme(theme) },
-                        label = { Text(stringResource(theme.labelResource)) },
-                    )
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.dynamic_color), fontWeight = FontWeight.SemiBold)
-                    Text(
-                        stringResource(R.string.dynamic_color_help),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Switch(
-                    checked = state.settings.dynamicColor,
-                    onCheckedChange = onSetDynamicColor,
-                )
-            }
-            SettingSwitchRow(
-                title = stringResource(R.string.allow_screenshots),
-                help = stringResource(R.string.allow_screenshots_help),
-                checked = state.settings.allowScreenshots,
-                onCheckedChange = onSetAllowScreenshots,
-            )
-            SettingSwitchRow(
-                title = stringResource(R.string.hide_addresses),
-                help = stringResource(R.string.hide_addresses_help),
-                checked = state.settings.hideAddresses,
-                onCheckedChange = onSetHideAddresses,
-            )
-        }
-    }
-}
-
-@Composable
-private fun SettingSwitchRow(
-    title: String,
-    help: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
-            Text(help, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
-}
-
-@Composable
 private fun EmptySystemCard(text: String) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))) {
         Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
@@ -564,20 +394,4 @@ private val SystemTab.labelResource: Int
         SystemTab.Status -> R.string.system_status
         SystemTab.Logs -> R.string.system_logs
         SystemTab.Servers -> R.string.system_servers
-        SystemTab.Security -> R.string.system_security
-        SystemTab.Appearance -> R.string.system_appearance
-    }
-
-private val AppLanguage.labelResource: Int
-    get() = when (this) {
-        AppLanguage.System -> R.string.follow_system
-        AppLanguage.SimplifiedChinese -> R.string.simplified_chinese
-        AppLanguage.English -> R.string.english
-    }
-
-private val AppTheme.labelResource: Int
-    get() = when (this) {
-        AppTheme.System -> R.string.follow_system
-        AppTheme.Light -> R.string.light_theme
-        AppTheme.Dark -> R.string.dark_theme
     }

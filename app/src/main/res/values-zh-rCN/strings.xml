@@ -43,6 +43,9 @@
     <string name="resource_api_keys">客户端 API Key</string>
     <string name="system_title">系统运维</string>
     <string name="system_subtitle">服务健康、日志和本地设置</string>
+    <string name="settings_title">设置</string>
+    <string name="settings_subtitle">隐私、安全和外观</string>
+    <string name="back">返回</string>
     <string name="system_status">Manager 状态</string>
     <string name="system_logs">运行日志</string>
     <string name="system_servers">已保存服务器</string>
@@ -93,7 +96,7 @@
     <string name="minutes_value">%1$d 分钟</string>
     <string name="one_hour">1 小时</string>
     <string name="security_change_failed">无法完成安全设置变更，现有加密密钥已保留。</string>
-    <string name="security_privacy_summary">应用已禁止截屏和最近任务预览，并关闭备份。CPAMP Mobile 不包含遥测或第三方崩溃上传。</string>
+    <string name="security_privacy_summary">应用已关闭备份，截图保护遵循当前设置。CPAMP Mobile 不包含遥测或第三方崩溃上传。</string>
     <string name="app_locked_title">CPAMP Mobile 已锁定</string>
     <string name="app_locked_body">请使用生物识别或设备凭据解密已保存的服务器密钥。</string>
     <string name="app_unlock_failed">认证未完成，已保存的服务器密钥仍处于加密状态。</string>

@@ -23,7 +23,10 @@ enum class AppDestination(
     ;
 
     companion object {
-        fun fromRoute(route: String?): AppDestination = entries.firstOrNull { it.route == route } ?: Overview
+        fun fromRoute(route: String?): AppDestination = when (route) {
+            "settings" -> System
+            else -> entries.firstOrNull { it.route == route } ?: Overview
+        }
     }
 }
 
