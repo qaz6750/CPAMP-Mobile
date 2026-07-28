@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 enum class UsageWindow(val durationMs: Long) {
@@ -66,6 +67,8 @@ class UsageAnalyticsViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(UsageAnalyticsUiState())
     val state: StateFlow<UsageAnalyticsUiState> = mutableState.asStateFlow()
+    private var refreshJob: Job? = null
+    private var refreshGeneration = 0L
 
     init {
         viewModelScope.launch {
@@ -87,7 +90,10 @@ class UsageAnalyticsViewModel @Inject constructor(
     }
 
     fun setWindow(window: UsageWindow) {
+        if (mutableState.value.window == window) return
         mutableState.value = mutableState.value.copy(window = window)
+        val session = sessionRepository.session.value ?: return
+        scheduleRefresh(session, window, mutableState.value.ranking)
     }
 
     fun setRanking(ranking: UsageRanking) {
@@ -99,7 +105,17 @@ class UsageAnalyticsViewModel @Inject constructor(
         val session = sessionRepository.session.value ?: return
         val window = mutableState.value.window
         val ranking = mutableState.value.ranking
-        viewModelScope.launch { refreshInternal(session, window, ranking) }
+        scheduleRefresh(session, window, ranking)
+    }
+
+    private fun scheduleRefresh(
+        session: AuthenticatedSession,
+        window: UsageWindow,
+        ranking: UsageRanking,
+    ) {
+        refreshJob?.cancel()
+        val generation = ++refreshGeneration
+        refreshJob = viewModelScope.launch { refreshInternal(session, window, ranking, generation) }
     }
 
     fun share() {
@@ -156,6 +172,7 @@ class UsageAnalyticsViewModel @Inject constructor(
         session: AuthenticatedSession,
         window: UsageWindow,
         ranking: UsageRanking,
+        generation: Long = ++refreshGeneration,
     ) {
         mutableState.value = mutableState.value.copy(loading = true, error = false)
         val now = System.currentTimeMillis()
@@ -176,7 +193,8 @@ class UsageAnalyticsViewModel @Inject constructor(
         runCatching { monitoringRepository.refresh(session, request, cacheResult = false) }
             .onSuccess { response ->
                 if (sessionRepository.session.value?.profile?.id == session.profile.id &&
-                    mutableState.value.window == window && mutableState.value.ranking == ranking
+                    mutableState.value.window == window && mutableState.value.ranking == ranking &&
+                    refreshGeneration == generation
                 ) {
                     mutableState.value = mutableState.value.copy(
                         response = response,
@@ -187,7 +205,10 @@ class UsageAnalyticsViewModel @Inject constructor(
                 }
             }
             .onFailure {
-                if (sessionRepository.session.value?.profile?.id == session.profile.id) {
+                if (sessionRepository.session.value?.profile?.id == session.profile.id &&
+                    mutableState.value.window == window && mutableState.value.ranking == ranking &&
+                    refreshGeneration == generation
+                ) {
                     mutableState.value = mutableState.value.copy(loading = false, error = true)
                 }
             }
