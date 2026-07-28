@@ -80,44 +80,58 @@ Instrumentation tests require an API 26+ emulator or device:
 ./gradlew connectedDebugAndroidTest
 ```
 
-## Release signing
+## APK signing
 
-Release signing is configured only through environment variables:
+Debug and release signing use separate environment-variable groups:
 
 ```text
-CPAMP_KEYSTORE_PATH
-CPAMP_KEYSTORE_PASSWORD
-CPAMP_KEY_ALIAS
-CPAMP_KEY_PASSWORD
+CPAMP_DEBUG_KEYSTORE_PATH
+CPAMP_DEBUG_KEYSTORE_PASSWORD
+CPAMP_DEBUG_KEY_ALIAS
+CPAMP_DEBUG_KEY_PASSWORD
+
+CPAMP_RELEASE_KEYSTORE_PATH
+CPAMP_RELEASE_KEYSTORE_PASSWORD
+CPAMP_RELEASE_KEY_ALIAS
+CPAMP_RELEASE_KEY_PASSWORD
 ```
 
-When all four values are available, `assembleRelease` signs the APK. Without them, Gradle produces an unsigned release APK. Keystores, signing properties, and `local.properties` are ignored by Git.
+When all four values in a group are available, Gradle uses that keystore for the corresponding build type. Keystores, signing properties, and `local.properties` are ignored by Git.
 
 GitHub Actions accepts the following repository secrets:
 
 ```text
-CPAMP_KEYSTORE_BASE64
-CPAMP_KEYSTORE_PASSWORD
-CPAMP_KEY_ALIAS
-CPAMP_KEY_PASSWORD
+CPAMP_DEBUG_KEYSTORE_BASE64
+CPAMP_DEBUG_KEYSTORE_PASSWORD
+CPAMP_DEBUG_KEY_ALIAS
+CPAMP_DEBUG_KEY_PASSWORD
+
+CPAMP_RELEASE_KEYSTORE_BASE64
+CPAMP_RELEASE_KEYSTORE_PASSWORD
+CPAMP_RELEASE_KEY_ALIAS
+CPAMP_RELEASE_KEY_PASSWORD
 ```
 
-Generate `CPAMP_KEYSTORE_BASE64` from the binary keystore as a single-line value:
+Generate each `*_KEYSTORE_BASE64` secret directly from its binary keystore as a single-line value:
 
 ```bash
-base64 -w 0 cpamp-release.jks
+base64 -w 0 debug.keystore
+base64 -w 0 CPMP-Mobile-release.jks
 ```
 
 ```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("cpamp-release.jks"))
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("debug.keystore"))
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("CPMP-Mobile-release.jks"))
 ```
 
-Before saving the secrets, verify the keystore password and alias locally:
+Before saving each secret group, verify that its keystore, store password, and alias belong together:
 
 ```bash
-keytool -list -keystore cpamp-release.jks -storepass '<keystore-password>'
-keytool -list -keystore cpamp-release.jks -storepass '<keystore-password>' -alias '<key-alias>'
+keytool -list -keystore '<keystore-file>' -storepass '<keystore-password>'
+keytool -list -keystore '<keystore-file>' -storepass '<keystore-password>' -alias '<key-alias>'
 ```
+
+The debug workflow requires the debug secret group on pushes to `main` and manual runs. Pull requests run tests and lint without accessing signing secrets or building an APK. Release tags require the release secret group and fail before Gradle if the decoded keystore, password, or alias do not match.
 
 The workflow uploads debug and release APK artifacts. Its release artifact name explicitly includes `signed` or `unsigned`. Pull requests also run GitHub Dependency Review and reject newly introduced high-severity vulnerable dependencies.
 
