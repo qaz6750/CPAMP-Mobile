@@ -68,16 +68,16 @@ class UsageShareImageWriter @Inject constructor(
         paint.shader = null
 
         paint.color = Color.WHITE
-        paint.textSize = 46f
+        paint.textSize = 34f
         paint.isFakeBoldText = true
-        canvas.drawText("CP", 74f, 122f, paint)
+        canvas.drawText(context.getString(R.string.app_name), 74f, 108f, paint)
         paint.textSize = 44f
-        canvas.drawText(context.getString(R.string.share_report_title), 164f, 122f, paint)
+        canvas.drawText(context.getString(R.string.share_report_title), 74f, 166f, paint)
 
         paint.isFakeBoldText = false
-        paint.textSize = 27f
+        paint.textSize = 24f
         paint.color = Color.argb(225, 255, 255, 255)
-        canvas.drawText(report.rangeLabel(), 64f, 190f, paint)
+        canvas.drawText(report.rangeLabel(), 74f, 212f, paint)
 
         paint.color = Color.argb(42, 255, 255, 255)
         canvas.drawRoundRect(RectF(64f, 232f, 280f, 310f), 39f, 39f, paint)
