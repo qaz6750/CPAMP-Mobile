@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -266,11 +267,18 @@ private fun ExpandedUsageTrend(
     onDismiss: () -> Unit,
 ) {
     val activity = LocalContext.current as? Activity
+    var previousOrientation by rememberSaveable {
+        mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+    }
     DisposableEffect(activity) {
-        val previousOrientation = activity?.requestedOrientation
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        if (activity != null && activity.requestedOrientation != ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE) {
+            previousOrientation = activity.requestedOrientation
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
         onDispose {
-            previousOrientation?.let { activity.requestedOrientation = it }
+            if (activity?.isChangingConfigurations == false) {
+                activity.requestedOrientation = previousOrientation
+            }
         }
     }
     Dialog(
