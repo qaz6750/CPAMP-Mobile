@@ -77,24 +77,39 @@ class ServerProfileStore @Inject constructor(
     }
 
     suspend fun delete(profileId: String) {
-        context.profileDataStore.edit { preferences ->
-            val current = preferences[PROFILES_KEY]
-                ?.let { json.decodeFromString<StoredProfiles>(it) }
-                ?: StoredProfiles()
-            val remaining = current.profiles.filterNot { it.id == profileId }
-            preferences[PROFILES_KEY] = json.encodeToString(
-                StoredProfiles(
-                    profiles = remaining,
-                    activeProfileId = current.activeProfileId
-                        ?.takeUnless { it == profileId }
-                        ?: remaining.firstOrNull()?.id,
-                ),
-            )
+        try {
+            context.profileDataStore.edit { preferences ->
+                val current = preferences[PROFILES_KEY]
+                    ?.let { json.decodeFromString<StoredProfiles>(it) }
+                    ?: StoredProfiles()
+                val remaining = current.profiles.filterNot { it.id == profileId }
+                preferences[PROFILES_KEY] = json.encodeToString(
+                    StoredProfiles(
+                        profiles = remaining,
+                        activeProfileId = current.activeProfileId
+                            ?.takeUnless { it == profileId }
+                            ?: remaining.firstOrNull()?.id,
+                    ),
+                )
+            }
+        } catch (error: Throwable) {
+            withContext(NonCancellable) {
+                runCatching { removeSecretIfProfileDeleted(profileId) }
+                    .exceptionOrNull()
+                    ?.let(error::addSuppressed)
+            }
+            throw error
         }
-        secretStore.remove(profileId)
+        withContext(NonCancellable) { secretStore.remove(profileId) }
     }
 
     suspend fun secret(profileId: String): String? = secretStore.get(profileId)
+
+    private suspend fun removeSecretIfProfileDeleted(profileId: String) {
+        if (snapshot().profiles.none { it.id == profileId }) {
+            secretStore.remove(profileId)
+        }
+    }
 
     private companion object {
         val PROFILES_KEY = stringPreferencesKey("profiles_json_v1")
