@@ -11,13 +11,13 @@ import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.ui.CPAMPMobileApp
 import com.cpamp.mobile.ui.security.AppLockScreen
 import com.cpamp.mobile.ui.security.AppLockViewModel
@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             val appearanceViewModel: AppearanceViewModel = hiltViewModel()
-            val appearance by appearanceViewModel.state.collectAsState()
+            val appearance by appearanceViewModel.state.collectAsStateWithLifecycle()
             val settings = appearance.settings
             LaunchedEffect(settings.allowScreenshots) {
                 if (settings.allowScreenshots) {
@@ -66,8 +66,8 @@ class MainActivity : AppCompatActivity() {
         appearanceViewModel: AppearanceViewModel,
         viewModel: AppLockViewModel = hiltViewModel(),
     ) {
-        val state by viewModel.state.collectAsState()
-        val appearance by appearanceViewModel.state.collectAsState()
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        val appearance by appearanceViewModel.state.collectAsStateWithLifecycle()
         DisposableEffect(viewModel) {
             val observer = LifecycleEventObserver { _, event ->
                 when (event) {

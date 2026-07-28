@@ -1,7 +1,6 @@
 package com.cpamp.mobile.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.navigation.compose.NavHost
@@ -9,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
@@ -41,7 +41,7 @@ fun CPAMPMobileApp(
     onSetHideAddresses: (Boolean) -> Unit,
     viewModel: SessionViewModel = hiltViewModel(),
 ) {
-    val sessionState by viewModel.state.collectAsState()
+    val sessionState by viewModel.state.collectAsStateWithLifecycle()
     if (sessionState.initializing) {
         SessionLoadingScreen()
         return
