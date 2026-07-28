@@ -28,6 +28,15 @@ fun Double.asCost(): String = when {
     else -> "\$%.2f".format(Locale.US, this)
 }
 
+fun Double.asLatency(): String = when {
+    this < 1_000 -> "%.0f ms".format(Locale.US, this)
+    this < 10_000 -> "%.2f s".format(Locale.US, this / 1_000)
+    this < 100_000 -> "%.1f s".format(Locale.US, this / 1_000)
+    else -> "%.0f s".format(Locale.US, this / 1_000)
+}
+
+fun Long.asLatency(): String = toDouble().asLatency()
+
 fun Long.asTime(): String = Instant.ofEpochMilli(this)
     .atZone(ZoneId.systemDefault())
     .format(DateTimeFormatter.ofPattern("HH:mm:ss"))

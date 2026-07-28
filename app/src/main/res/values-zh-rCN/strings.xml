@@ -223,7 +223,7 @@
     <string name="adjust_filters">调整筛选条件后，请点击刷新。</string>
     <string name="refresh_after_filter">点击刷新应用</string>
     <string name="event_tokens_value">%1$s Token</string>
-    <string name="event_latency_value">%1$d ms</string>
+    <string name="event_latency_value">%1$s</string>
     <string name="monitoring_rate_limited">分析服务当前繁忙，继续显示现有结果。</string>
     <string name="monitoring_timeout">监控请求超时，请点击刷新重试。</string>
     <string name="monitoring_offline">实时监控不可用，将尽可能继续显示缓存结果。</string>

@@ -59,6 +59,7 @@ import com.cpamp.mobile.data.monitoring.CredentialQuota
 import com.cpamp.mobile.data.monitoring.CredentialQuotaWindow
 import com.cpamp.mobile.data.remote.model.RequestEventDto
 import com.cpamp.mobile.ui.common.SensitiveText
+import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
@@ -185,7 +186,7 @@ fun MonitoringScreen(
                         )
                         CompactMetric(
                             label = stringResource(R.string.p95_latency),
-                            value = summary.p95LatencyMs?.let { "%.0f ms".format(it) } ?: "—",
+                            value = summary.p95LatencyMs?.asLatency() ?: "—",
                             icon = Icons.Outlined.Speed,
                             modifier = Modifier.weight(1f),
                         )
@@ -462,7 +463,7 @@ private fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(stringResource(R.string.event_tokens_value, event.totalTokens.compactNumber()), style = MaterialTheme.typography.labelSmall)
-                    event.latencyMs?.let { Text(stringResource(R.string.event_latency_value, it), style = MaterialTheme.typography.labelSmall) }
+                    event.latencyMs?.let { Text(stringResource(R.string.event_latency_value, it.asLatency()), style = MaterialTheme.typography.labelSmall) }
                     event.failStatusCode?.let { Text("HTTP $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error) }
                 }
             }
@@ -487,7 +488,7 @@ private fun RequestEventDetails(event: RequestEventDto) {
         item { DetailRow(stringResource(R.string.detail_provider), event.authProviderSnapshot.ifBlank { event.source.ifBlank { "—" } }) }
         item { DetailRow(stringResource(R.string.detail_account), event.authLabelSnapshot.ifBlank { event.accountSnapshot.ifBlank { "—" } }) }
         item { DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactNumber()) }
-        item { DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.let { "$it ms" } ?: "—") }
+        item { DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.asLatency() ?: "—") }
         if (event.failed) {
             item { DetailRow(stringResource(R.string.detail_error), SensitiveText.redact(event.failSummary).ifBlank { stringResource(R.string.request_failed) }) }
         }
