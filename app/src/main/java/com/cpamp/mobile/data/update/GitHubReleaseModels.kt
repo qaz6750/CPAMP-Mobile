@@ -1,5 +1,6 @@
 package com.cpamp.mobile.data.update
 
+import java.net.URI
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -31,11 +32,15 @@ data class ReleaseAssets(
 fun GitHubReleaseDto.releaseAssets(): ReleaseAssets? {
     if (draft || prerelease) return null
     val version = tagName.removePrefix("v")
-    if (SemanticVersion.parse(version) == null) return null
+    if (SemanticVersion.parse(version) == null || tagName != "v$version") return null
     val apkName = "cpamp-mobile-v$version.apk"
     val checksumName = "$apkName.sha256"
-    val apk = assets.singleOrNull { it.name == apkName && it.downloadUrl.isHttps() } ?: return null
-    val checksum = assets.singleOrNull { it.name == checksumName && it.downloadUrl.isHttps() } ?: return null
+    val apk = assets.singleOrNull {
+        it.name == apkName && it.downloadUrl.isTrustedReleaseAsset(tagName, apkName)
+    } ?: return null
+    val checksum = assets.singleOrNull {
+        it.name == checksumName && it.downloadUrl.isTrustedReleaseAsset(tagName, checksumName)
+    } ?: return null
     return ReleaseAssets(version, apk, checksum)
 }
 
@@ -67,4 +72,16 @@ fun isNewerVersion(candidate: String, current: String): Boolean {
     return candidateVersion > currentVersion
 }
 
-private fun String.isHttps(): Boolean = startsWith("https://", ignoreCase = true)
+private fun String.isTrustedReleaseAsset(tagName: String, assetName: String): Boolean {
+    val uri = runCatching { URI(this) }.getOrNull() ?: return false
+    return uri.scheme.equals("https", ignoreCase = true) &&
+        uri.host?.equals(RELEASE_HOST, ignoreCase = true) == true &&
+        uri.port == -1 &&
+        uri.rawUserInfo == null &&
+        uri.rawQuery == null &&
+        uri.rawFragment == null &&
+        uri.rawPath == "$RELEASE_DOWNLOAD_PATH/$tagName/$assetName"
+}
+
+private const val RELEASE_HOST = "github.com"
+private const val RELEASE_DOWNLOAD_PATH = "/qaz6750/CPA-Manager-Plus-Android/releases/download"
