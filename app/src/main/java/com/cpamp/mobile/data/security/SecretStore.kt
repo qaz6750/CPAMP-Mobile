@@ -33,7 +33,7 @@ class AndroidKeystoreSecretStore @Inject constructor(
         require(profileId.isNotBlank())
         require(secret.isNotBlank())
 
-        val payload = encrypt(secret, authenticationRequired)
+        val payload = encrypt(profileId, secret, authenticationRequired)
         preferences.edit()
             .putString(secretPreferenceKey(profileId), Base64.encodeToString(payload, Base64.NO_WRAP))
             .apply()
@@ -42,7 +42,7 @@ class AndroidKeystoreSecretStore @Inject constructor(
     override fun get(profileId: String): String? {
         val encoded = preferences.getString(secretPreferenceKey(profileId), null) ?: return null
         return runCatching {
-            decrypt(Base64.decode(encoded, Base64.NO_WRAP))
+            decrypt(profileId, Base64.decode(encoded, Base64.NO_WRAP))
         }.getOrNull()
     }
 
@@ -53,9 +53,9 @@ class AndroidKeystoreSecretStore @Inject constructor(
     override fun migrate(profileIds: List<String>, requireAuthentication: Boolean) {
         val migrated = profileIds.distinct().mapNotNull { profileId ->
             val encoded = preferences.getString(secretPreferenceKey(profileId), null) ?: return@mapNotNull null
-            val plaintext = decrypt(Base64.decode(encoded, Base64.NO_WRAP))
+            val plaintext = decrypt(profileId, Base64.decode(encoded, Base64.NO_WRAP))
             profileId to Base64.encodeToString(
-                encrypt(plaintext, requireAuthentication),
+                encrypt(profileId, plaintext, requireAuthentication),
                 Base64.NO_WRAP,
             )
         }
@@ -70,21 +70,33 @@ class AndroidKeystoreSecretStore @Inject constructor(
         authenticationRequired = required
     }
 
-    private fun encrypt(secret: String, requireAuthentication: Boolean): ByteArray {
+    private fun encrypt(
+        profileId: String,
+        secret: String,
+        requireAuthentication: Boolean,
+    ): ByteArray {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateKey(requireAuthentication))
+        cipher.updateAAD(associatedData(profileId))
         val ciphertext = cipher.doFinal(secret.toByteArray(Charsets.UTF_8))
         return ByteArray(2 + cipher.iv.size + ciphertext.size).also { payload ->
-            payload[0] = if (requireAuthentication) PAYLOAD_AUTHENTICATED else PAYLOAD_STANDARD
+            payload[0] = if (requireAuthentication) PAYLOAD_AUTHENTICATED_AAD else PAYLOAD_STANDARD_AAD
             payload[1] = cipher.iv.size.toByte()
             cipher.iv.copyInto(payload, destinationOffset = 2)
             ciphertext.copyInto(payload, destinationOffset = 2 + cipher.iv.size)
         }
     }
 
-    private fun decrypt(payload: ByteArray): String {
-        val legacy = payload.firstOrNull()?.toInt()?.and(0xFF) in 12..16
-        val authenticated = !legacy && payload.firstOrNull() == PAYLOAD_AUTHENTICATED
+    private fun decrypt(profileId: String, payload: ByteArray): String {
+        val payloadType = payload.firstOrNull() ?: error("INVALID_SECRET")
+        val legacy = payloadType.toInt().and(0xFF) in 12..16
+        val authenticated = when {
+            legacy -> false
+            payloadType == PAYLOAD_STANDARD || payloadType == PAYLOAD_STANDARD_AAD -> false
+            payloadType == PAYLOAD_AUTHENTICATED || payloadType == PAYLOAD_AUTHENTICATED_AAD -> true
+            else -> error("INVALID_SECRET")
+        }
+        val usesAssociatedData = payloadType == PAYLOAD_STANDARD_AAD || payloadType == PAYLOAD_AUTHENTICATED_AAD
         val ivOffset = if (legacy) 1 else 2
         val ivSize = payload.getOrNull(if (legacy) 0 else 1)?.toInt()?.and(0xFF) ?: error("INVALID_SECRET")
         require(ivSize in 12..16 && payload.size > ivOffset + ivSize)
@@ -92,9 +104,14 @@ class AndroidKeystoreSecretStore @Inject constructor(
         val ciphertext = payload.copyOfRange(ivOffset + ivSize, payload.size)
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, getOrCreateKey(authenticated), GCMParameterSpec(128, iv))
+        if (usesAssociatedData) cipher.updateAAD(associatedData(profileId))
+        val plaintext = cipher.doFinal(ciphertext).toString(Charsets.UTF_8)
         authenticationRequired = authenticated
-        return cipher.doFinal(ciphertext).toString(Charsets.UTF_8)
+        return plaintext
     }
+
+    private fun associatedData(profileId: String): ByteArray =
+        "$AAD_DOMAIN\u0000$profileId".toByteArray(Charsets.UTF_8)
 
     private fun getOrCreateKey(requireAuthentication: Boolean): SecretKey {
         val alias = if (requireAuthentication) AUTHENTICATED_KEY_ALIAS else STANDARD_KEY_ALIAS
@@ -145,6 +162,8 @@ class AndroidKeystoreSecretStore @Inject constructor(
         const val KEY_AUTHENTICATION_SECONDS = 3600
         const val PAYLOAD_STANDARD: Byte = 1
         const val PAYLOAD_AUTHENTICATED: Byte = 2
+        const val PAYLOAD_STANDARD_AAD: Byte = 3
+        const val PAYLOAD_AUTHENTICATED_AAD: Byte = 4
+        const val AAD_DOMAIN = "cpamp-profile-secret-v1"
     }
 }
-

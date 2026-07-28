@@ -31,4 +31,33 @@ class AndroidKeystoreSecretStoreTest {
         store.remove(profileId)
         assertNull(store.get(profileId))
     }
+
+    @Test
+    fun encryptedSecretsCannotBeSwappedBetweenProfiles() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val store = AndroidKeystoreSecretStore(context)
+        val firstProfileId = UUID.randomUUID().toString()
+        val secondProfileId = UUID.randomUUID().toString()
+        val preferences = context.getSharedPreferences(
+            "cpamp_encrypted_secrets_v1",
+            Context.MODE_PRIVATE,
+        )
+        val firstKey = "profile_secret_$firstProfileId"
+        val secondKey = "profile_secret_$secondProfileId"
+
+        store.put(firstProfileId, "admin-${UUID.randomUUID()}")
+        store.put(secondProfileId, "admin-${UUID.randomUUID()}")
+        val firstPayload = requireNotNull(preferences.getString(firstKey, null))
+        val secondPayload = requireNotNull(preferences.getString(secondKey, null))
+        preferences.edit()
+            .putString(firstKey, secondPayload)
+            .putString(secondKey, firstPayload)
+            .commit()
+
+        assertNull(store.get(firstProfileId))
+        assertNull(store.get(secondProfileId))
+
+        store.remove(firstProfileId)
+        store.remove(secondProfileId)
+    }
 }
