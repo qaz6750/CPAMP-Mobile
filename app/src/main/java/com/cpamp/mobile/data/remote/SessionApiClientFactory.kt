@@ -25,15 +25,21 @@ class SessionApiClientFactory @Inject constructor(
         if (existing?.matches(session) == true) return existing.api
 
         return synchronized(this) {
-            cached?.takeIf { it.matches(session) }?.api ?: create(session).also { cached = it }.api
+            cached?.takeIf { it.matches(session) }?.api ?: run {
+                val replacement = create(session)
+                val previous = cached
+                cached = replacement
+                previous?.close()
+                replacement.api
+            }
         }
     }
 
     fun invalidate() {
         synchronized(this) {
-            cached?.client?.dispatcher?.cancelAll()
-            cached?.client?.connectionPool?.evictAll()
+            val previous = cached
             cached = null
+            previous?.close()
         }
     }
 
@@ -76,6 +82,12 @@ class SessionApiClientFactory @Inject constructor(
             profileId == session.profile.id &&
                 baseUrl == session.profile.baseUrl &&
                 adminKey == session.adminKey
+
+        fun close() {
+            client.dispatcher.cancelAll()
+            client.connectionPool.evictAll()
+            client.dispatcher.executorService.shutdown()
+        }
     }
 
     private class AuthInterceptor(private val adminKey: String) : Interceptor {
@@ -104,4 +116,3 @@ class SessionApiClientFactory @Inject constructor(
         val RETRYABLE_CODES = setOf(502, 503, 504)
     }
 }
-
