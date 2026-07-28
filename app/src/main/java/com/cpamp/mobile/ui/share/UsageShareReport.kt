@@ -7,9 +7,12 @@ data class UsageShareReport(
     val toMs: Long,
     val actualDays: Int,
     val requests: Long,
+    val successfulRequests: Long,
+    val failedRequests: Long,
     val successRate: Double,
     val tokens: Long,
     val cost: Double,
+    val generatedAtMs: Long,
     val timeline: List<UsageSharePoint>,
     val topModels: List<UsageShareModel>,
 )
@@ -37,9 +40,12 @@ fun MonitoringResponseDto.toUsageShareReport(
         toMs = toMs,
         actualDays = actualDays,
         requests = summary.totalCalls,
+        successfulRequests = summary.successCalls,
+        failedRequests = summary.failureCalls,
         successRate = summary.successRate,
         tokens = summary.totalTokens,
         cost = summary.totalCost,
+        generatedAtMs = generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
         timeline = timeline.filter { it.bucketMs in fromMs..toMs }.map { point ->
             UsageSharePoint(
                 timestampMs = point.bucketMs,

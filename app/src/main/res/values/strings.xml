@@ -37,6 +37,8 @@
     <string name="share_usage">Share usage report</string>
     <string name="share_usage_failed">The usage report could not be generated.</string>
     <string name="share_report_title">CPAMP Mobile usage</string>
+    <string name="share_days_badge">%1$d days</string>
+    <string name="share_generated_at">Generated %1$s</string>
     <string name="share_model_value">%1$s requests · %2$s tokens</string>
     <string name="share_privacy_footer">Aggregate usage only · Server and credential details excluded</string>
     <string name="preview_live">Live request stream</string>
