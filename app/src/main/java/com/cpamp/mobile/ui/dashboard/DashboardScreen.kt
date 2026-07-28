@@ -22,7 +22,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +45,7 @@ import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.ConnectionPill
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
+import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
@@ -95,13 +95,12 @@ fun DashboardScreen(
                                     secure = !profile.usesCleartext,
                                 )
                             }
-                            IconButton(onClick = viewModel::refresh, enabled = !state.refreshing) {
-                                if (state.refreshing) {
-                                    CircularProgressIndicator(modifier = Modifier.height(22.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
-                                }
-                            }
+                            LoadingIconButton(
+                                icon = Icons.Outlined.Refresh,
+                                contentDescription = stringResource(R.string.refresh),
+                                loading = state.refreshing,
+                                onClick = viewModel::refresh,
+                            )
                         }
                     },
                 )

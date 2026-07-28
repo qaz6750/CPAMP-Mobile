@@ -25,10 +25,8 @@ import androidx.compose.material.icons.outlined.Token
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +51,7 @@ import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
+import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
@@ -93,20 +92,20 @@ fun UsageAnalyticsScreen(
                     subtitle = stringResource(R.string.usage_subtitle),
                     trailing = {
                         Row {
-                            IconButton(onClick = viewModel::share, enabled = !state.loading && !state.sharing) {
-                                if (state.sharing) {
-                                    CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.share_usage))
-                                }
-                            }
-                            IconButton(onClick = viewModel::refresh, enabled = !state.loading && !state.sharing) {
-                                if (state.loading) {
-                                    CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
-                                }
-                            }
+                            LoadingIconButton(
+                                icon = Icons.Outlined.Share,
+                                contentDescription = stringResource(R.string.share_usage),
+                                loading = state.sharing,
+                                enabled = !state.loading,
+                                onClick = viewModel::share,
+                            )
+                            LoadingIconButton(
+                                icon = Icons.Outlined.Refresh,
+                                contentDescription = stringResource(R.string.refresh),
+                                loading = state.loading,
+                                enabled = !state.sharing,
+                                onClick = viewModel::refresh,
+                            )
                         }
                     },
                 )

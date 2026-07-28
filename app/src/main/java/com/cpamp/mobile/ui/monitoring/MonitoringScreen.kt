@@ -34,7 +34,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -63,6 +62,7 @@ import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,13 +96,12 @@ fun MonitoringScreen(
                     title = stringResource(R.string.traffic_title),
                     subtitle = stringResource(R.string.traffic_subtitle),
                     trailing = {
-                        IconButton(onClick = viewModel::refresh, enabled = !state.refreshing) {
-                            if (state.refreshing) {
-                                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
-                            }
-                        }
+                        LoadingIconButton(
+                            icon = Icons.Outlined.Refresh,
+                            contentDescription = stringResource(R.string.refresh),
+                            loading = state.refreshing,
+                            onClick = viewModel::refresh,
+                        )
                     },
                 )
             }

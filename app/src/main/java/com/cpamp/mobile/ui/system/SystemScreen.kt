@@ -52,6 +52,7 @@ import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.CategoryListRow
 import com.cpamp.mobile.ui.components.ConnectionPill
+import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.safeServerName
@@ -89,13 +90,12 @@ fun SystemScreen(
                     title = stringResource(R.string.system_title),
                     subtitle = stringResource(R.string.system_subtitle),
                     trailing = {
-                        IconButton(onClick = viewModel::refresh, enabled = !state.loading) {
-                            if (state.loading) {
-                                CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                            } else {
-                                Icon(Icons.Outlined.Refresh, contentDescription = stringResource(R.string.refresh))
-                            }
-                        }
+                        LoadingIconButton(
+                            icon = Icons.Outlined.Refresh,
+                            contentDescription = stringResource(R.string.refresh),
+                            loading = state.loading,
+                            onClick = viewModel::refresh,
+                        )
                     },
                 )
             }
