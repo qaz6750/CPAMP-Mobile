@@ -112,16 +112,31 @@ fun DashboardScreen(
             summary?.let { data ->
                 item { DashboardMetrics(data) }
                 item {
+                    val timeline = state.analyticsTimeline
                     DashboardTrafficChart(
                         title = stringResource(R.string.preview_trend),
-                        points = data.trafficTimeline.map { point ->
-                            AnalyticsTrendPoint(
-                                timestampMs = point.bucketMs,
-                                requests = point.calls,
-                                tokens = point.tokens,
-                                success = point.success,
-                                failure = point.failure,
-                            )
+                        points = if (timeline.isNotEmpty()) {
+                            timeline.map { point ->
+                                AnalyticsTrendPoint(
+                                    timestampMs = point.bucketMs,
+                                    requests = point.calls,
+                                    tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
+                                    bucketEndMs = point.bucketEndMs,
+                                    success = point.success,
+                                    failure = point.failure,
+                                    cost = point.cost,
+                                )
+                            }
+                        } else {
+                            data.trafficTimeline.map { point ->
+                                AnalyticsTrendPoint(
+                                    timestampMs = point.bucketMs,
+                                    requests = point.calls,
+                                    tokens = point.tokens,
+                                    success = point.success,
+                                    failure = point.failure,
+                                )
+                            }
                         },
                         nowMs = data.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
                         emptyText = stringResource(R.string.no_traffic),

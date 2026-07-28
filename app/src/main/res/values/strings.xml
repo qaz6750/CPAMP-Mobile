@@ -12,7 +12,7 @@
     <string name="metric_success">Success rate</string>
     <string name="metric_tokens">Tokens today</string>
     <string name="metric_cost">Estimated cost</string>
-    <string name="preview_trend">Traffic trend</string>
+    <string name="preview_trend">Usage trend</string>
     <string name="traffic_title">Request monitoring</string>
     <string name="traffic_subtitle">Watch latency, failures and model usage</string>
     <string name="usage_title">Usage analytics</string>
@@ -189,6 +189,7 @@
     <string name="traffic_chart_description">Traffic trend with %1$d total requests</string>
     <string name="trend_tokens">Tokens</string>
     <string name="trend_requests">Requests</string>
+    <string name="trend_cost">Estimated cost</string>
     <string name="token_trend_description">Token trend with %1$d total tokens</string>
     <string name="request_trend_description">Request trend with %1$d total requests</string>
     <string name="previous_time_point">Previous time point</string>
@@ -196,6 +197,7 @@
     <string name="trend_time_range">%1$s – %2$s</string>
     <string name="trend_requests_value">%1$s requests</string>
     <string name="trend_tokens_value">%1$s tokens</string>
+    <string name="trend_cost_value">Estimated cost %1$s</string>
     <string name="trend_success_failure">%1$d succeeded · %2$d failed</string>
     <string name="model_usage">%1$d calls · %2$s tokens</string>
     <string name="cached_data_notice">Showing cached data from %1$s while reconnecting.</string>

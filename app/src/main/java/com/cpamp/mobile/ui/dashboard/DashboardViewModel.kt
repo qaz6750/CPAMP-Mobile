@@ -4,8 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.dashboard.DashboardRepository
+import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
+import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
+import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
+import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -23,6 +29,7 @@ import kotlinx.coroutines.sync.withLock
 data class DashboardUiState(
     val profile: ServerProfile? = null,
     val summary: DashboardSummaryDto? = null,
+    val analyticsTimeline: List<MonitoringTimelineDto> = emptyList(),
     val loading: Boolean = true,
     val refreshing: Boolean = false,
     val fromCache: Boolean = false,
@@ -36,6 +43,7 @@ enum class DashboardError { Unauthorized, RateLimited, Timeout, Network, Server 
 class DashboardViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val dashboardRepository: DashboardRepository,
+    private val monitoringRepository: MonitoringRepository,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(DashboardUiState())
     val state: StateFlow<DashboardUiState> = mutableState.asStateFlow()
@@ -80,12 +88,33 @@ class DashboardViewModel @Inject constructor(
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
-            runCatching { dashboardRepository.refresh(session, start, now) }
-                .onSuccess { summary ->
+            runCatching {
+                coroutineScope {
+                    val summary = async { dashboardRepository.refresh(session, start, now) }
+                    val timeline = async {
+                        runCatching {
+                            monitoringRepository.refresh(
+                                session = session,
+                                request = MonitoringRequestDto(
+                                    fromMs = start,
+                                    toMs = now,
+                                    nowMs = now,
+                                    timeZone = ZoneId.systemDefault().id,
+                                    include = MonitoringIncludeDto(timeline = true),
+                                ),
+                                cacheResult = false,
+                            ).timeline
+                        }.getOrDefault(emptyList())
+                    }
+                    summary.await() to timeline.await()
+                }
+            }
+                .onSuccess { (summary, timeline) ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
                     mutableState.value = mutableState.value.copy(
                         profile = session.profile,
                         summary = summary,
+                        analyticsTimeline = timeline,
                         loading = false,
                         refreshing = false,
                         fromCache = false,

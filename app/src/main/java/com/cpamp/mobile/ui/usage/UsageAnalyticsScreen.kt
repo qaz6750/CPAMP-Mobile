@@ -51,8 +51,8 @@ import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.components.AppBackground
-import com.cpamp.mobile.ui.components.AnalyticsTrendCard
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
+import com.cpamp.mobile.ui.components.DashboardTrafficChart
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.PageHeader
 
@@ -195,7 +195,7 @@ fun UsageAnalyticsScreen(
                     }
                 }
                 item {
-                    AnalyticsTrendCard(
+                    DashboardTrafficChart(
                         title = stringResource(R.string.usage_trend),
                         points = response.timeline.map { point ->
                             AnalyticsTrendPoint(
@@ -208,7 +208,9 @@ fun UsageAnalyticsScreen(
                                 cost = point.cost,
                             )
                         },
+                        nowMs = response.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
                         emptyText = stringResource(R.string.no_traffic),
+                        compactToData = false,
                     )
                 }
                 item {

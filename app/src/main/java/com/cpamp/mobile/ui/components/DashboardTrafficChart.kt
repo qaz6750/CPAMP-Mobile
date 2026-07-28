@@ -26,10 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -42,11 +39,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
+import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.compactNumber
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.math.min
 
 @Composable
 fun DashboardTrafficChart(
@@ -55,9 +52,13 @@ fun DashboardTrafficChart(
     nowMs: Long,
     emptyText: String,
     modifier: Modifier = Modifier,
+    compactToData: Boolean = true,
 ) {
-    val visiblePoints = remember(points, nowMs) { dashboardVisibleTrafficPoints(points, nowMs) }
-    val hasData = visiblePoints.any { it.requests > 0 || it.tokens > 0 }
+    val visiblePoints = remember(points, nowMs, compactToData) {
+        if (compactToData) dashboardVisibleTrafficPoints(points, nowMs)
+        else points.filter { it.timestampMs <= nowMs }
+    }
+    val hasData = visiblePoints.any { it.requests > 0 || it.tokens > 0 || (it.cost ?: 0.0) > 0 }
     val chartDescription = stringResource(
         R.string.traffic_chart_description,
         visiblePoints.sumOf(AnalyticsTrendPoint::requests),
@@ -73,9 +74,10 @@ fun DashboardTrafficChart(
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 ChartLegend(MaterialTheme.colorScheme.primary, stringResource(R.string.trend_requests))
                 ChartLegend(MaterialTheme.colorScheme.tertiary, stringResource(R.string.trend_tokens))
+                ChartLegend(CostLineColor, stringResource(R.string.trend_cost))
             }
             if (!hasData) {
                 Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
@@ -86,15 +88,18 @@ fun DashboardTrafficChart(
 
             val requestColor = MaterialTheme.colorScheme.primary
             val tokenColor = MaterialTheme.colorScheme.tertiary
+            val costColor = CostLineColor
             val gridColor = MaterialTheme.colorScheme.outlineVariant
             val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
             val surfaceColor = MaterialTheme.colorScheme.surface
             val maxTokens = visiblePoints.maxOf { it.tokens }.coerceAtLeast(1)
             val maxRequests = visiblePoints.maxOf { it.requests }.coerceAtLeast(1)
+            val hasCost = visiblePoints.any { it.cost != null }
+            val maxCost = visiblePoints.maxOf { it.cost ?: 0.0 }.coerceAtLeast(0.0001)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                ChartAxisLabels(maxTokens, Modifier.width(42.dp))
+                ChartAxisLabels(maxRequests, Modifier.width(38.dp), Alignment.End, requestColor)
                 Canvas(
-                    modifier = Modifier.weight(1f).height(180.dp).padding(horizontal = 5.dp)
+                    modifier = Modifier.weight(1f).height(180.dp).padding(horizontal = 4.dp)
                         .pointerInput(visiblePoints) {
                             detectTapGestures { selectedIndex = trendPointIndex(it.x, size.width.toFloat(), visiblePoints.size) }
                         }
@@ -109,58 +114,57 @@ fun DashboardTrafficChart(
                         val y = size.height * row / 2f
                         drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
                     }
-                    val slotWidth = size.width / visiblePoints.size
-                    val barWidth = min(slotWidth * 0.54f, 20.dp.toPx())
-                    visiblePoints.forEachIndexed { index, point ->
-                        val x = slotWidth * (index + 0.5f)
-                        val y = size.height * (1f - point.tokens / maxTokens.toFloat())
-                        drawRoundRect(
-                            color = tokenColor,
-                            topLeft = Offset(x - barWidth / 2f, y),
-                            size = Size(barWidth, size.height - y),
-                            cornerRadius = CornerRadius(4.dp.toPx()),
-                            alpha = if (isCurrentTrafficBucket(point, nowMs)) 0.55f else 0.88f,
-                        )
+                    val requestOffsets = visiblePoints.mapIndexed { index, point ->
+                        Offset(chartX(index, visiblePoints.size, size.width), size.height * (1f - point.requests / maxRequests.toFloat()))
                     }
-                    val offsets = visiblePoints.mapIndexed { index, point ->
-                        Offset(slotWidth * (index + 0.5f), size.height * (1f - point.requests / maxRequests.toFloat()))
+                    val tokenOffsets = visiblePoints.mapIndexed { index, point ->
+                        Offset(chartX(index, visiblePoints.size, size.width), size.height * (1f - point.tokens / maxTokens.toFloat()))
                     }
-                    val linePath = smoothChartPath(offsets)
-                    val areaPath = smoothChartPath(offsets).apply {
-                        lineTo(offsets.last().x, size.height)
-                        lineTo(offsets.first().x, size.height)
-                        close()
+                    val costOffsets = visiblePoints.mapIndexed { index, point ->
+                        Offset(chartX(index, visiblePoints.size, size.width), size.height * (1f - (point.cost ?: 0.0) / maxCost).toFloat())
                     }
                     drawPath(
-                        areaPath,
-                        Brush.verticalGradient(listOf(requestColor.copy(alpha = 0.22f), Color.Transparent)),
-                    )
-                    drawPath(
-                        linePath,
+                        smoothChartPath(requestOffsets),
                         requestColor,
                         style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                     )
-                    if (visiblePoints.size <= 24) {
-                        offsets.forEach { offset ->
-                            drawCircle(surfaceColor, 4.dp.toPx(), offset)
-                            drawCircle(requestColor, 2.5.dp.toPx(), offset)
-                        }
+                    drawPath(
+                        smoothChartPath(tokenOffsets),
+                        tokenColor,
+                        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                    )
+                    if (hasCost) {
+                        drawPath(
+                            smoothChartPath(costOffsets),
+                            costColor,
+                            style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                        )
                     }
                     selectedIndex?.let { index ->
-                        val offset = offsets[index]
-                        drawLine(labelColor, Offset(offset.x, 0f), Offset(offset.x, size.height), 1.dp.toPx())
-                        drawCircle(surfaceColor, 6.dp.toPx(), offset)
-                        drawCircle(requestColor, 4.dp.toPx(), offset)
+                        val x = requestOffsets[index].x
+                        drawLine(labelColor, Offset(x, 0f), Offset(x, size.height), 1.dp.toPx())
+                        listOf(
+                            requestOffsets[index] to requestColor,
+                            tokenOffsets[index] to tokenColor,
+                        ).forEach { (offset, color) ->
+                            drawCircle(surfaceColor, 6.dp.toPx(), offset)
+                            drawCircle(color, 4.dp.toPx(), offset)
+                        }
+                        if (hasCost) {
+                            drawCircle(surfaceColor, 6.dp.toPx(), costOffsets[index])
+                            drawCircle(costColor, 4.dp.toPx(), costOffsets[index])
+                        }
                     }
                 }
-                ChartAxisLabels(maxRequests, Modifier.width(42.dp), Alignment.Start, requestColor)
+                ChartAxisLabels(maxTokens, Modifier.width(40.dp), Alignment.Start, tokenColor)
+                CostAxisLabels(if (hasCost) maxCost else 0.0, Modifier.width(48.dp), costColor)
             }
             Row(
-                Modifier.fillMaxWidth().padding(horizontal = 47.dp),
+                Modifier.fillMaxWidth().padding(start = 42.dp, end = 88.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 dashboardChartTicks(visiblePoints).forEach { point ->
-                    Text(point.timestampMs.asDashboardHour(), style = MaterialTheme.typography.labelSmall, color = labelColor)
+                    Text(point.timestampMs.asChartLabel(visiblePoints), style = MaterialTheme.typography.labelSmall, color = labelColor)
                 }
             }
             selectedIndex?.let { index -> DashboardPointDetails(visiblePoints[index]) }
@@ -195,6 +199,19 @@ private fun ChartAxisLabels(
 }
 
 @Composable
+private fun CostAxisLabels(maximum: Double, modifier: Modifier, color: Color) {
+    Column(
+        modifier = modifier.height(180.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.Start,
+    ) {
+        Text(maximum.asCost(), style = MaterialTheme.typography.labelSmall, color = color)
+        Text((maximum / 2).asCost(), style = MaterialTheme.typography.labelSmall, color = color)
+        Text("$0", style = MaterialTheme.typography.labelSmall, color = color)
+    }
+}
+
+@Composable
 private fun DashboardPointDetails(point: AnalyticsTrendPoint) {
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(
@@ -210,7 +227,10 @@ private fun DashboardPointDetails(point: AnalyticsTrendPoint) {
             Text(stringResource(R.string.trend_requests_value, point.requests.compactNumber()), style = MaterialTheme.typography.bodySmall)
             Text(stringResource(R.string.trend_tokens_value, point.tokens.compactNumber()), style = MaterialTheme.typography.bodySmall)
         }
-        Text(stringResource(R.string.trend_success_failure, point.success, point.failure), style = MaterialTheme.typography.bodySmall)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(stringResource(R.string.trend_success_failure, point.success, point.failure), style = MaterialTheme.typography.bodySmall)
+            point.cost?.let { Text(stringResource(R.string.trend_cost_value, it.asCost()), style = MaterialTheme.typography.bodySmall) }
+        }
     }
 }
 
@@ -237,15 +257,26 @@ private fun smoothChartPath(points: List<Offset>): Path = Path().apply {
     }
 }
 
+private fun chartX(index: Int, pointCount: Int, width: Float): Float =
+    if (pointCount <= 1) width / 2f else width * index / (pointCount - 1f)
+
 private fun dashboardChartTicks(points: List<AnalyticsTrendPoint>): List<AnalyticsTrendPoint> {
     if (points.size <= 2) return points
     return listOf(0, points.lastIndex / 2, points.lastIndex).distinct().map(points::get)
 }
 
-private fun Long.asDashboardHour(): String = Instant.ofEpochMilli(this)
-    .atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("HH:mm"))
+private fun Long.asChartLabel(points: List<AnalyticsTrendPoint>): String {
+    val span = (points.lastOrNull()?.timestampMs ?: this) - (points.firstOrNull()?.timestampMs ?: this)
+    val pattern = when {
+        span <= 24 * 60 * 60 * 1000L -> "HH:mm"
+        span <= 7 * 24 * 60 * 60 * 1000L -> "MM/dd HH:mm"
+        else -> "MM/dd"
+    }
+    return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern(pattern))
+}
 
 private fun Long.asDashboardDateTime(): String = Instant.ofEpochMilli(this)
     .atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))
 
 private const val DASHBOARD_BUCKET_MS = 60 * 60 * 1000L
+private val CostLineColor = Color(0xFFF59E0B)
