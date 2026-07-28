@@ -16,12 +16,25 @@ private val LightColors = lightColorScheme(
     primaryContainer = BrandBlueLight,
     onPrimaryContainer = Ink,
     secondary = ColorTokens.Secondary,
+    onSecondary = White,
+    secondaryContainer = ColorTokens.SecondaryContainerLight,
+    onSecondaryContainer = Ink,
     tertiary = Success,
+    onTertiary = White,
+    tertiaryContainer = ColorTokens.TertiaryContainerLight,
+    onTertiaryContainer = ColorTokens.OnTertiaryContainerLight,
     background = Sky,
     onBackground = Ink,
     surface = White,
+    onSurface = Ink,
     surfaceVariant = ColorTokens.SurfaceVariantLight,
+    onSurfaceVariant = ColorTokens.OnSurfaceVariantLight,
+    outline = ColorTokens.OutlineLight,
     outlineVariant = ColorTokens.OutlineLight,
+    surfaceTint = BrandBlue,
+    inverseSurface = Ink,
+    inverseOnSurface = Sky,
+    inversePrimary = ColorTokens.InversePrimaryLight,
     error = ColorTokens.Error,
 )
 
@@ -40,14 +53,19 @@ private val DarkColors = darkColorScheme(
 )
 
 private object ColorTokens {
-    val Secondary = androidx.compose.ui.graphics.Color(0xFF536785)
+    val Secondary = androidx.compose.ui.graphics.Color(0xFF3282A8)
     val SecondaryDark = androidx.compose.ui.graphics.Color(0xFFB9C8E5)
+    val SecondaryContainerLight = androidx.compose.ui.graphics.Color(0xFFDDF3FC)
     val PrimaryContainerDark = androidx.compose.ui.graphics.Color(0xFF173B78)
-    val SurfaceVariantLight = androidx.compose.ui.graphics.Color(0xFFE7EFFC)
+    val SurfaceVariantLight = androidx.compose.ui.graphics.Color(0xFFE8F7FE)
     val SurfaceVariantDark = androidx.compose.ui.graphics.Color(0xFF192C4B)
-    val OutlineLight = androidx.compose.ui.graphics.Color(0xFFC7D5EA)
+    val OnSurfaceVariantLight = androidx.compose.ui.graphics.Color(0xFF526D82)
+    val OutlineLight = androidx.compose.ui.graphics.Color(0xFFB8DDEE)
     val OutlineDark = androidx.compose.ui.graphics.Color(0xFF344B70)
     val OnDark = androidx.compose.ui.graphics.Color(0xFFEAF1FF)
+    val TertiaryContainerLight = androidx.compose.ui.graphics.Color(0xFFD9F8EC)
+    val OnTertiaryContainerLight = androidx.compose.ui.graphics.Color(0xFF064E3B)
+    val InversePrimaryLight = androidx.compose.ui.graphics.Color(0xFF7DD3FC)
     val SuccessDark = androidx.compose.ui.graphics.Color(0xFF63D9A8)
     val Error = androidx.compose.ui.graphics.Color(0xFFBA1A1A)
     val ErrorDark = androidx.compose.ui.graphics.Color(0xFFFFB4AB)
