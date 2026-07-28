@@ -25,7 +25,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.math.min
 
 @Singleton
 class UsageShareImageWriter @Inject constructor(
@@ -135,16 +134,20 @@ class UsageShareImageWriter @Inject constructor(
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.usage_trend), 56f, 824f, paint)
+        canvas.drawText(context.getString(R.string.share_trend_title), 56f, 812f, paint)
         paint.isFakeBoldText = false
+        paint.color = MUTED
+        paint.textSize = 21f
+        canvas.drawText(context.getString(R.string.share_trend_subtitle), 56f, 846f, paint)
 
-        drawLegend(canvas, paint, 720f, 816f, BLUE, context.getString(R.string.trend_requests))
-        drawLegend(canvas, paint, 866f, 816f, GREEN, context.getString(R.string.trend_tokens))
+        drawLegend(canvas, paint, 600f, 812f, BLUE, context.getString(R.string.trend_requests))
+        drawLegend(canvas, paint, 748f, 812f, GREEN, context.getString(R.string.trend_tokens))
+        drawLegend(canvas, paint, 850f, 812f, ORANGE, context.getString(R.string.trend_cost))
         drawTrend(
             canvas = canvas,
             paint = paint,
             points = report.timeline,
-            bounds = RectF(56f, 850f, 1024f, 1228f),
+            bounds = RectF(56f, 868f, 1024f, 1228f),
             useHourLabels = report.actualDays <= 1,
         )
     }
@@ -174,7 +177,7 @@ class UsageShareImageWriter @Inject constructor(
         paint.style = Paint.Style.FILL
         paint.color = CARD
         canvas.drawRoundRect(bounds, 24f, 24f, paint)
-        if (points.isEmpty() || points.none { it.requests > 0 || it.tokens > 0 }) {
+        if (points.isEmpty() || points.none { it.requests > 0 || it.tokens > 0 || it.cost > 0 }) {
             paint.color = MUTED
             paint.textSize = 25f
             paint.textAlign = Paint.Align.CENTER
@@ -183,70 +186,44 @@ class UsageShareImageWriter @Inject constructor(
             return
         }
 
-        val plot = RectF(bounds.left + 76f, bounds.top + 36f, bounds.right - 54f, bounds.bottom - 62f)
+        val plot = RectF(bounds.left + 72f, bounds.top + 34f, bounds.right - 190f, bounds.bottom - 62f)
         val maxTokens = points.maxOf { it.tokens }.coerceAtLeast(1)
         val maxRequests = points.maxOf { it.requests }.coerceAtLeast(1)
+        val maxCost = points.maxOf { it.cost }.coerceAtLeast(0.0001)
         repeat(3) { index ->
             val y = plot.top + plot.height() * index / 2f
             paint.color = GRID
             paint.strokeWidth = 2f
             canvas.drawLine(plot.left, y, plot.right, y, paint)
-            paint.color = MUTED
+            paint.color = BLUE
             paint.textSize = 19f
             paint.textAlign = Paint.Align.RIGHT
-            canvas.drawText(((maxTokens * (2 - index)) / 2).compactNumber(), plot.left - 14f, y + 7f, paint)
+            canvas.drawText(((maxRequests * (2 - index)) / 2).compactNumber(), plot.left - 14f, y + 7f, paint)
+            paint.color = GREEN
             paint.textAlign = Paint.Align.LEFT
-            canvas.drawText(((maxRequests * (2 - index)) / 2).compactNumber(), plot.right + 14f, y + 7f, paint)
+            canvas.drawText(((maxTokens * (2 - index)) / 2).compactNumber(), plot.right + 14f, y + 7f, paint)
+            paint.color = ORANGE
+            paint.textAlign = Paint.Align.RIGHT
+            canvas.drawText((maxCost * (2 - index) / 2).asCost(), bounds.right - 14f, y + 7f, paint)
         }
 
-        val slotWidth = plot.width() / points.size
-        val barWidth = min(slotWidth * 0.5f, 24f)
-        points.forEachIndexed { index, point ->
-            val x = plot.left + slotWidth * (index + 0.5f)
-            val top = plot.bottom - plot.height() * point.tokens / maxTokens.toFloat()
-            paint.color = Color.argb(210, 16, 185, 129)
-            canvas.drawRoundRect(RectF(x - barWidth / 2f, top, x + barWidth / 2f, plot.bottom), 5f, 5f, paint)
+        val requestPoints = points.mapIndexed { index, point ->
+            chartPoint(index, points.size, point.requests.toDouble(), maxRequests.toDouble(), plot)
         }
-
-        val requestPath = Path()
-        val areaPath = Path()
-        points.forEachIndexed { index, point ->
-            val x = plot.left + slotWidth * (index + 0.5f)
-            val y = plot.bottom - plot.height() * point.requests / maxRequests.toFloat()
-            if (index == 0) {
-                requestPath.moveTo(x, y)
-                areaPath.moveTo(x, plot.bottom)
-                areaPath.lineTo(x, y)
-            } else {
-                requestPath.lineTo(x, y)
-                areaPath.lineTo(x, y)
-            }
+        val tokenPoints = points.mapIndexed { index, point ->
+            chartPoint(index, points.size, point.tokens.toDouble(), maxTokens.toDouble(), plot)
         }
-        areaPath.lineTo(plot.left + slotWidth * (points.size - 0.5f), plot.bottom)
-        areaPath.close()
-        paint.shader = LinearGradient(
-            0f,
-            plot.top,
-            0f,
-            plot.bottom,
-            BLUE_FADE,
-            Color.TRANSPARENT,
-            Shader.TileMode.CLAMP,
-        )
-        paint.style = Paint.Style.FILL
-        canvas.drawPath(areaPath, paint)
-        paint.shader = null
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 7f
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.color = BLUE
-        canvas.drawPath(requestPath, paint)
+        val costPoints = points.mapIndexed { index, point ->
+            chartPoint(index, points.size, point.cost, maxCost, plot)
+        }
+        drawTrendLine(canvas, paint, requestPoints, BLUE)
+        drawTrendLine(canvas, paint, tokenPoints, GREEN)
+        drawTrendLine(canvas, paint, costPoints, ORANGE)
         paint.style = Paint.Style.FILL
 
         chartTicks(points).forEach { point ->
             val index = points.indexOf(point)
-            val x = plot.left + slotWidth * (index + 0.5f)
+            val x = chartX(index, points.size, plot)
             paint.color = MUTED
             paint.textSize = 19f
             paint.textAlign = when (index) {
@@ -257,6 +234,33 @@ class UsageShareImageWriter @Inject constructor(
             canvas.drawText(point.timestampMs.chartLabel(useHourLabels), x, bounds.bottom - 22f, paint)
         }
         paint.textAlign = Paint.Align.LEFT
+    }
+
+    private fun chartPoint(index: Int, count: Int, value: Double, maximum: Double, plot: RectF): Pair<Float, Float> =
+        chartX(index, count, plot) to (plot.bottom - plot.height() * (value / maximum).toFloat())
+
+    private fun chartX(index: Int, count: Int, plot: RectF): Float =
+        if (count <= 1) plot.centerX() else plot.left + plot.width() * index / (count - 1f)
+
+    private fun drawTrendLine(canvas: Canvas, paint: Paint, points: List<Pair<Float, Float>>, color: Int) {
+        if (points.isEmpty()) return
+        val path = Path().apply {
+            moveTo(points.first().first, points.first().second)
+            points.zipWithNext().forEach { (previous, current) ->
+                val midpoint = (previous.first + current.first) / 2f
+                cubicTo(midpoint, previous.second, midpoint, current.second, current.first, current.second)
+            }
+        }
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 7f
+        paint.strokeCap = Paint.Cap.ROUND
+        paint.strokeJoin = Paint.Join.ROUND
+        paint.color = color
+        canvas.drawPath(path, paint)
+        if (points.size == 1) {
+            paint.style = Paint.Style.FILL
+            canvas.drawCircle(points.first().first, points.first().second, 7f, paint)
+        }
     }
 
     private fun drawModels(canvas: Canvas, paint: Paint, report: UsageShareReport) {
@@ -360,8 +364,8 @@ class UsageShareImageWriter @Inject constructor(
         val CARD = Color.WHITE
         val SKY_BLUE = Color.rgb(56, 189, 248)
         val BLUE = Color.rgb(14, 165, 233)
-        val BLUE_FADE = Color.argb(70, 14, 165, 233)
         val GREEN = Color.rgb(16, 185, 129)
+        val ORANGE = Color.rgb(245, 158, 11)
         val TEXT = Color.rgb(15, 41, 66)
         val MUTED = Color.rgb(89, 112, 136)
         val GRID = Color.rgb(222, 235, 246)

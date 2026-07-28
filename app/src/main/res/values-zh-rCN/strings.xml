@@ -41,6 +41,8 @@
     <string name="share_generated_at">生成于 %1$s</string>
     <string name="share_model_value">%1$s 次请求 · %2$s Token</string>
     <string name="share_privacy_footer">仅包含聚合用量 · 不包含服务器和凭据信息</string>
+    <string name="share_trend_title">用量趋势总览</string>
+    <string name="share_trend_subtitle">请求、Token 与成本在同一时间范围内联动展示。</string>
     <string name="preview_live">实时请求流</string>
     <string name="preview_failures">近期失败</string>
     <string name="item_count">%1$d 项</string>

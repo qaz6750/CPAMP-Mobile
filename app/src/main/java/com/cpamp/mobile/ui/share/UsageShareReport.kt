@@ -21,6 +21,7 @@ data class UsageSharePoint(
     val timestampMs: Long,
     val requests: Long,
     val tokens: Long,
+    val cost: Double,
 )
 
 data class UsageShareModel(
@@ -51,6 +52,7 @@ fun MonitoringResponseDto.toUsageShareReport(
                 timestampMs = point.bucketMs,
                 requests = point.calls,
                 tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
+                cost = point.cost,
             )
         },
         topModels = modelStats.sortedByDescending { it.calls }.take(5).map { model ->

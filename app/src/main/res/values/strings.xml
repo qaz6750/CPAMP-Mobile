@@ -41,6 +41,8 @@
     <string name="share_generated_at">Generated %1$s</string>
     <string name="share_model_value">%1$s requests · %2$s tokens</string>
     <string name="share_privacy_footer">Aggregate usage only · Server and credential details excluded</string>
+    <string name="share_trend_title">Usage trend overview</string>
+    <string name="share_trend_subtitle">Requests, tokens and cost shown over the same time range.</string>
     <string name="preview_live">Live request stream</string>
     <string name="preview_failures">Recent failures</string>
     <string name="item_count">%1$d items</string>
