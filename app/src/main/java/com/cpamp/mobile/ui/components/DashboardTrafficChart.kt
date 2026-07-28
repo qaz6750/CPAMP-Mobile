@@ -55,7 +55,7 @@ fun DashboardTrafficChart(
     emptyText: String,
     modifier: Modifier = Modifier,
     compactToData: Boolean = true,
-    chartHeight: Dp = 180.dp,
+    chartHeight: Dp = 220.dp,
     titleAction: (@Composable () -> Unit)? = null,
 ) {
     val visiblePoints = remember(points, nowMs, compactToData) {
@@ -108,9 +108,9 @@ fun DashboardTrafficChart(
             val hasCost = visiblePoints.any { it.cost != null }
             val maxCost = visiblePoints.maxOf { it.cost ?: 0.0 }.coerceAtLeast(0.0001)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                ChartAxisLabels(maxRequests, chartHeight, Modifier.width(38.dp), Alignment.End, requestColor)
+                ChartAxisLabels(maxRequests, chartHeight, Modifier.width(30.dp), Alignment.End, requestColor)
                 Canvas(
-                    modifier = Modifier.weight(1f).height(chartHeight).padding(horizontal = 4.dp)
+                    modifier = Modifier.weight(1f).height(chartHeight).padding(horizontal = 2.dp)
                         .pointerInput(visiblePoints) {
                             detectTapGestures { selectedIndex = trendPointIndex(it.x, size.width.toFloat(), visiblePoints.size) }
                         }
@@ -167,11 +167,18 @@ fun DashboardTrafficChart(
                         }
                     }
                 }
-                ChartAxisLabels(maxTokens, chartHeight, Modifier.width(40.dp), Alignment.Start, tokenColor)
-                CostAxisLabels(if (hasCost) maxCost else 0.0, chartHeight, Modifier.width(48.dp), costColor)
+                CombinedAxisLabels(
+                    tokenMaximum = maxTokens,
+                    costMaximum = maxCost,
+                    showCost = hasCost,
+                    height = chartHeight,
+                    modifier = Modifier.width(48.dp),
+                    tokenColor = tokenColor,
+                    costColor = costColor,
+                )
             }
             Row(
-                Modifier.fillMaxWidth().padding(start = 42.dp, end = 88.dp),
+                Modifier.fillMaxWidth().padding(start = 32.dp, end = 50.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 dashboardChartTicks(visiblePoints).forEach { point ->
@@ -211,15 +218,29 @@ private fun ChartAxisLabels(
 }
 
 @Composable
-private fun CostAxisLabels(maximum: Double, height: Dp, modifier: Modifier, color: Color) {
+private fun CombinedAxisLabels(
+    tokenMaximum: Long,
+    costMaximum: Double,
+    showCost: Boolean,
+    height: Dp,
+    modifier: Modifier,
+    tokenColor: Color,
+    costColor: Color,
+) {
+    val levels = listOf(1.0, 0.5, 0.0)
     Column(
         modifier = modifier.height(height),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.Start,
     ) {
-        Text(maximum.asCost(), style = MaterialTheme.typography.labelSmall, color = color)
-        Text((maximum / 2).asCost(), style = MaterialTheme.typography.labelSmall, color = color)
-        Text("$0", style = MaterialTheme.typography.labelSmall, color = color)
+        levels.forEach { level ->
+            Column {
+                Text((tokenMaximum * level).toLong().compactNumber(), style = MaterialTheme.typography.labelSmall, color = tokenColor)
+                if (showCost) {
+                    Text((costMaximum * level).asCost(), style = MaterialTheme.typography.labelSmall, color = costColor)
+                }
+            }
+        }
     }
 }
 
