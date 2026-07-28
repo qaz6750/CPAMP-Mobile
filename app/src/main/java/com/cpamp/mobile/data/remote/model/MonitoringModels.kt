@@ -114,6 +114,11 @@ data class MonitoringTimelineDto(
     val failure: Long = 0,
     val tokens: Long = 0,
     @SerialName("total_tokens") val totalTokens: Long = 0,
+    @SerialName("input_tokens") val inputTokens: Long = 0,
+    @SerialName("output_tokens") val outputTokens: Long = 0,
+    @SerialName("cached_tokens") val cachedTokens: Long = 0,
+    @SerialName("reasoning_tokens") val reasoningTokens: Long = 0,
+    @SerialName("average_latency_ms") val averageLatencyMs: Double? = null,
     val cost: Double = 0.0,
 )
 

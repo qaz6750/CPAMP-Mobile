@@ -58,4 +58,30 @@ class RemoteModelsTest {
         assertEquals("evt-1", decoded.events?.items?.single()?.stableId)
         assertEquals(true, decoded.events?.hasMore)
     }
+
+    @Test
+    fun `monitoring timeline preserves health and token structure`() {
+        val payload = """
+            {
+              "timeline": [{
+                "bucket_ms": 100,
+                "calls": 10,
+                "success": 8,
+                "failure": 2,
+                "average_latency_ms": 1250.5,
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "cached_tokens": 25,
+                "reasoning_tokens": 10
+              }]
+            }
+        """.trimIndent()
+
+        val point = json.decodeFromString<MonitoringResponseDto>(payload).timeline.single()
+        assertEquals(1250.5, point.averageLatencyMs ?: 0.0, 0.0)
+        assertEquals(100, point.inputTokens)
+        assertEquals(50, point.outputTokens)
+        assertEquals(25, point.cachedTokens)
+        assertEquals(10, point.reasoningTokens)
+    }
 }
