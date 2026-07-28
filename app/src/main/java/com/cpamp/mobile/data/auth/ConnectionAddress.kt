@@ -6,8 +6,6 @@ object ConnectionAddress {
     fun normalize(raw: String): String {
         var candidate = raw.trim()
         require(candidate.isNotBlank()) { "SERVER_ADDRESS_REQUIRED" }
-        candidate = candidate.replace(Regex("""(?i)/?(?:v0/management|management\.html)/?$"""), "")
-            .trimEnd('/')
         if (!candidate.startsWith("http://", true) && !candidate.startsWith("https://", true)) {
             candidate = "https://$candidate"
         }
@@ -20,10 +18,12 @@ object ConnectionAddress {
         require(uri.rawUserInfo == null && uri.rawQuery == null && uri.rawFragment == null) {
             "SERVER_ADDRESS_INVALID"
         }
-        val path = uri.path.orEmpty().trimEnd('/')
-        require(path.isBlank()) { "SERVER_PATH_UNSUPPORTED" }
+        require(uri.port == -1 || uri.port in 1..65535) { "SERVER_ADDRESS_INVALID" }
+        val path = uri.rawPath.orEmpty()
+        require(ALLOWED_PATHS.any { it.equals(path, ignoreCase = true) }) { "SERVER_PATH_UNSUPPORTED" }
         val normalizedScheme = uri.scheme.lowercase()
-        val normalizedHost = if (uri.host.contains(':') && !uri.host.startsWith('[')) "[${uri.host}]" else uri.host
+        val host = uri.host.lowercase()
+        val normalizedHost = if (host.contains(':') && !host.startsWith('[')) "[$host]" else host
         val port = if (uri.port >= 0) ":${uri.port}" else ""
         return "$normalizedScheme://$normalizedHost$port"
     }
@@ -32,4 +32,13 @@ object ConnectionAddress {
         val uri = URI(normalized)
         return if (uri.port >= 0) "${uri.host}:${uri.port}" else uri.host
     }
+
+    private val ALLOWED_PATHS = setOf(
+        "",
+        "/",
+        "/v0/management",
+        "/v0/management/",
+        "/management.html",
+        "/management.html/",
+    )
 }

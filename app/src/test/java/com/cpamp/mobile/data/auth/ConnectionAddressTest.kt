@@ -23,12 +23,25 @@ class ConnectionAddressTest {
     }
 
     @Test
+    fun `management filename in host is preserved`() {
+        assertEquals(
+            "https://server.management.html",
+            ConnectionAddress.normalize("server.management.html"),
+        )
+    }
+
+    @Test
     fun `credentials queries fragments and arbitrary paths are rejected`() {
         listOf(
             "https://user@example.test",
             "https://example.test?token=x",
             "https://example.test/#secret",
             "https://example.test/admin",
+            "https://example.test//",
+            "https://example.test/v0/management//",
+            "https://example.test/%6danagement.html",
+            "https://example.test:0",
+            "https://example.test:65536",
         ).forEach { value ->
             assertThrows(IllegalArgumentException::class.java) { ConnectionAddress.normalize(value) }
         }
@@ -37,5 +50,13 @@ class ConnectionAddressTest {
     @Test
     fun `only http schemes are accepted`() {
         assertThrows(IllegalArgumentException::class.java) { ConnectionAddress.normalize("ftp://example.test") }
+    }
+
+    @Test
+    fun `scheme and host are canonicalized to lowercase`() {
+        assertEquals(
+            "https://example.test",
+            ConnectionAddress.normalize("HTTPS://EXAMPLE.TEST/"),
+        )
     }
 }
