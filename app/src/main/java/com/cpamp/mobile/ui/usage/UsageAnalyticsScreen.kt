@@ -39,7 +39,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -267,22 +266,20 @@ private fun ExpandedUsageTrend(
     onDismiss: () -> Unit,
 ) {
     val activity = LocalActivity.current
-    var previousOrientation by rememberSaveable {
-        mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+    val closeLandscape = {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        onDismiss()
     }
     DisposableEffect(activity) {
-        if (activity != null && activity.requestedOrientation != ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE) {
-            previousOrientation = activity.requestedOrientation
-            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-        }
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         onDispose {
             if (activity?.isChangingConfigurations == false) {
-                activity.requestedOrientation = previousOrientation
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             }
         }
     }
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = closeLandscape,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         Box(
@@ -298,7 +295,7 @@ private fun ExpandedUsageTrend(
                 compactToData = false,
                 chartHeight = 220.dp,
                 titleAction = {
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = closeLandscape) {
                         Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.close_expanded_trend))
                     }
                 },
