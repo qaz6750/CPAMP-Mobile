@@ -9,9 +9,11 @@ import com.cpamp.mobile.data.profile.ServerProfileStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 private val Context.securityDataStore by preferencesDataStore(name = "security_settings")
 
@@ -42,9 +44,12 @@ class AppLockRepository @Inject constructor(
             secretStore.migrate(profileIds, requireAuthentication = enabled)
             context.securityDataStore.edit { preferences -> preferences[LOCK_ENABLED] = enabled }
         } catch (error: Throwable) {
-            runCatching {
-                secretStore.migrate(profileIds, requireAuthentication = previousEnabled)
-            }.exceptionOrNull()?.let(error::addSuppressed)
+            withContext(NonCancellable) {
+                runCatching {
+                    val persistedEnabled = settings.first().enabled
+                    secretStore.migrate(profileIds, requireAuthentication = persistedEnabled)
+                }.exceptionOrNull()?.let(error::addSuppressed)
+            }
             throw error
         }
     }

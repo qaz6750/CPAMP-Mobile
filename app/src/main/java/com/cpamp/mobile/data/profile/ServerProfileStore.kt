@@ -11,6 +11,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,8 +35,8 @@ class ServerProfileStore @Inject constructor(
 
     suspend fun upsert(profile: ServerProfile, adminKey: String) {
         val previousSecret = secretStore.get(profile.id)
-        secretStore.put(profile.id, adminKey)
         try {
+            secretStore.put(profile.id, adminKey)
             context.profileDataStore.edit { preferences ->
                 val current = preferences[PROFILES_KEY]
                     ?.let { json.decodeFromString<StoredProfiles>(it) }
@@ -46,13 +48,19 @@ class ServerProfileStore @Inject constructor(
                 )
             }
         } catch (error: Throwable) {
-            runCatching {
-                if (previousSecret == null) {
-                    secretStore.remove(profile.id)
-                } else {
-                    secretStore.put(profile.id, previousSecret)
-                }
-            }.exceptionOrNull()?.let(error::addSuppressed)
+            withContext(NonCancellable) {
+                runCatching {
+                    val persisted = snapshot()
+                    val profileWasSaved = persisted.profiles.any { it == profile }
+                    if (profileWasSaved) {
+                        secretStore.put(profile.id, adminKey)
+                    } else if (previousSecret == null) {
+                        secretStore.remove(profile.id)
+                    } else {
+                        secretStore.put(profile.id, previousSecret)
+                    }
+                }.exceptionOrNull()?.let(error::addSuppressed)
+            }
             throw error
         }
     }
