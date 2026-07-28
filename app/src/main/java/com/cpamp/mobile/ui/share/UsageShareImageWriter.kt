@@ -181,7 +181,7 @@ class UsageShareImageWriter @Inject constructor(
             paint.color = MUTED
             paint.textSize = 25f
             paint.textAlign = Paint.Align.CENTER
-            canvas.drawText(context.getString(R.string.no_traffic), bounds.centerX(), bounds.centerY(), paint)
+            canvas.drawText(context.getString(R.string.share_no_traffic), bounds.centerX(), bounds.centerY(), paint)
             paint.textAlign = Paint.Align.LEFT
             return
         }
@@ -299,7 +299,7 @@ class UsageShareImageWriter @Inject constructor(
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.top_models), 56f, 1310f, paint)
+        canvas.drawText(context.getString(R.string.share_top_models, report.shortRangeLabel()), 56f, 1310f, paint)
         paint.isFakeBoldText = false
         paint.color = CARD
         canvas.drawRoundRect(RectF(56f, 1340f, 1024f, 1780f), 24f, 24f, paint)
@@ -308,7 +308,7 @@ class UsageShareImageWriter @Inject constructor(
             paint.color = MUTED
             paint.textSize = 25f
             paint.textAlign = Paint.Align.CENTER
-            canvas.drawText(context.getString(R.string.no_traffic), 540f, 1566f, paint)
+            canvas.drawText(context.getString(R.string.share_no_traffic), 540f, 1566f, paint)
             paint.textAlign = Paint.Align.LEFT
             return
         }
@@ -364,6 +364,14 @@ class UsageShareImageWriter @Inject constructor(
         val zone = ZoneId.systemDefault()
         return "${Instant.ofEpochMilli(fromMs).atZone(zone).format(formatter)}  –  " +
             Instant.ofEpochMilli(toMs).atZone(zone).format(formatter)
+    }
+
+    private fun UsageShareReport.shortRangeLabel(): String {
+        val formatter = DateTimeFormatter.ofPattern("MM-dd")
+        val zone = ZoneId.systemDefault()
+        val start = Instant.ofEpochMilli(fromMs).atZone(zone).format(formatter)
+        val end = Instant.ofEpochMilli(toMs).atZone(zone).format(formatter)
+        return if (start == end) start else "$start – $end"
     }
 
     private fun Long.chartLabel(reportUsesHours: Boolean): String {
