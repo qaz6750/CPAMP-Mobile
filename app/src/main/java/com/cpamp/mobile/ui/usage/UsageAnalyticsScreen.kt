@@ -68,6 +68,8 @@ import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
+import com.cpamp.mobile.ui.components.RequestHealthChart
+import com.cpamp.mobile.ui.components.TokenStructureChart
 
 @Composable
 fun UsageAnalyticsScreen(
@@ -221,6 +223,29 @@ fun UsageAnalyticsScreen(
                                 Icon(Icons.Outlined.Fullscreen, contentDescription = stringResource(R.string.expand_usage_trend))
                             }
                         },
+                    )
+                }
+                item {
+                    RequestHealthChart(
+                        title = stringResource(R.string.request_health_trend),
+                        subtitle = stringResource(R.string.request_health_subtitle),
+                        points = response.timeline,
+                        emptyText = stringResource(R.string.no_range_traffic),
+                        successLabel = stringResource(R.string.health_success_rate),
+                        failureLabel = stringResource(R.string.health_failure_rate),
+                        latencyLabel = stringResource(R.string.health_average_latency),
+                    )
+                }
+                item {
+                    TokenStructureChart(
+                        title = stringResource(R.string.token_structure),
+                        subtitle = stringResource(R.string.token_structure_subtitle),
+                        points = response.timeline,
+                        emptyText = stringResource(R.string.no_token_structure),
+                        inputLabel = stringResource(R.string.token_input),
+                        outputLabel = stringResource(R.string.token_output),
+                        cachedLabel = stringResource(R.string.token_cached),
+                        reasoningLabel = stringResource(R.string.token_reasoning),
                     )
                 }
                 item {
