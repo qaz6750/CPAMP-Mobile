@@ -23,6 +23,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -154,7 +155,7 @@ class AppUpdateRepository @Inject constructor(
             val checksum = fetchChecksum(assets)
             val fileName = assets.apk.name
             val destination = File(requireNotNull(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)), fileName)
-            destination.delete()
+            check(!destination.exists() || destination.delete()) { "UPDATE_FILE_DELETE_FAILED" }
             val request = DownloadManager.Request(Uri.parse(assets.apk.downloadUrl))
                 .setTitle(fileName)
                 .setDescription(context.applicationInfo.loadLabel(context.packageManager).toString())
@@ -162,12 +163,24 @@ class AppUpdateRepository @Inject constructor(
                 .setAllowedOverMetered(true)
                 .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName)
             val downloadId = downloadManager.enqueue(request)
-            context.updateDataStore.edit { stored ->
-                stored[DOWNLOAD_ID] = downloadId
-                stored[DOWNLOAD_FILE] = fileName
-                stored[DOWNLOAD_CHECKSUM] = checksum
-                stored[DOWNLOAD_VERSION] = assets.version
-                stored[RELEASE_JSON] = json.encodeToString(release)
+            try {
+                context.updateDataStore.edit { stored ->
+                    stored[DOWNLOAD_ID] = downloadId
+                    stored[DOWNLOAD_FILE] = fileName
+                    stored[DOWNLOAD_CHECKSUM] = checksum
+                    stored[DOWNLOAD_VERSION] = assets.version
+                    stored[RELEASE_JSON] = json.encodeToString(release)
+                }
+            } catch (error: Throwable) {
+                withContext(NonCancellable + Dispatchers.IO) {
+                    runCatching { downloadManager.remove(downloadId) }
+                        .exceptionOrNull()
+                        ?.let(error::addSuppressed)
+                    runCatching {
+                        check(!destination.exists() || destination.delete()) { "UPDATE_FILE_DELETE_FAILED" }
+                    }.exceptionOrNull()?.let(error::addSuppressed)
+                }
+                throw error
             }
         }.onFailure { error ->
             mutableState.value = mutableState.value.copy(
