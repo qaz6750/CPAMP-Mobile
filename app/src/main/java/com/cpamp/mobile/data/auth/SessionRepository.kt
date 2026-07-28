@@ -77,7 +77,7 @@ class SessionRepository @Inject constructor(
     }
 
     private suspend fun connect(profile: ServerProfile): AuthenticatedSession {
-        apiClientFactory.invalidate()
+        disconnect()
         val adminKey = profileStore.secret(profile.id)?.takeIf(String::isNotBlank)
             ?: error("SAVED_KEY_UNAVAILABLE")
         val probe = connectionTester.test(profile.baseUrl, adminKey)
