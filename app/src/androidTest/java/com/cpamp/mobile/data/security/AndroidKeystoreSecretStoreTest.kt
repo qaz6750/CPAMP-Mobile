@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.util.UUID
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -13,7 +14,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class AndroidKeystoreSecretStoreTest {
     @Test
-    fun encryptedPreferenceNeverContainsPlaintextAndDeletionRemovesIt() {
+    fun encryptedPreferenceNeverContainsPlaintextAndDeletionRemovesIt() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val store = AndroidKeystoreSecretStore(context)
         val profileId = UUID.randomUUID().toString()
@@ -33,7 +34,7 @@ class AndroidKeystoreSecretStoreTest {
     }
 
     @Test
-    fun encryptedSecretsCannotBeSwappedBetweenProfiles() {
+    fun encryptedSecretsCannotBeSwappedBetweenProfiles() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val store = AndroidKeystoreSecretStore(context)
         val firstProfileId = UUID.randomUUID().toString()

@@ -54,7 +54,7 @@ class AppLockRepository @Inject constructor(
         context.securityDataStore.edit { preferences -> preferences[LOCK_TIMEOUT_MINUTES] = minutes }
     }
 
-    fun synchronizeRuntimeMode(enabled: Boolean) {
+    suspend fun synchronizeRuntimeMode(enabled: Boolean) {
         secretStore.setAuthenticationRequired(enabled)
     }
 

@@ -86,7 +86,7 @@ class ServerProfileStore @Inject constructor(
         secretStore.remove(profileId)
     }
 
-    fun secret(profileId: String): String? = secretStore.get(profileId)
+    suspend fun secret(profileId: String): String? = secretStore.get(profileId)
 
     private companion object {
         val PROFILES_KEY = stringPreferencesKey("profiles_json_v1")

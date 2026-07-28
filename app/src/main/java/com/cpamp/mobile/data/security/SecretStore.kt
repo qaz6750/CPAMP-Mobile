@@ -13,13 +13,17 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 interface SecretStore {
-    fun put(profileId: String, secret: String)
-    fun get(profileId: String): String?
-    fun remove(profileId: String)
-    fun migrate(profileIds: List<String>, requireAuthentication: Boolean)
-    fun setAuthenticationRequired(required: Boolean)
+    suspend fun put(profileId: String, secret: String)
+    suspend fun get(profileId: String): String?
+    suspend fun remove(profileId: String)
+    suspend fun migrate(profileIds: List<String>, requireAuthentication: Boolean)
+    suspend fun setAuthenticationRequired(required: Boolean)
 }
 
 @Singleton
@@ -27,47 +31,67 @@ class AndroidKeystoreSecretStore @Inject constructor(
     @ApplicationContext context: Context,
 ) : SecretStore {
     private val preferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+    private val operationMutex = Mutex()
     @Volatile private var authenticationRequired = false
 
-    override fun put(profileId: String, secret: String) {
-        require(profileId.isNotBlank())
-        require(secret.isNotBlank())
+    override suspend fun put(profileId: String, secret: String) = withContext(Dispatchers.IO) {
+        operationMutex.withLock {
+            require(profileId.isNotBlank())
+            require(secret.isNotBlank())
 
-        val payload = encrypt(profileId, secret, authenticationRequired)
-        preferences.edit()
-            .putString(secretPreferenceKey(profileId), Base64.encodeToString(payload, Base64.NO_WRAP))
-            .apply()
-    }
-
-    override fun get(profileId: String): String? {
-        val encoded = preferences.getString(secretPreferenceKey(profileId), null) ?: return null
-        return runCatching {
-            decrypt(profileId, Base64.decode(encoded, Base64.NO_WRAP))
-        }.getOrNull()
-    }
-
-    override fun remove(profileId: String) {
-        preferences.edit().remove(secretPreferenceKey(profileId)).apply()
-    }
-
-    override fun migrate(profileIds: List<String>, requireAuthentication: Boolean) {
-        val migrated = profileIds.distinct().mapNotNull { profileId ->
-            val encoded = preferences.getString(secretPreferenceKey(profileId), null) ?: return@mapNotNull null
-            val plaintext = decrypt(profileId, Base64.decode(encoded, Base64.NO_WRAP))
-            profileId to Base64.encodeToString(
-                encrypt(profileId, plaintext, requireAuthentication),
-                Base64.NO_WRAP,
-            )
+            val payload = encrypt(profileId, secret, authenticationRequired)
+            check(
+                preferences.edit()
+                    .putString(secretPreferenceKey(profileId), Base64.encodeToString(payload, Base64.NO_WRAP))
+                    .commit(),
+            ) { "SECRET_WRITE_FAILED" }
         }
-        val editor = preferences.edit()
-        migrated.forEach { (profileId, encoded) -> editor.putString(secretPreferenceKey(profileId), encoded) }
-        check(editor.commit()) { "SECRET_MIGRATION_FAILED" }
-        authenticationRequired = requireAuthentication
-        deleteKey(if (requireAuthentication) STANDARD_KEY_ALIAS else AUTHENTICATED_KEY_ALIAS)
     }
 
-    override fun setAuthenticationRequired(required: Boolean) {
-        authenticationRequired = required
+    override suspend fun get(profileId: String): String? = withContext(Dispatchers.IO) {
+        operationMutex.withLock {
+            val encoded = preferences.getString(secretPreferenceKey(profileId), null)
+                ?: return@withLock null
+            runCatching {
+                decrypt(profileId, Base64.decode(encoded, Base64.NO_WRAP))
+            }.getOrNull()
+        }
+    }
+
+    override suspend fun remove(profileId: String) = withContext(Dispatchers.IO) {
+        operationMutex.withLock {
+            check(preferences.edit().remove(secretPreferenceKey(profileId)).commit()) {
+                "SECRET_DELETE_FAILED"
+            }
+        }
+    }
+
+    override suspend fun migrate(
+        profileIds: List<String>,
+        requireAuthentication: Boolean,
+    ) = withContext(Dispatchers.IO) {
+        operationMutex.withLock {
+            val migrated = profileIds.distinct().mapNotNull { profileId ->
+                val encoded = preferences.getString(secretPreferenceKey(profileId), null)
+                    ?: return@mapNotNull null
+                val plaintext = decrypt(profileId, Base64.decode(encoded, Base64.NO_WRAP))
+                profileId to Base64.encodeToString(
+                    encrypt(profileId, plaintext, requireAuthentication),
+                    Base64.NO_WRAP,
+                )
+            }
+            val editor = preferences.edit()
+            migrated.forEach { (profileId, encoded) ->
+                editor.putString(secretPreferenceKey(profileId), encoded)
+            }
+            check(editor.commit()) { "SECRET_MIGRATION_FAILED" }
+            authenticationRequired = requireAuthentication
+            deleteKey(if (requireAuthentication) STANDARD_KEY_ALIAS else AUTHENTICATED_KEY_ALIAS)
+        }
+    }
+
+    override suspend fun setAuthenticationRequired(required: Boolean) {
+        operationMutex.withLock { authenticationRequired = required }
     }
 
     private fun encrypt(
