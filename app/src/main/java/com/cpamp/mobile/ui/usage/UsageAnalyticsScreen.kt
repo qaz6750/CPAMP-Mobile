@@ -1,7 +1,10 @@
 package com.cpamp.mobile.ui.usage
 
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,17 +24,24 @@ import androidx.compose.material.icons.outlined.DataUsage
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material.icons.outlined.Token
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,6 +49,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
@@ -63,6 +75,7 @@ fun UsageAnalyticsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var showExpandedTrend by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.shareUri) {
         state.shareUri?.let { uri ->
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -195,22 +208,18 @@ fun UsageAnalyticsScreen(
                     }
                 }
                 item {
+                    val trendPoints = response.timeline.toAnalyticsTrendPoints()
                     DashboardTrafficChart(
                         title = stringResource(R.string.usage_trend),
-                        points = response.timeline.map { point ->
-                            AnalyticsTrendPoint(
-                                timestampMs = point.bucketMs,
-                                requests = point.calls,
-                                tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
-                                bucketEndMs = point.bucketEndMs,
-                                success = point.success,
-                                failure = point.failure,
-                                cost = point.cost,
-                            )
-                        },
+                        points = trendPoints,
                         nowMs = response.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
                         emptyText = stringResource(R.string.no_traffic),
                         compactToData = false,
+                        titleAction = {
+                            IconButton(onClick = { showExpandedTrend = true }) {
+                                Icon(Icons.Outlined.Fullscreen, contentDescription = stringResource(R.string.expand_usage_trend))
+                            }
+                        },
                     )
                 }
                 item {
@@ -241,6 +250,65 @@ fun UsageAnalyticsScreen(
             }
         }
     }
+    if (showExpandedTrend) {
+        ExpandedUsageTrend(
+            points = state.response?.timeline.orEmpty().toAnalyticsTrendPoints(),
+            nowMs = state.response?.generatedAtMs?.takeIf { it > 0 } ?: System.currentTimeMillis(),
+            onDismiss = { showExpandedTrend = false },
+        )
+    }
+}
+
+@Composable
+private fun ExpandedUsageTrend(
+    points: List<AnalyticsTrendPoint>,
+    nowMs: Long,
+    onDismiss: () -> Unit,
+) {
+    val activity = LocalContext.current as? Activity
+    DisposableEffect(activity) {
+        val previousOrientation = activity?.requestedOrientation
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        onDispose {
+            previousOrientation?.let { activity.requestedOrientation = it }
+        }
+    }
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(20.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            DashboardTrafficChart(
+                title = stringResource(R.string.usage_trend),
+                points = points,
+                nowMs = nowMs,
+                emptyText = stringResource(R.string.no_traffic),
+                modifier = Modifier.fillMaxWidth(),
+                compactToData = false,
+                chartHeight = 220.dp,
+                titleAction = {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.close_expanded_trend))
+                    }
+                },
+            )
+        }
+    }
+}
+
+private fun List<com.cpamp.mobile.data.remote.model.MonitoringTimelineDto>.toAnalyticsTrendPoints() = map { point ->
+    AnalyticsTrendPoint(
+        timestampMs = point.bucketMs,
+        requests = point.calls,
+        tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
+        bucketEndMs = point.bucketEndMs,
+        success = point.success,
+        failure = point.failure,
+        cost = point.cost,
+    )
 }
 
 @Composable

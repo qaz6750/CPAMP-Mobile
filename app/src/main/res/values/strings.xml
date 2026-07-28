@@ -28,6 +28,8 @@
     <string name="usage_estimated">Based on configured model prices</string>
     <string name="usage_failures_value">%1$d failed</string>
     <string name="usage_trend">Usage trend</string>
+    <string name="expand_usage_trend">View full trend in landscape</string>
+    <string name="close_expanded_trend">Close full trend</string>
     <string name="usage_models">Models</string>
     <string name="usage_api_keys">API keys</string>
     <string name="usage_credentials">Credentials</string>

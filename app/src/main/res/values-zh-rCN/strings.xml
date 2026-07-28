@@ -28,6 +28,8 @@
     <string name="usage_estimated">基于已配置的模型价格</string>
     <string name="usage_failures_value">失败 %1$d 次</string>
     <string name="usage_trend">用量趋势</string>
+    <string name="expand_usage_trend">横屏查看完整趋势</string>
+    <string name="close_expanded_trend">关闭完整趋势</string>
     <string name="usage_models">模型</string>
     <string name="usage_api_keys">API Key</string>
     <string name="usage_credentials">凭据</string>

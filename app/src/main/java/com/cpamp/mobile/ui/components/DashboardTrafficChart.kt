@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
 import com.cpamp.mobile.ui.common.asCost
@@ -54,6 +55,8 @@ fun DashboardTrafficChart(
     emptyText: String,
     modifier: Modifier = Modifier,
     compactToData: Boolean = true,
+    chartHeight: Dp = 180.dp,
+    titleAction: (@Composable () -> Unit)? = null,
 ) {
     val visiblePoints = remember(points, nowMs, compactToData) {
         if (compactToData) dashboardVisibleTrafficPoints(points, nowMs)
@@ -74,14 +77,21 @@ fun DashboardTrafficChart(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                titleAction?.invoke()
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 ChartLegend(MaterialTheme.colorScheme.primary, stringResource(R.string.trend_requests))
                 ChartLegend(MaterialTheme.colorScheme.tertiary, stringResource(R.string.trend_tokens))
                 ChartLegend(CostLineColor, stringResource(R.string.trend_cost))
             }
             if (!hasData) {
-                Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxWidth().height(chartHeight), contentAlignment = Alignment.Center) {
                     Text(emptyText, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 return@Column
@@ -98,9 +108,9 @@ fun DashboardTrafficChart(
             val hasCost = visiblePoints.any { it.cost != null }
             val maxCost = visiblePoints.maxOf { it.cost ?: 0.0 }.coerceAtLeast(0.0001)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                ChartAxisLabels(maxRequests, Modifier.width(38.dp), Alignment.End, requestColor)
+                ChartAxisLabels(maxRequests, chartHeight, Modifier.width(38.dp), Alignment.End, requestColor)
                 Canvas(
-                    modifier = Modifier.weight(1f).height(180.dp).padding(horizontal = 4.dp)
+                    modifier = Modifier.weight(1f).height(chartHeight).padding(horizontal = 4.dp)
                         .pointerInput(visiblePoints) {
                             detectTapGestures { selectedIndex = trendPointIndex(it.x, size.width.toFloat(), visiblePoints.size) }
                         }
@@ -157,8 +167,8 @@ fun DashboardTrafficChart(
                         }
                     }
                 }
-                ChartAxisLabels(maxTokens, Modifier.width(40.dp), Alignment.Start, tokenColor)
-                CostAxisLabels(if (hasCost) maxCost else 0.0, Modifier.width(48.dp), costColor)
+                ChartAxisLabels(maxTokens, chartHeight, Modifier.width(40.dp), Alignment.Start, tokenColor)
+                CostAxisLabels(if (hasCost) maxCost else 0.0, chartHeight, Modifier.width(48.dp), costColor)
             }
             Row(
                 Modifier.fillMaxWidth().padding(start = 42.dp, end = 88.dp),
@@ -184,12 +194,13 @@ private fun ChartLegend(color: Color, label: String) {
 @Composable
 private fun ChartAxisLabels(
     maximum: Long,
+    height: Dp,
     modifier: Modifier,
     alignment: Alignment.Horizontal = Alignment.End,
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
 ) {
     Column(
-        modifier = modifier.height(180.dp),
+        modifier = modifier.height(height),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = alignment,
     ) {
@@ -200,9 +211,9 @@ private fun ChartAxisLabels(
 }
 
 @Composable
-private fun CostAxisLabels(maximum: Double, modifier: Modifier, color: Color) {
+private fun CostAxisLabels(maximum: Double, height: Dp, modifier: Modifier, color: Color) {
     Column(
-        modifier = modifier.height(180.dp),
+        modifier = modifier.height(height),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.Start,
     ) {
