@@ -382,9 +382,7 @@ private fun UpdateDetailsDialog(
     val context = LocalContext.current
     val release = state.release ?: return
     AlertDialog(
-        onDismissRequest = {
-            if (state.status !in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying)) onDismiss()
-        },
+        onDismissRequest = onDismiss,
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(R.string.update_details_title, release.tagName.removePrefix("v")))
@@ -431,10 +429,7 @@ private fun UpdateDetailsDialog(
             }
         },
         dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                enabled = state.status !in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying),
-            ) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
         },
