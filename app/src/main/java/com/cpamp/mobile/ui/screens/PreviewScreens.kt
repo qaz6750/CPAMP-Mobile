@@ -64,6 +64,7 @@ fun OverviewPreviewScreen(contentPadding: PaddingValues) {
                         supporting = stringResource(R.string.awaiting_server),
                         icon = Icons.Outlined.DataUsage,
                         modifier = Modifier.weight(1f),
+                        compact = true,
                     )
                     MetricCard(
                         label = stringResource(R.string.metric_success),
@@ -72,6 +73,7 @@ fun OverviewPreviewScreen(contentPadding: PaddingValues) {
                         icon = Icons.Outlined.CheckCircle,
                         modifier = Modifier.weight(1f),
                         accent = MaterialTheme.colorScheme.tertiary,
+                        compact = true,
                     )
                 }
             }
@@ -86,6 +88,7 @@ fun OverviewPreviewScreen(contentPadding: PaddingValues) {
                         supporting = stringResource(R.string.awaiting_server),
                         icon = Icons.Outlined.Speed,
                         modifier = Modifier.weight(1f),
+                        compact = true,
                     )
                     MetricCard(
                         label = stringResource(R.string.metric_cost),
@@ -94,6 +97,7 @@ fun OverviewPreviewScreen(contentPadding: PaddingValues) {
                         icon = Icons.Outlined.Payments,
                         modifier = Modifier.weight(1f),
                         accent = MaterialTheme.colorScheme.secondary,
+                        compact = true,
                     )
                 }
             }

@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -68,16 +69,16 @@ fun MetricCard(
     compact: Boolean = false,
 ) {
     Card(
-        modifier = modifier.then(if (compact) Modifier.heightIn(min = 132.dp) else Modifier),
-        shape = RoundedCornerShape(if (compact) 16.dp else 24.dp),
+        modifier = modifier.then(if (compact) Modifier.heightIn(min = 116.dp) else Modifier),
+        shape = RoundedCornerShape(if (compact) 18.dp else 24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(if (compact) 13.dp else 20.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(if (compact) 12.dp else 20.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -86,14 +87,14 @@ fun MetricCard(
             ) {
                 Surface(
                     color = accent.copy(alpha = 0.12f),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(if (compact) 10.dp else 12.dp),
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = accent,
                         modifier = Modifier.padding(if (compact) 6.dp else 9.dp)
-                            .then(if (compact) Modifier.size(18.dp) else Modifier),
+                            .then(if (compact) Modifier.size(17.dp) else Modifier),
                     )
                 }
                 if (compact) {
@@ -102,7 +103,8 @@ fun MetricCard(
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -115,6 +117,7 @@ fun MetricCard(
                 },
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             if (compact) {
                 Text(
@@ -122,6 +125,7 @@ fun MetricCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -131,6 +135,7 @@ fun MetricCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -159,4 +164,3 @@ fun ConnectionPill(
         )
     }
 }
-

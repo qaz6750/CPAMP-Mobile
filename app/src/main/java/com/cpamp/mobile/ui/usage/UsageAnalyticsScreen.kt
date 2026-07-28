@@ -150,7 +150,7 @@ fun UsageAnalyticsScreen(
             } else if (response != null) {
                 response.summary?.let { summary ->
                     item {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             MetricCard(
                                 label = stringResource(R.string.usage_requests),
                                 value = summary.totalCalls.compactNumber(),
@@ -170,7 +170,7 @@ fun UsageAnalyticsScreen(
                         }
                     }
                     item {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             MetricCard(
                                 label = stringResource(R.string.usage_cost),
                                 value = summary.totalCost.asCost(),
