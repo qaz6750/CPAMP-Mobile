@@ -36,7 +36,7 @@
     <string name="today">今天</string>
     <string name="share_usage">分享用量报告</string>
     <string name="share_usage_failed">无法生成用量报告。</string>
-    <string name="share_report_title">CPAMP Mobile 用量</string>
+    <string name="share_report_title">用量分析报告</string>
     <string name="share_days_badge">共 %1$d 天</string>
     <string name="share_generated_at">生成于 %1$s</string>
     <string name="share_model_value">%1$s 次请求 · %2$s Token</string>
