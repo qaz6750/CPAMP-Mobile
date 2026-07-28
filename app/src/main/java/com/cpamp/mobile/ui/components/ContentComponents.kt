@@ -3,8 +3,9 @@ package com.cpamp.mobile.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,7 +70,7 @@ fun MetricCard(
     compact: Boolean = false,
 ) {
     Card(
-        modifier = modifier.then(if (compact) Modifier.heightIn(min = 116.dp) else Modifier),
+        modifier = modifier.then(if (compact) Modifier.height(120.dp) else Modifier),
         shape = RoundedCornerShape(if (compact) 18.dp else 24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
@@ -77,8 +78,10 @@ fun MetricCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(if (compact) 12.dp else 20.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 12.dp),
+            modifier = Modifier.fillMaxWidth()
+                .then(if (compact) Modifier.fillMaxHeight() else Modifier)
+                .padding(if (compact) 12.dp else 20.dp),
+            verticalArrangement = if (compact) Arrangement.SpaceBetween else Arrangement.spacedBy(12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -124,7 +127,7 @@ fun MetricCard(
                     text = supporting,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
