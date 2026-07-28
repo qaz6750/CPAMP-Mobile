@@ -20,7 +20,14 @@ data class UsageShareReport(
 data class UsageSharePoint(
     val timestampMs: Long,
     val requests: Long,
+    val successfulRequests: Long,
+    val failedRequests: Long,
+    val averageLatencyMs: Double?,
     val tokens: Long,
+    val inputTokens: Long,
+    val outputTokens: Long,
+    val cachedTokens: Long,
+    val reasoningTokens: Long,
     val cost: Double,
 )
 
@@ -51,7 +58,14 @@ fun MonitoringResponseDto.toUsageShareReport(
             UsageSharePoint(
                 timestampMs = point.bucketMs,
                 requests = point.calls,
+                successfulRequests = point.success,
+                failedRequests = point.failure,
+                averageLatencyMs = point.averageLatencyMs,
                 tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
+                inputTokens = point.inputTokens,
+                outputTokens = point.outputTokens,
+                cachedTokens = point.cachedTokens,
+                reasoningTokens = point.reasoningTokens,
                 cost = point.cost,
             )
         },

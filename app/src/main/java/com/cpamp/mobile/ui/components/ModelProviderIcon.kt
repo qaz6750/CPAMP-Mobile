@@ -20,7 +20,7 @@ import com.cpamp.mobile.R
 
 @Composable
 fun ModelProviderIcon(model: String, modifier: Modifier = Modifier) {
-    val provider = ModelProvider.fromModel(model)
+    val provider = modelProviderVisual(model)
     Surface(
         modifier = modifier.size(34.dp),
         shape = CircleShape,
@@ -34,8 +34,8 @@ fun ModelProviderIcon(model: String, modifier: Modifier = Modifier) {
                     contentDescription = provider.displayName,
                     modifier = Modifier.size(21.dp),
                 )
-                provider == ModelProvider.Xai -> Text(
-                    text = "xAI",
+                provider.badgeText != null -> Text(
+                    text = provider.badgeText,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Black,
                 )
@@ -49,31 +49,28 @@ fun ModelProviderIcon(model: String, modifier: Modifier = Modifier) {
     }
 }
 
-private enum class ModelProvider(
+internal data class ModelProviderVisual(
     val displayName: String,
     @DrawableRes val icon: Int?,
     val color: Color,
-) {
-    OpenAi("OpenAI", R.drawable.ic_provider_openai, Color(0xFF111111)),
-    Anthropic("Claude", R.drawable.ic_provider_anthropic, Color(0xFFD97757)),
-    Google("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4)),
-    Xai("xAI", null, Color(0xFF111111)),
-    DeepSeek("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6)),
-    Qwen("Qwen", R.drawable.ic_provider_qwen, Color(0xFF6950EF)),
-    Generic("AI model", null, Color(0xFF356AE6));
+    val badgeText: String? = null,
+)
 
-    companion object {
-        fun fromModel(model: String): ModelProvider {
-            val normalized = model.lowercase()
-            return when {
-                listOf("gpt", "o1", "o3", "o4", "codex", "chatgpt").any(normalized::contains) -> OpenAi
-                listOf("claude", "anthropic").any(normalized::contains) -> Anthropic
-                listOf("gemini", "vertex", "palm").any(normalized::contains) -> Google
-                listOf("grok", "xai").any(normalized::contains) -> Xai
-                "deepseek" in normalized -> DeepSeek
-                listOf("qwen", "qwq", "tongyi").any(normalized::contains) -> Qwen
-                else -> Generic
-            }
-        }
+internal fun modelProviderVisual(model: String): ModelProviderVisual {
+    val normalized = model.lowercase()
+    return when {
+        listOf("gpt", "o1", "o3", "o4", "codex", "chatgpt").any(normalized::contains) ->
+            ModelProviderVisual("OpenAI", R.drawable.ic_provider_openai, Color(0xFF111111))
+        listOf("claude", "anthropic").any(normalized::contains) ->
+            ModelProviderVisual("Claude", R.drawable.ic_provider_anthropic, Color(0xFFD97757))
+        listOf("gemini", "vertex", "palm").any(normalized::contains) ->
+            ModelProviderVisual("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4))
+        listOf("grok", "xai").any(normalized::contains) ->
+            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI")
+        "deepseek" in normalized ->
+            ModelProviderVisual("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6))
+        listOf("qwen", "qwq", "tongyi").any(normalized::contains) ->
+            ModelProviderVisual("Qwen", R.drawable.ic_provider_qwen, Color(0xFF6950EF))
+        else -> ModelProviderVisual("AI model", null, Color(0xFF356AE6), "AI")
     }
 }
