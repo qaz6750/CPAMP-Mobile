@@ -55,7 +55,7 @@ private enum class ModelProvider(
     val color: Color,
 ) {
     OpenAi("OpenAI", R.drawable.ic_provider_openai, Color(0xFF111111)),
-    Anthropic("Anthropic", R.drawable.ic_provider_anthropic, Color(0xFF191919)),
+    Anthropic("Claude", R.drawable.ic_provider_anthropic, Color(0xFFD97757)),
     Google("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4)),
     Xai("xAI", null, Color(0xFF111111)),
     DeepSeek("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6)),
