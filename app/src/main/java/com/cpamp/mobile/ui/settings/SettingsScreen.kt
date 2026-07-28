@@ -29,6 +29,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
@@ -36,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +64,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @Composable
 fun SettingsScreen(
@@ -82,6 +86,7 @@ fun SettingsScreen(
     val cacheState by cacheViewModel.state.collectAsStateWithLifecycle()
     var showUpstreamLicense by rememberSaveable { mutableStateOf(false) }
     var confirmClearCache by rememberSaveable { mutableStateOf(false) }
+    var showUpdateDetails by rememberSaveable { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -89,6 +94,15 @@ fun SettingsScreen(
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(updateState.status, updateState.release?.tagName) {
+        if (updateState.status == UpdateStatus.Available) showUpdateDetails = true
+    }
+    LaunchedEffect(updateState.status) {
+        while (isActive && updateState.status == UpdateStatus.Downloading) {
+            delay(750)
+            updateViewModel.refreshDownloadStatus()
+        }
     }
     AppBackground {
         LazyColumn(
@@ -231,7 +245,7 @@ fun SettingsScreen(
                 UpdateSettingsCard(
                     state = updateState,
                     onCheck = updateViewModel::checkForUpdates,
-                    onDownload = updateViewModel::downloadUpdate,
+                    onShowUpdate = { showUpdateDetails = true },
                     onOpenSourceLicenses = { showUpstreamLicense = true },
                 )
             }
@@ -293,13 +307,20 @@ fun SettingsScreen(
             },
         )
     }
+    if (showUpdateDetails && updateState.release != null) {
+        UpdateDetailsDialog(
+            state = updateState,
+            onDismiss = { showUpdateDetails = false },
+            onDownload = updateViewModel::downloadUpdate,
+        )
+    }
 }
 
 @Composable
 private fun UpdateSettingsCard(
     state: AppUpdateState,
     onCheck: () -> Unit,
-    onDownload: () -> Unit,
+    onShowUpdate: () -> Unit,
     onOpenSourceLicenses: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -314,15 +335,15 @@ private fun UpdateSettingsCard(
                 fontWeight = FontWeight.SemiBold,
             )
             release.publishedAt?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            release.displayBody()?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
         }
         Text(updateStatusText(state), style = MaterialTheme.typography.bodySmall, color = statusColor(state))
         when (state.status) {
-            UpdateStatus.Available -> Button(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
+            UpdateStatus.Available, UpdateStatus.Downloading, UpdateStatus.Verifying -> Button(
+                onClick = onShowUpdate,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Icon(Icons.Outlined.Download, contentDescription = null)
-                Text(stringResource(R.string.download_update), modifier = Modifier.padding(start = 8.dp))
+                Text(stringResource(R.string.view_update_details), modifier = Modifier.padding(start = 8.dp))
             }
             UpdateStatus.ReadyToInstall -> Button(
                 onClick = { state.installUri?.let { context.installUpdate(it) } },
@@ -348,6 +369,74 @@ private fun UpdateSettingsCard(
             Text(stringResource(R.string.open_source_licenses))
         }
     }
+}
+
+@Composable
+private fun UpdateDetailsDialog(
+    state: AppUpdateState,
+    onDismiss: () -> Unit,
+    onDownload: () -> Unit,
+) {
+    val context = LocalContext.current
+    val release = state.release ?: return
+    AlertDialog(
+        onDismissRequest = {
+            if (state.status !in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying)) onDismiss()
+        },
+        title = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.update_details_title, release.tagName.removePrefix("v")))
+                release.publishedAt?.let {
+                    Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                release.displayBody()?.let { body ->
+                    Text(
+                        body,
+                        modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                if (state.status in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(updateStatusText(state), style = MaterialTheme.typography.bodySmall)
+                        state.progressPercent?.let { progress ->
+                            LinearProgressIndicator(
+                                progress = { progress / 100f },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } ?: LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            when (state.status) {
+                UpdateStatus.Available -> Button(onClick = onDownload) {
+                    Icon(Icons.Outlined.Download, contentDescription = null)
+                    Text(stringResource(R.string.download_update), modifier = Modifier.padding(start = 8.dp))
+                }
+                UpdateStatus.ReadyToInstall -> Button(
+                    onClick = { state.installUri?.let(context::installUpdate) },
+                ) {
+                    Icon(Icons.Outlined.InstallMobile, contentDescription = null)
+                    Text(stringResource(R.string.install_update), modifier = Modifier.padding(start = 8.dp))
+                }
+                else -> Unit
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = state.status !in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying),
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable

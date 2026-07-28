@@ -70,6 +70,8 @@
     <string name="latest_version">最新版本：%1$s</string>
     <string name="check_for_updates">检查更新</string>
     <string name="download_update">下载更新</string>
+    <string name="view_update_details">查看更新说明</string>
+    <string name="update_details_title">版本 %1$s 更新说明</string>
     <string name="install_update">安装更新</string>
     <string name="update_manual_check">仅在点击按钮时检查更新。</string>
     <string name="update_checking">正在检查 GitHub Release…</string>

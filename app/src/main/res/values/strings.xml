@@ -70,6 +70,8 @@
     <string name="latest_version">Latest version: %1$s</string>
     <string name="check_for_updates">Check for updates</string>
     <string name="download_update">Download update</string>
+    <string name="view_update_details">View update details</string>
+    <string name="update_details_title">What’s new in %1$s</string>
     <string name="install_update">Install update</string>
     <string name="update_manual_check">Updates are checked only when you tap the button.</string>
     <string name="update_checking">Checking GitHub Releases…</string>
