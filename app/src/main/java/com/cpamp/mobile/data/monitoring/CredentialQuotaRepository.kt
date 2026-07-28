@@ -1,5 +1,6 @@
 package com.cpamp.mobile.data.monitoring
 
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.remote.SessionApiClientFactory
 import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
 import com.cpamp.mobile.data.remote.model.AuthFileDto
@@ -45,7 +46,7 @@ class CredentialQuotaRepository @Inject constructor(
     private suspend fun loadCodexQuota(
         file: AuthFileDto,
         api: com.cpamp.mobile.data.remote.CPAMPApi,
-    ): CredentialQuota = runCatching {
+    ): CredentialQuota = runSuspendCatching {
         val headers = buildMap {
             put("Authorization", "Bearer \$TOKEN\$")
             put("Content-Type", "application/json")

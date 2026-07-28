@@ -3,6 +3,7 @@ package com.cpamp.mobile.ui.security
 import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.security.AppLockRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -74,7 +75,7 @@ class AppLockViewModel @Inject constructor(
     fun setEnabledAfterAuthentication(enabled: Boolean) {
         viewModelScope.launch {
             mutableState.update { it.copy(mutating = true, error = false) }
-            runCatching { repository.setEnabled(enabled) }
+            runSuspendCatching { repository.setEnabled(enabled) }
                 .onSuccess {
                     mutableState.update {
                         it.copy(
@@ -90,7 +91,7 @@ class AppLockViewModel @Inject constructor(
 
     fun setTimeoutMinutes(minutes: Int) {
         viewModelScope.launch {
-            runCatching { repository.setTimeoutMinutes(minutes) }
+            runSuspendCatching { repository.setTimeoutMinutes(minutes) }
                 .onFailure { mutableState.update { it.copy(error = true) } }
         }
     }

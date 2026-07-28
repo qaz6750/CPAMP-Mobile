@@ -15,6 +15,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.cpamp.mobile.BuildConfig
+import com.cpamp.mobile.common.runSuspendCatching
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.security.MessageDigest
@@ -100,7 +101,7 @@ class AppUpdateRepository @Inject constructor(
             .header("User-Agent", "CPAMPMobile/${BuildConfig.VERSION_NAME} Android")
             .apply { preferences[RELEASE_ETAG]?.let { header("If-None-Match", it) } }
             .build()
-        val result = runCatching {
+        val result = runSuspendCatching {
             withContext(Dispatchers.IO) {
                 client.newCall(request).execute().use { response ->
                     when (response.code) {
@@ -149,7 +150,7 @@ class AppUpdateRepository @Inject constructor(
         val assets = release.releaseAssets() ?: return
         if (mutableState.value.status != UpdateStatus.Available) return
         mutableState.value = mutableState.value.copy(status = UpdateStatus.Downloading, progressPercent = 0, error = null)
-        runCatching {
+        runSuspendCatching {
             val checksum = fetchChecksum(assets)
             val fileName = assets.apk.name
             val destination = File(requireNotNull(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)), fileName)

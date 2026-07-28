@@ -2,6 +2,7 @@ package com.cpamp.mobile.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.dashboard.DashboardRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
@@ -93,11 +94,11 @@ class DashboardViewModel @Inject constructor(
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
-            runCatching {
+            runSuspendCatching {
                 coroutineScope {
                     val summary = async { dashboardRepository.refresh(session, start, now) }
                     val timeline = async {
-                        runCatching {
+                        runSuspendCatching {
                             monitoringRepository.refresh(
                                 session = session,
                                 request = MonitoringRequestDto(

@@ -2,6 +2,7 @@ package com.cpamp.mobile.ui.monitoring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.monitoring.CredentialQuota
@@ -118,7 +119,7 @@ class MonitoringViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            runCatching { credentialQuotaRepository.load(session) }
+            runSuspendCatching { credentialQuotaRepository.load(session) }
                 .onSuccess { quotas ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
                     mutableState.update {
@@ -163,7 +164,7 @@ class MonitoringViewModel @Inject constructor(
                 eventsPage = EventsPageRequestDto(limit = 50),
             ),
         )
-        runCatching {
+        runSuspendCatching {
             monitoringRepository.refresh(session, request, cacheResult = currentFilter.cacheable)
         }.onSuccess { response ->
             if (filter.value != currentFilter || sessionRepository.session.value?.profile?.id != session.profile.id) {

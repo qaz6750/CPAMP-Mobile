@@ -1,6 +1,7 @@
 package com.cpamp.mobile.data.cache
 
 import android.content.Context
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.update.AppUpdateRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -17,9 +18,9 @@ class CacheCleanupRepository @Inject constructor(
 ) {
     suspend fun clearRegenerableCache() {
         val failures = mutableListOf<Throwable>()
-        runCatching { cacheDao.clear() }.onFailure(failures::add)
-        runCatching { clearSharedReports() }.onFailure(failures::add)
-        runCatching { updateRepository.clearRegenerableCache() }.onFailure(failures::add)
+        runSuspendCatching { cacheDao.clear() }.onFailure(failures::add)
+        runSuspendCatching { clearSharedReports() }.onFailure(failures::add)
+        runSuspendCatching { updateRepository.clearRegenerableCache() }.onFailure(failures::add)
         if (failures.isNotEmpty()) throw CacheCleanupException(failures)
     }
 

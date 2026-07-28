@@ -2,6 +2,7 @@ package com.cpamp.mobile.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.ConnectionException
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.domain.model.AuthenticatedSession
@@ -68,7 +69,7 @@ class SessionViewModel @Inject constructor(
     fun login(name: String, address: String, adminKey: String, allowCleartext: Boolean) {
         viewModelScope.launch {
             mutableState.update { it.copy(submitting = true, error = null) }
-            runCatching { repository.login(name, address, adminKey, allowCleartext) }
+            runSuspendCatching { repository.login(name, address, adminKey, allowCleartext) }
                 .onSuccess { session ->
                     mutableState.update { it.copy(submitting = false, session = session) }
                 }
@@ -86,7 +87,7 @@ class SessionViewModel @Inject constructor(
     fun switchTo(profileId: String) {
         viewModelScope.launch {
             mutableState.update { it.copy(submitting = true, session = null, error = null) }
-            runCatching { repository.switchTo(profileId) }
+            runSuspendCatching { repository.switchTo(profileId) }
                 .onSuccess { session ->
                     mutableState.update { it.copy(submitting = false, session = session) }
                 }

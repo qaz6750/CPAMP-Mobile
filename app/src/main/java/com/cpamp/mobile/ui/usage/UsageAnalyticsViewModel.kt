@@ -3,6 +3,7 @@ package com.cpamp.mobile.ui.usage
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
@@ -131,7 +132,7 @@ class UsageAnalyticsViewModel @Inject constructor(
             }
             val range = current.loadedRange?.takeIf { reusable != null }
                 ?: usageWindowRange(window, System.currentTimeMillis())
-            runCatching {
+            runSuspendCatching {
                 val response = reusable ?: monitoringRepository.refresh(
                     session = session,
                     request = MonitoringRequestDto(
@@ -191,7 +192,7 @@ class UsageAnalyticsViewModel @Inject constructor(
                 apiKeyStats = ranking == UsageRanking.ApiKeys,
             ),
         )
-        runCatching { monitoringRepository.refresh(session, request, cacheResult = false) }
+        runSuspendCatching { monitoringRepository.refresh(session, request, cacheResult = false) }
             .onSuccess { response ->
                 if (sessionRepository.session.value?.profile?.id == session.profile.id &&
                     mutableState.value.window == window && mutableState.value.ranking == ranking &&

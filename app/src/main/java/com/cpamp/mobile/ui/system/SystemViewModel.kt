@@ -2,6 +2,7 @@ package com.cpamp.mobile.ui.system
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.remote.model.ManagerInfoDto
 import com.cpamp.mobile.data.remote.model.ManagerStatusDto
@@ -52,7 +53,7 @@ class SystemViewModel @Inject constructor(
                     return@collectLatest
                 }
                 mutableState.value = SystemUiState(loading = true)
-                runCatching { repository.status(session) }
+                runSuspendCatching { repository.status(session) }
                     .onSuccess { snapshot ->
                         if (sessionRepository.session.value?.profile?.id == session.profile.id) {
                             mutableState.update {
@@ -92,7 +93,7 @@ class SystemViewModel @Inject constructor(
             val session = sessionRepository.session.value ?: return@launch
             mutableState.update { it.copy(loading = true, error = null, message = null) }
             when (mutableState.value.tab) {
-                SystemTab.Status -> runCatching { repository.status(session) }
+                SystemTab.Status -> runSuspendCatching { repository.status(session) }
                     .onSuccess { snapshot ->
                         mutableState.update {
                             it.copy(
@@ -105,7 +106,7 @@ class SystemViewModel @Inject constructor(
                     .onFailure {
                         mutableState.update { it.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
                     }
-                SystemTab.Logs -> runCatching { repository.logs(session) }
+                SystemTab.Logs -> runSuspendCatching { repository.logs(session) }
                     .onSuccess { page ->
                         mutableState.update {
                             it.copy(
@@ -129,7 +130,7 @@ class SystemViewModel @Inject constructor(
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
             mutableState.update { it.copy(loadingMore = true, error = null) }
-            runCatching { repository.logs(session, cursor) }
+            runSuspendCatching { repository.logs(session, cursor) }
                 .onSuccess { page ->
                     mutableState.update { state ->
                         state.copy(
@@ -147,7 +148,7 @@ class SystemViewModel @Inject constructor(
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
             mutableState.update { it.copy(mutating = true, error = null, message = null) }
-            runCatching { repository.clearLogs(session) }
+            runSuspendCatching { repository.clearLogs(session) }
                 .onSuccess {
                     mutableState.update {
                         it.copy(

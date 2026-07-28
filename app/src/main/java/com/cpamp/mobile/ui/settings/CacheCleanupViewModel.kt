@@ -2,6 +2,7 @@ package com.cpamp.mobile.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.cache.CacheCleanupRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,7 +30,7 @@ class CacheCleanupViewModel @Inject constructor(
         if (mutableState.value.clearing) return
         viewModelScope.launch {
             mutableState.value = CacheCleanupUiState(clearing = true)
-            mutableState.value = runCatching { repository.clearRegenerableCache() }
+            mutableState.value = runSuspendCatching { repository.clearRegenerableCache() }
                 .fold(
                     onSuccess = { CacheCleanupUiState(result = CacheCleanupResult.Success) },
                     onFailure = { CacheCleanupUiState(result = CacheCleanupResult.Failure) },

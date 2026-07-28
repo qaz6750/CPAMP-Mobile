@@ -2,6 +2,7 @@ package com.cpamp.mobile.data.auth
 
 import com.cpamp.mobile.data.profile.ServerProfileStore
 import com.cpamp.mobile.data.cache.CacheDao
+import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.data.remote.SessionApiClientFactory
@@ -23,7 +24,7 @@ class SessionRepository @Inject constructor(
     val session: StateFlow<AuthenticatedSession?> = mutableSession.asStateFlow()
     val profiles = profileStore.profiles
 
-    suspend fun restore(): Result<AuthenticatedSession> = runCatching {
+    suspend fun restore(): Result<AuthenticatedSession> = runSuspendCatching {
         val stored = profileStore.snapshot()
         val profile = stored.profiles.firstOrNull { it.id == stored.activeProfileId }
             ?: error("NO_ACTIVE_PROFILE")
