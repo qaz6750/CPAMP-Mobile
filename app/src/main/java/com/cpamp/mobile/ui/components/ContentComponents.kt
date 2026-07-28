@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -65,7 +66,7 @@ fun PageHeader(
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = eyebrow.uppercase(),
+                text = eyebrow,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
@@ -97,11 +98,12 @@ fun MetricCard(
 ) {
     Card(
         modifier = modifier.then(if (compact) Modifier.height(120.dp) else Modifier),
-        shape = RoundedCornerShape(if (compact) 18.dp else 24.dp),
+        shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.62f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -115,7 +117,7 @@ fun MetricCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Surface(
-                    color = accent.copy(alpha = 0.12f),
+                    color = accent.copy(alpha = 0.10f),
                     shape = RoundedCornerShape(if (compact) 10.dp else 12.dp),
                 ) {
                     Icon(

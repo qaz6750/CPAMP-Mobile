@@ -87,17 +87,17 @@ private fun FloatingNavigationBar(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth().shadow(
-                elevation = 14.dp,
-                shape = RoundedCornerShape(30.dp),
-                ambientColor = Color.Black.copy(alpha = 0.12f),
-                spotColor = Color.Black.copy(alpha = 0.18f),
+                elevation = 6.dp,
+                shape = RoundedCornerShape(28.dp),
+                ambientColor = Color.Black.copy(alpha = 0.08f),
+                spotColor = Color.Black.copy(alpha = 0.10f),
             ),
-            shape = RoundedCornerShape(30.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.58f)),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 62.dp).padding(horizontal = 7.dp, vertical = 7.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 6.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -128,13 +128,13 @@ private fun FloatingNavigationItem(
             indication = null,
             onClick = onClick,
         ),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent,
         contentColor = if (selected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(22.dp),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = if (selected) 11.dp else 8.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = if (selected) 11.dp else 8.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
