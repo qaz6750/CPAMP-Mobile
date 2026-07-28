@@ -54,6 +54,7 @@ import com.cpamp.mobile.data.settings.AppTheme
 import com.cpamp.mobile.data.update.AppUpdateState
 import com.cpamp.mobile.data.update.UpdateError
 import com.cpamp.mobile.data.update.UpdateStatus
+import com.cpamp.mobile.data.update.displayBody
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.security.AppLockUiState
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -313,7 +314,7 @@ private fun UpdateSettingsCard(
                 fontWeight = FontWeight.SemiBold,
             )
             release.publishedAt?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            release.body?.takeIf(String::isNotBlank)?.let {
+            release.displayBody()?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }

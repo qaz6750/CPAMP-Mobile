@@ -44,6 +44,14 @@ fun GitHubReleaseDto.releaseAssets(): ReleaseAssets? {
     return ReleaseAssets(version, apk, checksum)
 }
 
+fun GitHubReleaseDto.displayBody(): String? = body
+    ?.substringBefore("\n## Download / 下载")
+    ?.lineSequence()
+    ?.map { line -> line.replaceFirst(MARKDOWN_HEADING, "") }
+    ?.joinToString("\n")
+    ?.trim()
+    ?.takeIf(String::isNotEmpty)
+
 data class SemanticVersion(
     val major: Int,
     val minor: Int,
@@ -85,3 +93,4 @@ private fun String.isTrustedReleaseAsset(tagName: String, assetName: String): Bo
 
 private const val RELEASE_HOST = "github.com"
 private const val RELEASE_DOWNLOAD_PATH = "/qaz6750/CPAMP-Mobile/releases/download"
+private val MARKDOWN_HEADING = Regex("^#{1,6}\\s+")

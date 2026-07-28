@@ -47,4 +47,29 @@ class GitHubReleaseModelsTest {
             ).releaseAssets(),
         )
     }
+
+    @Test
+    fun `shows release notes without generated asset logs`() {
+        val release = GitHubReleaseDto(
+            tagName = "v1.2.3",
+            htmlUrl = "https://github.com/qaz6750/CPAMP-Mobile/releases/tag/v1.2.3",
+            body = """
+                # CPAMP Mobile 1.2.3
+
+                ## 中文
+
+                - 修复更新检查。
+
+                ## Download / 下载
+
+                | Platform | Package |
+
+                ## Integrity / 完整性
+
+                - SHA-256: value
+            """.trimIndent(),
+        )
+
+        assertEquals("CPAMP Mobile 1.2.3\n\n中文\n\n- 修复更新检查。", release.displayBody())
+    }
 }
