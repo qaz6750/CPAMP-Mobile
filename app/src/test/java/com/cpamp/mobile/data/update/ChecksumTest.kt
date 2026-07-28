@@ -8,10 +8,19 @@ import org.junit.Test
 
 class ChecksumTest {
     @Test
-    fun `parses checksum with or without filename`() {
+    fun `parses checksum only for the exact apk filename`() {
         val digest = "a".repeat(64)
         assertEquals(digest, parseSha256("$digest  cpamp-mobile-v1.0.4.apk", "cpamp-mobile-v1.0.4.apk"))
-        assertEquals(digest, parseSha256(digest, "cpamp-mobile-v1.0.4.apk"))
+        assertEquals(digest, parseSha256("$digest *cpamp-mobile-v1.0.4.apk", "cpamp-mobile-v1.0.4.apk"))
+        assertNull(parseSha256(digest, "cpamp-mobile-v1.0.4.apk"))
+        assertNull(parseSha256("$digest  another.apk", "cpamp-mobile-v1.0.4.apk"))
+        assertNull(parseSha256("$digest  cpamp-mobile-v1.0.4.apk\nunexpected", "cpamp-mobile-v1.0.4.apk"))
+        assertNull(
+            parseSha256(
+                "$digest  cpamp-mobile-v1.0.4.apk\n$digest  cpamp-mobile-v1.0.4.apk",
+                "cpamp-mobile-v1.0.4.apk",
+            ),
+        )
         assertNull(parseSha256("not-a-digest", "cpamp-mobile-v1.0.4.apk"))
     }
 

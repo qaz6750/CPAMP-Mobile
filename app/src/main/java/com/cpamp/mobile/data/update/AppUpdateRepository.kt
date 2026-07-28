@@ -34,6 +34,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.ResponseBody
 
 private val Context.updateDataStore by preferencesDataStore(name = "app_update")
 
@@ -250,9 +251,24 @@ class AppUpdateRepository @Inject constructor(
             .build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw UpdateException(UpdateError.Download)
-            val body = response.body?.string()?.take(512).orEmpty()
+            val body = response.body?.readLimitedUtf8(MAX_CHECKSUM_BYTES)
+                ?: throw UpdateException(UpdateError.Checksum)
             parseSha256(body, assets.apk.name) ?: throw UpdateException(UpdateError.Checksum)
         }
+    }
+
+    private fun ResponseBody.readLimitedUtf8(maxBytes: Int): String {
+        val buffer = ByteArray(maxBytes + 1)
+        var total = 0
+        byteStream().use { input ->
+            while (total < buffer.size) {
+                val count = input.read(buffer, total, buffer.size - total)
+                if (count < 0) break
+                total += count
+            }
+        }
+        if (total > maxBytes) throw UpdateException(UpdateError.Checksum)
+        return buffer.copyOf(total).toString(Charsets.UTF_8)
     }
 
     private suspend fun verifyDownloadedApk(downloadId: Long) {
@@ -339,6 +355,7 @@ class AppUpdateRepository @Inject constructor(
 
     private companion object {
         const val LATEST_RELEASE_URL = "https://api.github.com/repos/qaz6750/CPA-Manager-Plus-Android/releases/latest"
+        const val MAX_CHECKSUM_BYTES = 512
         val RELEASE_ETAG = stringPreferencesKey("release_etag")
         val RELEASE_JSON = stringPreferencesKey("release_json")
         val DOWNLOAD_ID = longPreferencesKey("download_id")
@@ -349,10 +366,14 @@ class AppUpdateRepository @Inject constructor(
 }
 
 internal fun parseSha256(body: String, expectedFileName: String): String? {
-    val line = body.lineSequence().firstOrNull { it.contains(expectedFileName) } ?: body.lineSequence().firstOrNull()
-    val digest = line?.trim()?.substringBefore(' ')?.lowercase() ?: return null
-    return digest.takeIf { it.matches(Regex("^[0-9a-f]{64}$")) }
+    if (!isExpectedUpdateFileName(expectedFileName)) return null
+    val lines = body.lineSequence().map(String::trim).filter(String::isNotEmpty).toList()
+    val match = lines.singleOrNull()?.let(SHA256_ENTRY::matchEntire) ?: return null
+    val fileName = match.groupValues[2].removePrefix("*")
+    return match.groupValues[1].lowercase().takeIf { fileName == expectedFileName }
 }
 
 internal fun isExpectedUpdateFileName(fileName: String): Boolean =
     fileName.matches(Regex("^cpamp-mobile-v\\d+\\.\\d+\\.\\d+\\.apk$"))
+
+private val SHA256_ENTRY = Regex("^([0-9a-fA-F]{64})\\s+([^\\s]+)$")
