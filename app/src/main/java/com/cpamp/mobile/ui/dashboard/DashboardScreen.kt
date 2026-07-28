@@ -215,7 +215,7 @@ private fun TopModelRow(model: TopModelDto) {
     Card(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(17.dp),

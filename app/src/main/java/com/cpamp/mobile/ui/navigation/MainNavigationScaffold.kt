@@ -1,6 +1,5 @@
 package com.cpamp.mobile.ui.navigation
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -10,10 +9,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -95,7 +96,7 @@ private fun FloatingNavigationBar(
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 6.dp, vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -104,7 +105,7 @@ private fun FloatingNavigationBar(
                         destination = destination,
                         selected = destination == currentDestination,
                         onClick = { onNavigate(destination) },
-                        modifier = Modifier.weight(if (destination == currentDestination) 1.45f else 0.8f),
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -126,31 +127,36 @@ private fun FloatingNavigationItem(
             indication = null,
             onClick = onClick,
         ),
-        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else Color.Transparent,
-        contentColor = if (selected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = RoundedCornerShape(22.dp),
+        color = Color.Transparent,
+        contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        shape = RoundedCornerShape(16.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = if (selected) 11.dp else 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
+        androidx.compose.foundation.layout.Column(
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
             Icon(
                 imageVector = destination.icon,
                 contentDescription = stringResource(destination.label),
-                modifier = Modifier.size(23.dp),
+                modifier = Modifier.size(24.dp),
             )
-            AnimatedVisibility(visible = selected) {
-                Text(
-                    text = stringResource(destination.label),
-                    modifier = Modifier.padding(start = 6.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Text(
+                text = stringResource(destination.label),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Box(
+                modifier = Modifier.padding(top = 2.dp).width(18.dp).height(2.dp)
+                    .then(
+                        if (selected) Modifier.background(
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(50),
+                        ) else Modifier,
+                    ),
+            )
         }
     }
 }
