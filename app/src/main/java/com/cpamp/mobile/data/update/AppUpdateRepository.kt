@@ -154,7 +154,8 @@ class AppUpdateRepository @Inject constructor(
         runSuspendCatching {
             val checksum = fetchChecksum(assets)
             val fileName = assets.apk.name
-            val destination = File(requireNotNull(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)), fileName)
+            val destination = resolveUpdateFile(fileName)
+                ?: throw UpdateException(UpdateError.Download)
             check(!destination.exists() || destination.delete()) { "UPDATE_FILE_DELETE_FAILED" }
             val request = DownloadManager.Request(Uri.parse(assets.apk.downloadUrl))
                 .setTitle(fileName)
@@ -232,7 +233,7 @@ class AppUpdateRepository @Inject constructor(
         val downloadedVersion = preferences[DOWNLOAD_VERSION]
         if (downloadedVersion != null && !isNewerVersion(downloadedVersion, BuildConfig.VERSION_NAME)) {
             preferences[DOWNLOAD_FILE]?.let { fileName ->
-                File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName).delete()
+                resolveUpdateFile(fileName)?.delete()
             }
             clearDownloadState()
             mutableState.value = AppUpdateState(status = UpdateStatus.UpToDate, release = release)
@@ -259,7 +260,7 @@ class AppUpdateRepository @Inject constructor(
         val preferences = context.updateDataStore.data.first()
         val fileName = preferences[DOWNLOAD_FILE] ?: return verificationFailed(UpdateError.Download)
         val expected = preferences[DOWNLOAD_CHECKSUM] ?: return verificationFailed(UpdateError.Checksum)
-        val file = File(requireNotNull(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)), fileName)
+        val file = resolveUpdateFile(fileName) ?: return verificationFailed(UpdateError.Download)
         val error = when {
             !file.isFile -> UpdateError.Download
             file.sha256() != expected -> UpdateError.Checksum
@@ -288,6 +289,14 @@ class AppUpdateRepository @Inject constructor(
             stored.remove(DOWNLOAD_CHECKSUM)
             stored.remove(DOWNLOAD_VERSION)
         }
+    }
+
+    private suspend fun resolveUpdateFile(fileName: String): File? = withContext(Dispatchers.IO) {
+        if (!isExpectedUpdateFileName(fileName)) return@withContext null
+        val directory = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            ?.canonicalFile
+            ?: return@withContext null
+        File(directory, fileName).canonicalFile.takeIf { it.parentFile == directory }
     }
 
     @Suppress("DEPRECATION")
@@ -344,3 +353,6 @@ internal fun parseSha256(body: String, expectedFileName: String): String? {
     val digest = line?.trim()?.substringBefore(' ')?.lowercase() ?: return null
     return digest.takeIf { it.matches(Regex("^[0-9a-f]{64}$")) }
 }
+
+internal fun isExpectedUpdateFileName(fileName: String): Boolean =
+    fileName.matches(Regex("^cpamp-mobile-v\\d+\\.\\d+\\.\\d+\\.apk$"))
