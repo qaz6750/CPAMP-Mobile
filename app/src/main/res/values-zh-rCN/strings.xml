@@ -50,6 +50,14 @@
     <string name="system_subtitle">服务健康、运行日志和服务器管理</string>
     <string name="settings_title">设置</string>
     <string name="settings_subtitle">隐私、安全和外观</string>
+    <string name="storage_cache">存储与缓存</string>
+    <string name="cache_description">清理概览响应缓存、分享报告图片和更新文件；已保存服务器、密钥与设置均会保留。</string>
+    <string name="clear_cache">清理缓存</string>
+    <string name="clearing_cache">正在清理…</string>
+    <string name="clear_cache_title">清理可再生缓存？</string>
+    <string name="clear_cache_body">离线概览数据、已生成的分享图片和已下载更新文件将被删除，登录状态和设置保持不变。</string>
+    <string name="cache_cleared">缓存已清理；当前实时数据会保留到下次刷新。</string>
+    <string name="cache_clear_failed">部分缓存无法删除；登录状态和设置未被更改。</string>
     <string name="about_updates">关于与更新</string>
     <string name="open_source_licenses">开源许可</string>
     <string name="current_version">当前版本：%1$s</string>

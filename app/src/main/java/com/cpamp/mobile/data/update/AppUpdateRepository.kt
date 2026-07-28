@@ -198,6 +198,20 @@ class AppUpdateRepository @Inject constructor(
         }
     }
 
+    suspend fun clearRegenerableCache() {
+        val preferences = context.updateDataStore.data.first()
+        preferences[DOWNLOAD_ID]?.let { downloadManager.remove(it) }
+        withContext(Dispatchers.IO) {
+            context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                ?.listFiles()
+                ?.forEach { file ->
+                    check(file.deleteRecursively()) { "UPDATE_FILE_DELETE_FAILED" }
+                }
+        }
+        context.updateDataStore.edit { it.clear() }
+        mutableState.value = AppUpdateState()
+    }
+
     private suspend fun restoreDownload() {
         val preferences = context.updateDataStore.data.first()
         val release = preferences[RELEASE_JSON]?.let { runCatching { json.decodeFromString<GitHubReleaseDto>(it) }.getOrNull() }

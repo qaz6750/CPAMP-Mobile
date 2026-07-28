@@ -14,10 +14,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
@@ -28,6 +30,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -71,9 +74,12 @@ fun SettingsScreen(
     onSetAllowScreenshots: (Boolean) -> Unit,
     onSetHideAddresses: (Boolean) -> Unit,
     updateViewModel: AppUpdateViewModel = hiltViewModel(),
+    cacheViewModel: CacheCleanupViewModel = hiltViewModel(),
 ) {
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
+    val cacheState by cacheViewModel.state.collectAsStateWithLifecycle()
     var showUpstreamLicense by remember { mutableStateOf(false) }
+    var confirmClearCache by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -183,6 +189,43 @@ fun SettingsScreen(
                 }
             }
             item {
+                SettingsCard(stringResource(R.string.storage_cache)) {
+                    Text(
+                        stringResource(R.string.cache_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OutlinedButton(
+                        onClick = { confirmClearCache = true },
+                        enabled = !cacheState.clearing,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (cacheState.clearing) {
+                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Outlined.DeleteSweep, contentDescription = null)
+                        }
+                        Text(
+                            stringResource(
+                                if (cacheState.clearing) R.string.clearing_cache else R.string.clear_cache,
+                            ),
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                    cacheState.result?.let { result ->
+                        Text(
+                            stringResource(
+                                if (result == CacheCleanupResult.Success) R.string.cache_cleared
+                                else R.string.cache_clear_failed,
+                            ),
+                            color = if (result == CacheCleanupResult.Success) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
+            item {
                 UpdateSettingsCard(
                     state = updateState,
                     onCheck = updateViewModel::checkForUpdates,
@@ -221,6 +264,29 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { showUpstreamLicense = false }) {
                     Text(stringResource(R.string.dismiss))
+                }
+            },
+        )
+    }
+    if (confirmClearCache) {
+        AlertDialog(
+            onDismissRequest = { confirmClearCache = false },
+            title = { Text(stringResource(R.string.clear_cache_title)) },
+            text = { Text(stringResource(R.string.clear_cache_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmClearCache = false
+                        cacheViewModel.clearResult()
+                        cacheViewModel.clear()
+                    },
+                ) {
+                    Text(stringResource(R.string.clear_cache))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClearCache = false }) {
+                    Text(stringResource(R.string.cancel))
                 }
             },
         )

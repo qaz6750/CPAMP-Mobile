@@ -50,6 +50,14 @@
     <string name="system_subtitle">Service health, runtime logs and saved servers</string>
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">Privacy, security and appearance</string>
+    <string name="storage_cache">Storage and cache</string>
+    <string name="cache_description">Remove cached dashboard responses, shared report images and update files. Saved servers, keys and settings are kept.</string>
+    <string name="clear_cache">Clear cache</string>
+    <string name="clearing_cache">Clearing…</string>
+    <string name="clear_cache_title">Clear regenerable cache?</string>
+    <string name="clear_cache_body">Offline dashboard data, generated share images and downloaded update files will be removed. Login and settings remain unchanged.</string>
+    <string name="cache_cleared">Cache cleared. Current live data remains visible until the next refresh.</string>
+    <string name="cache_clear_failed">Some cached files could not be removed. Login and settings were not changed.</string>
     <string name="about_updates">About and updates</string>
     <string name="open_source_licenses">Open-source licenses</string>
     <string name="current_version">Current version: %1$s</string>
