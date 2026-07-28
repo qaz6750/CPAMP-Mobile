@@ -62,7 +62,7 @@ class CredentialQuotaRepository @Inject constructor(
             )
         }
         check(response.statusCode in 200..299)
-        val usage = response.body?.let { json.decodeFromJsonElement<CodexUsageDto>(it) }
+        val usage = response.body?.let { json.decodeFromJsonElement(CodexUsageDto.serializer(), it) }
             ?: response.bodyText.takeIf(String::isNotBlank)?.let { json.decodeFromString<CodexUsageDto>(it) }
             ?: error("Empty Codex quota response")
         CredentialQuota(
