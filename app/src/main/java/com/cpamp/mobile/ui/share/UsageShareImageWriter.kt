@@ -190,21 +190,22 @@ class UsageShareImageWriter @Inject constructor(
         val maxTokens = points.maxOf { it.tokens }.coerceAtLeast(1)
         val maxRequests = points.maxOf { it.requests }.coerceAtLeast(1)
         val maxCost = points.maxOf { it.cost }.coerceAtLeast(0.0001)
-        repeat(3) { index ->
-            val y = plot.top + plot.height() * index / 2f
+        repeat(4) { index ->
+            val fraction = index / 3f
+            val y = plot.top + plot.height() * fraction
             paint.color = GRID
             paint.strokeWidth = 2f
             canvas.drawLine(plot.left, y, plot.right, y, paint)
             paint.color = BLUE
             paint.textSize = 19f
             paint.textAlign = Paint.Align.RIGHT
-            canvas.drawText(((maxRequests * (2 - index)) / 2).compactNumber(), plot.left - 14f, y + 7f, paint)
+            canvas.drawText((maxRequests * (1f - fraction)).toLong().compactNumber(), plot.left - 14f, y + 7f, paint)
             paint.color = GREEN
             paint.textAlign = Paint.Align.LEFT
-            canvas.drawText(((maxTokens * (2 - index)) / 2).compactNumber(), plot.right + 14f, y + 7f, paint)
+            canvas.drawText((maxTokens * (1f - fraction)).toLong().compactNumber(), plot.right + 14f, y + 7f, paint)
             paint.color = ORANGE
             paint.textAlign = Paint.Align.RIGHT
-            canvas.drawText((maxCost * (2 - index) / 2).asCost(), bounds.right - 14f, y + 7f, paint)
+            canvas.drawText((maxCost * (1f - fraction)).asCost(), bounds.right - 14f, y + 7f, paint)
         }
 
         val requestPoints = points.mapIndexed { index, point ->
@@ -216,9 +217,10 @@ class UsageShareImageWriter @Inject constructor(
         val costPoints = points.mapIndexed { index, point ->
             chartPoint(index, points.size, point.cost, maxCost, plot)
         }
-        drawTrendLine(canvas, paint, requestPoints, BLUE)
-        drawTrendLine(canvas, paint, tokenPoints, GREEN)
-        drawTrendLine(canvas, paint, costPoints, ORANGE)
+        drawTrendArea(canvas, paint, requestPoints, plot, BLUE)
+        drawTrendLine(canvas, paint, requestPoints, BLUE, showPoints = true)
+        drawTrendLine(canvas, paint, tokenPoints, GREEN, showPoints = true)
+        drawTrendLine(canvas, paint, costPoints, ORANGE, showPoints = true)
         paint.style = Paint.Style.FILL
 
         chartTicks(points).forEach { point ->
@@ -242,24 +244,54 @@ class UsageShareImageWriter @Inject constructor(
     private fun chartX(index: Int, count: Int, plot: RectF): Float =
         if (count <= 1) plot.centerX() else plot.left + plot.width() * index / (count - 1f)
 
-    private fun drawTrendLine(canvas: Canvas, paint: Paint, points: List<Pair<Float, Float>>, color: Int) {
+    private fun drawTrendArea(
+        canvas: Canvas,
+        paint: Paint,
+        points: List<Pair<Float, Float>>,
+        plot: RectF,
+        color: Int,
+    ) {
         if (points.isEmpty()) return
-        val path = Path().apply {
-            moveTo(points.first().first, points.first().second)
-            points.zipWithNext().forEach { (previous, current) ->
-                val midpoint = (previous.first + current.first) / 2f
-                cubicTo(midpoint, previous.second, midpoint, current.second, current.first, current.second)
-            }
+        val path = smoothTrendPath(points).apply {
+            lineTo(points.last().first, plot.bottom)
+            lineTo(points.first().first, plot.bottom)
+            close()
         }
+        paint.style = Paint.Style.FILL
+        paint.color = Color.argb(24, Color.red(color), Color.green(color), Color.blue(color))
+        canvas.drawPath(path, paint)
+    }
+
+    private fun drawTrendLine(
+        canvas: Canvas,
+        paint: Paint,
+        points: List<Pair<Float, Float>>,
+        color: Int,
+        showPoints: Boolean,
+    ) {
+        if (points.isEmpty()) return
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 7f
         paint.strokeCap = Paint.Cap.ROUND
         paint.strokeJoin = Paint.Join.ROUND
         paint.color = color
-        canvas.drawPath(path, paint)
-        if (points.size == 1) {
+        canvas.drawPath(smoothTrendPath(points), paint)
+        if (showPoints) {
             paint.style = Paint.Style.FILL
-            canvas.drawCircle(points.first().first, points.first().second, 7f, paint)
+            val step = ((points.size - 1) / 4).coerceAtLeast(1)
+            points.forEachIndexed { index, point ->
+                if (index == 0 || index == points.lastIndex || index % step == 0) {
+                    canvas.drawCircle(point.first, point.second, 6f, paint)
+                }
+            }
+        }
+    }
+
+    private fun smoothTrendPath(points: List<Pair<Float, Float>>) = Path().apply {
+        moveTo(points.first().first, points.first().second)
+        points.zipWithNext().forEach { (previous, current) ->
+            val midpoint = (previous.first + current.first) / 2f
+            cubicTo(midpoint, previous.second, midpoint, current.second, current.first, current.second)
         }
     }
 
@@ -350,11 +382,9 @@ class UsageShareImageWriter @Inject constructor(
         return value.take(count.coerceAtLeast(0)) + suffix
     }
 
-    private fun chartTicks(points: List<UsageSharePoint>): List<UsageSharePoint> = when (points.size) {
-        0 -> emptyList()
-        1 -> listOf(points.first())
-        2 -> points
-        else -> listOf(points.first(), points[points.lastIndex / 2], points.last()).distinct()
+    private fun chartTicks(points: List<UsageSharePoint>): List<UsageSharePoint> {
+        if (points.size <= 5) return points
+        return (0..4).map { step -> points[points.lastIndex * step / 4] }.distinct()
     }
 
     private companion object {
