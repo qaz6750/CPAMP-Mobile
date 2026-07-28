@@ -354,7 +354,7 @@ class AppUpdateRepository @Inject constructor(
     private class UpdateException(val reason: UpdateError) : Exception()
 
     private companion object {
-        const val LATEST_RELEASE_URL = "https://api.github.com/repos/qaz6750/CPA-Manager-Plus-Android/releases/latest"
+        const val LATEST_RELEASE_URL = "https://api.github.com/repos/qaz6750/CPAMP-Mobile/releases/latest"
         const val MAX_CHECKSUM_BYTES = 512
         val RELEASE_ETAG = stringPreferencesKey("release_etag")
         val RELEASE_JSON = stringPreferencesKey("release_json")

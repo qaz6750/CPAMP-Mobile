@@ -84,4 +84,4 @@ private fun String.isTrustedReleaseAsset(tagName: String, assetName: String): Bo
 }
 
 private const val RELEASE_HOST = "github.com"
-private const val RELEASE_DOWNLOAD_PATH = "/qaz6750/CPA-Manager-Plus-Android/releases/download"
+private const val RELEASE_DOWNLOAD_PATH = "/qaz6750/CPAMP-Mobile/releases/download"

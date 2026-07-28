@@ -8,7 +8,7 @@ import org.junit.Test
 
 class GitHubReleaseModelsTest {
     private val apkUrl =
-        "https://github.com/qaz6750/CPA-Manager-Plus-Android/releases/download/v1.0.4/cpamp-mobile-v1.0.4.apk"
+        "https://github.com/qaz6750/CPAMP-Mobile/releases/download/v1.0.4/cpamp-mobile-v1.0.4.apk"
     private val checksumUrl = "$apkUrl.sha256"
 
     @Test
@@ -23,7 +23,7 @@ class GitHubReleaseModelsTest {
     fun `selects only the fixed signed release asset contract`() {
         val release = GitHubReleaseDto(
             tagName = "v1.0.4",
-            htmlUrl = "https://github.com/qaz6750/CPA-Manager-Plus-Android/releases/tag/v1.0.4",
+            htmlUrl = "https://github.com/qaz6750/CPAMP-Mobile/releases/tag/v1.0.4",
             assets = listOf(
                 GitHubReleaseAssetDto("cpamp-mobile-v1.0.4.apk", 10, apkUrl),
                 GitHubReleaseAssetDto("cpamp-mobile-v1.0.4.apk.sha256", 64, checksumUrl),
