@@ -175,16 +175,28 @@ jobs:
           echo "::add-mask::$KEY_ALIAS"
           echo "::add-mask::$KEY_PASSWORD"
           key_path="$RUNNER_TEMP/cpamp-release.jks"
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$key_path"
+          if ! printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$key_path"; then
+            echo "CPAMP_KEYSTORE_BASE64 is not valid base64" >&2
+            exit 1
+          fi
           chmod 600 "$key_path"
           if [[ ! -s "$key_path" ]]; then
             echo "Decoded keystore is empty" >&2
             exit 1
           fi
-          keytool -list \
+          if ! keytool -list \
+            -keystore "$key_path" \
+            -storepass "$KEYSTORE_PASSWORD" > /dev/null; then
+            echo "Unable to open decoded keystore; check CPAMP_KEYSTORE_BASE64 and CPAMP_KEYSTORE_PASSWORD" >&2
+            exit 1
+          fi
+          if ! keytool -list \
             -keystore "$key_path" \
             -storepass "$KEYSTORE_PASSWORD" \
-            -alias "$KEY_ALIAS" > /dev/null
+            -alias "$KEY_ALIAS" > /dev/null; then
+            echo "Signing alias was not found; check CPAMP_KEY_ALIAS" >&2
+            exit 1
+          fi
           echo "CPAMP_KEYSTORE_PATH=$key_path" >> "$GITHUB_ENV"
           echo "CPAMP_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
           echo "CPAMP_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"

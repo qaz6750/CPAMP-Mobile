@@ -102,6 +102,23 @@ CPAMP_KEY_ALIAS
 CPAMP_KEY_PASSWORD
 ```
 
+Generate `CPAMP_KEYSTORE_BASE64` from the binary keystore as a single-line value:
+
+```bash
+base64 -w 0 cpamp-release.jks
+```
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("cpamp-release.jks"))
+```
+
+Before saving the secrets, verify the keystore password and alias locally:
+
+```bash
+keytool -list -keystore cpamp-release.jks -storepass '<keystore-password>'
+keytool -list -keystore cpamp-release.jks -storepass '<keystore-password>' -alias '<key-alias>'
+```
+
 The workflow uploads debug and release APK artifacts. Its release artifact name explicitly includes `signed` or `unsigned`. Pull requests also run GitHub Dependency Review and reject newly introduced high-severity vulnerable dependencies.
 
 Tags matching `v*` create a GitHub Release only when all signing secrets are present. The tag must match `versionName`; the release contains a deterministically named signed APK and its SHA-256 file. Missing or partial signing configuration blocks the release instead of publishing an unsigned installer.
