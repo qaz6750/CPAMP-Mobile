@@ -1,5 +1,8 @@
 name: Android Debug
-run-name: Android Debug / ${{ github.ref_name }}
+run-name: >-
+  Android Debug / ${{ github.ref_name }} / ${{
+    github.event.head_commit.message || github.ref_name
+  }}
 
 on:
   push:
