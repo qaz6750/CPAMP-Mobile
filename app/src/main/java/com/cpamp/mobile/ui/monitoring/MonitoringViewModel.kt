@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
+import com.cpamp.mobile.data.monitoring.CredentialQuota
+import com.cpamp.mobile.data.monitoring.CredentialQuotaRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.model.MonitoringFiltersDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
@@ -44,6 +46,9 @@ data class MonitoringUiState(
     val fromCache: Boolean = false,
     val updatedAt: Long? = null,
     val error: MonitoringError? = null,
+    val credentialQuotas: List<CredentialQuota> = emptyList(),
+    val credentialQuotasLoading: Boolean = false,
+    val credentialQuotasError: Boolean = false,
 )
 
 enum class MonitoringError { Unauthorized, RateLimited, Timeout, Network, Server }
@@ -52,6 +57,7 @@ enum class MonitoringError { Unauthorized, RateLimited, Timeout, Network, Server
 class MonitoringViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val monitoringRepository: MonitoringRepository,
+    private val credentialQuotaRepository: CredentialQuotaRepository,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(MonitoringUiState())
     val state: StateFlow<MonitoringUiState> = mutableState.asStateFlow()
@@ -78,6 +84,7 @@ class MonitoringViewModel @Inject constructor(
                         updatedAt = cached.updatedAt,
                     )
                 }
+                loadCredentialQuotas(session)
                 refreshInternal(defaultFilter, session)
             }
         }
@@ -97,6 +104,31 @@ class MonitoringViewModel @Inject constructor(
         if (mutableState.value.loading || mutableState.value.refreshing) return
         val session = sessionRepository.session.value ?: return
         viewModelScope.launch { refreshInternal(filter.value, session) }
+        loadCredentialQuotas(session)
+    }
+
+    private fun loadCredentialQuotas(session: AuthenticatedSession) {
+        mutableState.value = mutableState.value.copy(
+            credentialQuotasLoading = true,
+            credentialQuotasError = false,
+        )
+        viewModelScope.launch {
+            runCatching { credentialQuotaRepository.load(session) }
+                .onSuccess { quotas ->
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
+                    mutableState.value = mutableState.value.copy(
+                        credentialQuotas = quotas,
+                        credentialQuotasLoading = false,
+                    )
+                }
+                .onFailure {
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
+                    mutableState.value = mutableState.value.copy(
+                        credentialQuotasLoading = false,
+                        credentialQuotasError = true,
+                    )
+                }
+        }
     }
 
     private suspend fun refreshInternal(
