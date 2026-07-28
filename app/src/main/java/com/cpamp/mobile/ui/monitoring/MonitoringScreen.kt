@@ -32,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -130,6 +131,19 @@ fun MonitoringScreen(
                                 onClick = { viewModel.setFailedOnly(true) },
                                 label = { Text(stringResource(R.string.failed_only)) },
                                 leadingIcon = { Icon(Icons.Outlined.ErrorOutline, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    labelColor = MaterialTheme.colorScheme.error,
+                                    iconColor = MaterialTheme.colorScheme.error,
+                                    selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer,
+                                    selectedLeadingIconColor = MaterialTheme.colorScheme.onErrorContainer,
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = state.filter.failedOnly,
+                                    borderColor = MaterialTheme.colorScheme.error,
+                                    selectedBorderColor = MaterialTheme.colorScheme.error,
+                                ),
                             )
                             Text(
                                 stringResource(R.string.refresh_after_filter),
