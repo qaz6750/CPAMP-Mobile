@@ -12,13 +12,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
-import com.cpamp.mobile.ui.dashboard.DashboardViewModel
 import com.cpamp.mobile.ui.system.SystemScreen
-import com.cpamp.mobile.ui.system.SystemViewModel
 import com.cpamp.mobile.ui.monitoring.MonitoringScreen
-import com.cpamp.mobile.ui.monitoring.MonitoringViewModel
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
-import com.cpamp.mobile.ui.usage.UsageAnalyticsViewModel
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionViewModel
@@ -97,10 +93,6 @@ private fun ConnectedApp(
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val current = AppDestination.fromRoute(backStackEntry?.destination?.route)
-    val dashboardViewModel: DashboardViewModel = hiltViewModel()
-    val monitoringViewModel: MonitoringViewModel = hiltViewModel()
-    val usageViewModel: UsageAnalyticsViewModel = hiltViewModel()
-    val systemViewModel: SystemViewModel = hiltViewModel()
 
     MainNavigationScaffold(
         currentDestination = current,
@@ -120,18 +112,16 @@ private fun ConnectedApp(
                 DashboardScreen(
                     contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
-                    viewModel = dashboardViewModel,
                 )
             }
             composable(AppDestination.Traffic.route) {
                 MonitoringScreen(
                     contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
-                    viewModel = monitoringViewModel,
                 )
             }
             composable(AppDestination.Usage.route) {
-                UsageAnalyticsScreen(contentPadding, viewModel = usageViewModel)
+                UsageAnalyticsScreen(contentPadding)
             }
             composable(AppDestination.Operations.route) {
                 SystemScreen(
@@ -142,7 +132,6 @@ private fun ConnectedApp(
                     onDeleteServer = onDeleteServer,
                     onDisconnect = onDisconnect,
                     appearanceState = appearanceState,
-                    viewModel = systemViewModel,
                 )
             }
             composable(AppDestination.Settings.route) {
