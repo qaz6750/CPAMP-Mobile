@@ -63,10 +63,12 @@ class SessionRepository @Inject constructor(
     }
 
     suspend fun delete(profileId: String) {
-        apiClientFactory.invalidate()
         profileStore.delete(profileId)
+        if (mutableSession.value?.profile?.id == profileId) {
+            apiClientFactory.invalidate()
+            mutableSession.value = null
+        }
         cacheDao.deleteProfile(profileId)
-        if (mutableSession.value?.profile?.id == profileId) mutableSession.value = null
     }
 
     fun disconnect() {
