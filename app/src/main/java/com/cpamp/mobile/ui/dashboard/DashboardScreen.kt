@@ -111,6 +111,7 @@ fun DashboardScreen(
             summary?.let { data ->
                 item { DashboardMetrics(data) }
                 item {
+                    val costByBucket = state.costTimeline.associate { it.bucketMs to it.cost }
                     DashboardTrafficChart(
                         title = stringResource(R.string.preview_trend),
                         points = data.trafficTimeline.map { point ->
@@ -120,6 +121,7 @@ fun DashboardScreen(
                                 tokens = point.tokens,
                                 success = point.success,
                                 failure = point.failure,
+                                cost = costByBucket[point.bucketMs],
                             )
                         },
                         nowMs = data.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
