@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.securityDataStore by preferencesDataStore(name = "security_settings")
@@ -33,9 +34,19 @@ class AppLockRepository @Inject constructor(
     }
 
     suspend fun setEnabled(enabled: Boolean) {
+        val previousEnabled = settings.first().enabled
+        if (previousEnabled == enabled) return
+
         val profileIds = profileStore.snapshot().profiles.map { it.id }
-        secretStore.migrate(profileIds, requireAuthentication = enabled)
-        context.securityDataStore.edit { preferences -> preferences[LOCK_ENABLED] = enabled }
+        try {
+            secretStore.migrate(profileIds, requireAuthentication = enabled)
+            context.securityDataStore.edit { preferences -> preferences[LOCK_ENABLED] = enabled }
+        } catch (error: Throwable) {
+            runCatching {
+                secretStore.migrate(profileIds, requireAuthentication = previousEnabled)
+            }.exceptionOrNull()?.let(error::addSuppressed)
+            throw error
+        }
     }
 
     suspend fun setTimeoutMinutes(minutes: Int) {

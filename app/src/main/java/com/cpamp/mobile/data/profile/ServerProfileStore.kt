@@ -32,8 +32,9 @@ class ServerProfileStore @Inject constructor(
     suspend fun snapshot(): StoredProfiles = profiles.first()
 
     suspend fun upsert(profile: ServerProfile, adminKey: String) {
+        val previousSecret = secretStore.get(profile.id)
         secretStore.put(profile.id, adminKey)
-        runCatching {
+        try {
             context.profileDataStore.edit { preferences ->
                 val current = preferences[PROFILES_KEY]
                     ?.let { json.decodeFromString<StoredProfiles>(it) }
@@ -44,7 +45,16 @@ class ServerProfileStore @Inject constructor(
                     StoredProfiles(nextProfiles, activeProfileId = profile.id),
                 )
             }
-        }.onFailure { secretStore.remove(profile.id) }.getOrThrow()
+        } catch (error: Throwable) {
+            runCatching {
+                if (previousSecret == null) {
+                    secretStore.remove(profile.id)
+                } else {
+                    secretStore.put(profile.id, previousSecret)
+                }
+            }.exceptionOrNull()?.let(error::addSuppressed)
+            throw error
+        }
     }
 
     suspend fun markActive(profileId: String) {
@@ -82,4 +92,3 @@ class ServerProfileStore @Inject constructor(
         val PROFILES_KEY = stringPreferencesKey("profiles_json_v1")
     }
 }
-
