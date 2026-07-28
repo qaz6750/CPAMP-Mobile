@@ -8,6 +8,7 @@ import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
+import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.ui.share.UsageShareImageWriter
 import com.cpamp.mobile.ui.share.toUsageShareReport
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 enum class UsageWindow(val durationMs: Long) {
@@ -65,6 +67,25 @@ class UsageAnalyticsViewModel @Inject constructor(
     private val mutableState = MutableStateFlow(UsageAnalyticsUiState())
     val state: StateFlow<UsageAnalyticsUiState> = mutableState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            sessionRepository.session.collectLatest { session ->
+                if (session == null) {
+                    mutableState.value = UsageAnalyticsUiState()
+                    return@collectLatest
+                }
+                val window = UsageWindow.Week
+                val ranking = UsageRanking.Models
+                mutableState.value = UsageAnalyticsUiState(
+                    window = window,
+                    ranking = ranking,
+                    loading = true,
+                )
+                refreshInternal(session, window, ranking)
+            }
+        }
+    }
+
     fun setWindow(window: UsageWindow) {
         mutableState.value = mutableState.value.copy(window = window)
     }
@@ -78,38 +99,7 @@ class UsageAnalyticsViewModel @Inject constructor(
         val session = sessionRepository.session.value ?: return
         val window = mutableState.value.window
         val ranking = mutableState.value.ranking
-        viewModelScope.launch {
-            mutableState.value = mutableState.value.copy(loading = true, error = false)
-            val now = System.currentTimeMillis()
-            val range = usageWindowRange(window, now)
-            val request = MonitoringRequestDto(
-                fromMs = range.fromMs,
-                toMs = range.toMs,
-                nowMs = now,
-                timeZone = ZoneId.systemDefault().id,
-                include = MonitoringIncludeDto(
-                    summary = true,
-                    timeline = true,
-                    modelStats = ranking == UsageRanking.Models,
-                    credentialStats = ranking == UsageRanking.Credentials,
-                    apiKeyStats = ranking == UsageRanking.ApiKeys,
-                ),
-            )
-            runCatching { monitoringRepository.refresh(session, request, cacheResult = false) }
-                .onSuccess { response ->
-                    if (mutableState.value.window == window && mutableState.value.ranking == ranking) {
-                        mutableState.value = mutableState.value.copy(
-                            response = response,
-                            loadedWindow = window,
-                            loadedRange = range,
-                            loading = false,
-                        )
-                    }
-                }
-                .onFailure {
-                    mutableState.value = mutableState.value.copy(loading = false, error = true)
-                }
-        }
+        viewModelScope.launch { refreshInternal(session, window, ranking) }
     }
 
     fun share() {
@@ -160,6 +150,47 @@ class UsageAnalyticsViewModel @Inject constructor(
 
     fun consumeShare() {
         mutableState.value = mutableState.value.copy(shareUri = null)
+    }
+
+    private suspend fun refreshInternal(
+        session: AuthenticatedSession,
+        window: UsageWindow,
+        ranking: UsageRanking,
+    ) {
+        mutableState.value = mutableState.value.copy(loading = true, error = false)
+        val now = System.currentTimeMillis()
+        val range = usageWindowRange(window, now)
+        val request = MonitoringRequestDto(
+            fromMs = range.fromMs,
+            toMs = range.toMs,
+            nowMs = now,
+            timeZone = ZoneId.systemDefault().id,
+            include = MonitoringIncludeDto(
+                summary = true,
+                timeline = true,
+                modelStats = ranking == UsageRanking.Models,
+                credentialStats = ranking == UsageRanking.Credentials,
+                apiKeyStats = ranking == UsageRanking.ApiKeys,
+            ),
+        )
+        runCatching { monitoringRepository.refresh(session, request, cacheResult = false) }
+            .onSuccess { response ->
+                if (sessionRepository.session.value?.profile?.id == session.profile.id &&
+                    mutableState.value.window == window && mutableState.value.ranking == ranking
+                ) {
+                    mutableState.value = mutableState.value.copy(
+                        response = response,
+                        loadedWindow = window,
+                        loadedRange = range,
+                        loading = false,
+                    )
+                }
+            }
+            .onFailure {
+                if (sessionRepository.session.value?.profile?.id == session.profile.id) {
+                    mutableState.value = mutableState.value.copy(loading = false, error = true)
+                }
+            }
     }
 }
 

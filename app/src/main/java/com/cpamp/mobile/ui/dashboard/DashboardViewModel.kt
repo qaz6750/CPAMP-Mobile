@@ -7,6 +7,7 @@ import com.cpamp.mobile.data.dashboard.DashboardRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.domain.model.ServerProfile
+import com.cpamp.mobile.domain.model.AuthenticatedSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.ZoneId
@@ -47,7 +48,7 @@ class DashboardViewModel @Inject constructor(
                     mutableState.value = DashboardUiState(loading = false)
                     return@collectLatest
                 }
-                mutableState.value = DashboardUiState(profile = session.profile, loading = false)
+                mutableState.value = DashboardUiState(profile = session.profile, loading = true)
                 dashboardRepository.cached(session.profile.id)?.let { cached ->
                     mutableState.value = mutableState.value.copy(
                         summary = cached.summary,
@@ -56,17 +57,18 @@ class DashboardViewModel @Inject constructor(
                         updatedAt = cached.updatedAt,
                     )
                 }
+                refreshInternal(session)
             }
         }
     }
 
     fun refresh() {
         if (mutableState.value.loading || mutableState.value.refreshing) return
-        viewModelScope.launch { refreshInternal() }
+        val session = sessionRepository.session.value ?: return
+        viewModelScope.launch { refreshInternal(session) }
     }
 
-    private suspend fun refreshInternal() {
-        val session = sessionRepository.session.value ?: return
+    private suspend fun refreshInternal(session: AuthenticatedSession) {
         refreshMutex.withLock {
             mutableState.value = mutableState.value.copy(
                 refreshing = mutableState.value.summary != null,
@@ -80,6 +82,7 @@ class DashboardViewModel @Inject constructor(
                 .toEpochMilli()
             runCatching { dashboardRepository.refresh(session, start, now) }
                 .onSuccess { summary ->
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
                     mutableState.value = mutableState.value.copy(
                         profile = session.profile,
                         summary = summary,
@@ -91,6 +94,7 @@ class DashboardViewModel @Inject constructor(
                     )
                 }
                 .onFailure { error ->
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
                     mutableState.value = mutableState.value.copy(
                         loading = false,
                         refreshing = false,
@@ -109,4 +113,3 @@ private fun Throwable.toDashboardError(): DashboardError = when (this) {
     is RemoteFailure.Network, is RemoteFailure.Tls -> DashboardError.Network
     else -> DashboardError.Server
 }
-

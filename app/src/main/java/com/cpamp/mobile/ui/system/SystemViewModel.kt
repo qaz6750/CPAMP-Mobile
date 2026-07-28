@@ -11,6 +11,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 enum class SystemTab { Status, Logs, Servers }
@@ -41,6 +42,36 @@ class SystemViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(SystemUiState())
     val state: StateFlow<SystemUiState> = mutableState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            sessionRepository.session.collectLatest { session ->
+                if (session == null) {
+                    mutableState.value = SystemUiState()
+                    return@collectLatest
+                }
+                mutableState.value = SystemUiState(loading = true)
+                runCatching { repository.status(session) }
+                    .onSuccess { snapshot ->
+                        if (sessionRepository.session.value?.profile?.id == session.profile.id) {
+                            mutableState.value = mutableState.value.copy(
+                                info = snapshot.info,
+                                status = snapshot.status,
+                                loading = false,
+                            )
+                        }
+                    }
+                    .onFailure {
+                        if (sessionRepository.session.value?.profile?.id == session.profile.id) {
+                            mutableState.value = mutableState.value.copy(
+                                loading = false,
+                                error = "SYSTEM_REQUEST_FAILED",
+                            )
+                        }
+                    }
+            }
+        }
+    }
 
     fun selectTab(tab: SystemTab) {
         mutableState.value = mutableState.value.copy(tab = tab)

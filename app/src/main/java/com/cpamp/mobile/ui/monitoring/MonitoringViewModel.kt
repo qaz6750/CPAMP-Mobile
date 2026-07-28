@@ -11,6 +11,7 @@ import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
 import com.cpamp.mobile.data.remote.model.EventsPageRequestDto
 import com.cpamp.mobile.domain.model.ServerProfile
+import com.cpamp.mobile.domain.model.AuthenticatedSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.ZoneId
 import javax.inject.Inject
@@ -63,7 +64,13 @@ class MonitoringViewModel @Inject constructor(
                     mutableState.value = MonitoringUiState(loading = false)
                     return@collectLatest
                 }
-                mutableState.value = MonitoringUiState(profile = session.profile, loading = false)
+                val defaultFilter = TrafficFilter()
+                filter.value = defaultFilter
+                mutableState.value = MonitoringUiState(
+                    profile = session.profile,
+                    filter = defaultFilter,
+                    loading = true,
+                )
                 monitoringRepository.cached(session.profile.id)?.let { cached ->
                     mutableState.value = mutableState.value.copy(
                         response = cached.response,
@@ -71,6 +78,7 @@ class MonitoringViewModel @Inject constructor(
                         updatedAt = cached.updatedAt,
                     )
                 }
+                refreshInternal(defaultFilter, session)
             }
         }
     }
@@ -87,11 +95,14 @@ class MonitoringViewModel @Inject constructor(
 
     fun refresh() {
         if (mutableState.value.loading || mutableState.value.refreshing) return
-        viewModelScope.launch { refreshInternal(filter.value) }
+        val session = sessionRepository.session.value ?: return
+        viewModelScope.launch { refreshInternal(filter.value, session) }
     }
 
-    private suspend fun refreshInternal(currentFilter: TrafficFilter) {
-        val session = sessionRepository.session.value ?: return
+    private suspend fun refreshInternal(
+        currentFilter: TrafficFilter,
+        session: AuthenticatedSession,
+    ) {
         mutableState.value = mutableState.value.copy(
             refreshing = mutableState.value.response != null,
             loading = mutableState.value.response == null,
@@ -125,7 +136,9 @@ class MonitoringViewModel @Inject constructor(
                 error = null,
             )
         }.onFailure { error ->
-            if (filter.value != currentFilter) return@onFailure
+            if (filter.value != currentFilter || sessionRepository.session.value?.profile?.id != session.profile.id) {
+                return@onFailure
+            }
             mutableState.value = mutableState.value.copy(
                 loading = false,
                 refreshing = false,
