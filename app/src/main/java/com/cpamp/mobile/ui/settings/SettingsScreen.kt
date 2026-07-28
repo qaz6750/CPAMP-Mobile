@@ -39,6 +39,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
@@ -78,8 +79,8 @@ fun SettingsScreen(
 ) {
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
     val cacheState by cacheViewModel.state.collectAsStateWithLifecycle()
-    var showUpstreamLicense by remember { mutableStateOf(false) }
-    var confirmClearCache by remember { mutableStateOf(false) }
+    var showUpstreamLicense by rememberSaveable { mutableStateOf(false) }
+    var confirmClearCache by rememberSaveable { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->

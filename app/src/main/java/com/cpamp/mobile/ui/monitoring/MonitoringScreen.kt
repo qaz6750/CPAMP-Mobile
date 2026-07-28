@@ -42,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,7 +75,7 @@ fun MonitoringScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var selectedEvent by remember { mutableStateOf<RequestEventDto?>(null) }
-    var showCredentialQuotas by remember { mutableStateOf(false) }
+    var showCredentialQuotas by rememberSaveable { mutableStateOf(false) }
 
     AppBackground {
         LazyColumn(
