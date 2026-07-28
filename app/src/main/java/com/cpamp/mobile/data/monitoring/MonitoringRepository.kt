@@ -49,11 +49,14 @@ class MonitoringRepository @Inject constructor(
     }
 
     private fun MonitoringResponseDto.cacheSafeCopy(): MonitoringResponseDto = copy(
+        apiKeyStats = emptyList(),
+        credentialStats = emptyList(),
         recentFailures = emptyList(),
         events = events?.copy(
             items = events.items.map { event ->
                 event.copy(
                     requestId = "",
+                    eventHash = "",
                     path = "",
                     authIndex = "",
                     source = "",
@@ -70,4 +73,3 @@ class MonitoringRepository @Inject constructor(
         const val CACHE_KIND = "monitoring.v1"
     }
 }
-
