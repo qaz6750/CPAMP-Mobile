@@ -19,6 +19,7 @@
     <string name="usage_subtitle">Compare traffic, spend and resource rankings</string>
     <string name="usage_manual_prompt">Choose a time range, then refresh to load analytics.</string>
     <string name="usage_request_failed">Usage analytics could not be loaded. Existing results remain visible.</string>
+    <string name="usage_partial_range">Only %1$d days of statistics are available. The shared report will use this actual range.</string>
     <string name="usage_requests">Requests</string>
     <string name="usage_tokens">Tokens</string>
     <string name="usage_cost">Estimated cost</string>

@@ -130,6 +130,9 @@ fun UsageAnalyticsScreen(
             if (state.shareError) {
                 item { UsageNotice(stringResource(R.string.share_usage_failed)) }
             }
+            state.effectiveMonthRange?.takeIf { it.actualDays < 30 }?.let { range ->
+                item { UsageRangeNotice(stringResource(R.string.usage_partial_range, range.actualDays)) }
+            }
             val response = state.response
             if (response == null && !state.loading) {
                 item {
@@ -257,6 +260,18 @@ private fun RankingRow(name: String, calls: Long, tokens: Long, cost: Double, su
 private fun UsageNotice(text: String) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
         Text(text, modifier = Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun UsageRangeNotice(text: String) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+        Text(
+            text,
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }
 

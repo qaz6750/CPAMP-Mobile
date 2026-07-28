@@ -5,6 +5,7 @@ import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
 data class UsageShareReport(
     val fromMs: Long,
     val toMs: Long,
+    val actualDays: Int,
     val requests: Long,
     val successRate: Double,
     val tokens: Long,
@@ -25,16 +26,21 @@ data class UsageShareModel(
     val tokens: Long,
 )
 
-fun MonitoringResponseDto.toUsageShareReport(fromMs: Long, toMs: Long): UsageShareReport? {
+fun MonitoringResponseDto.toUsageShareReport(
+    fromMs: Long,
+    toMs: Long,
+    actualDays: Int,
+): UsageShareReport? {
     val summary = summary ?: return null
     return UsageShareReport(
         fromMs = fromMs,
         toMs = toMs,
+        actualDays = actualDays,
         requests = summary.totalCalls,
         successRate = summary.successRate,
         tokens = summary.totalTokens,
         cost = summary.totalCost,
-        timeline = timeline.map { point ->
+        timeline = timeline.filter { it.bucketMs in fromMs..toMs }.map { point ->
             UsageSharePoint(
                 timestampMs = point.bucketMs,
                 requests = point.calls,

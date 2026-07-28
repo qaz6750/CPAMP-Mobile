@@ -19,6 +19,7 @@
     <string name="usage_subtitle">比较流量、成本和资源排名</string>
     <string name="usage_manual_prompt">选择时间范围，然后点击刷新加载分析数据。</string>
     <string name="usage_request_failed">无法加载用量分析，现有结果将继续显示。</string>
+    <string name="usage_partial_range">当前仅有 %1$d 天统计数据，分享报告将按实际日期范围生成。</string>
     <string name="usage_requests">请求</string>
     <string name="usage_tokens">Token</string>
     <string name="usage_cost">预估成本</string>

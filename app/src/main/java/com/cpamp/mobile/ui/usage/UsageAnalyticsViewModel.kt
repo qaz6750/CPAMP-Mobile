@@ -13,6 +13,7 @@ import com.cpamp.mobile.ui.share.toUsageShareReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,12 @@ enum class UsageWindow(val durationMs: Long) {
 
 data class UsageRange(val fromMs: Long, val toMs: Long)
 
+data class UsageEffectiveRange(
+    val fromMs: Long,
+    val toMs: Long,
+    val actualDays: Int,
+)
+
 enum class UsageRanking { Models, ApiKeys, Credentials }
 
 data class UsageAnalyticsUiState(
@@ -40,7 +47,14 @@ data class UsageAnalyticsUiState(
     val shareUri: Uri? = null,
     val shareError: Boolean = false,
     val error: Boolean = false,
-)
+) {
+    val effectiveMonthRange: UsageEffectiveRange?
+        get() = if (window == UsageWindow.Month && loadedWindow == UsageWindow.Month) {
+            response?.let { loadedRange?.let { range -> effectiveUsageRange(it, range) } }
+        } else {
+            null
+        }
+}
 
 @HiltViewModel
 class UsageAnalyticsViewModel @Inject constructor(
@@ -122,7 +136,19 @@ class UsageAnalyticsViewModel @Inject constructor(
                     ),
                     cacheResult = false,
                 )
-                val report = requireNotNull(response.toUsageShareReport(range.fromMs, range.toMs))
+                val effectiveRange = if (window == UsageWindow.Month) {
+                    effectiveUsageRange(response, range)
+                        ?: UsageEffectiveRange(range.fromMs, range.toMs, UsageWindow.Month.days)
+                } else {
+                    UsageEffectiveRange(range.fromMs, range.toMs, window.days)
+                }
+                val report = requireNotNull(
+                    response.toUsageShareReport(
+                        fromMs = effectiveRange.fromMs,
+                        toMs = effectiveRange.toMs,
+                        actualDays = effectiveRange.actualDays,
+                    ),
+                )
                 shareImageWriter.write(report)
             }.onSuccess { uri ->
                 mutableState.value = mutableState.value.copy(sharing = false, shareUri = uri)
@@ -145,7 +171,42 @@ internal fun usageWindowRange(
     val fromMs = when (window) {
         UsageWindow.Day -> Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
             .atStartOfDay(zoneId).toInstant().toEpochMilli()
-        UsageWindow.Week, UsageWindow.Month -> nowMs - window.durationMs
+        UsageWindow.Week -> nowMs - window.durationMs
+        UsageWindow.Month -> Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
+            .minusDays((UsageWindow.Month.days - 1).toLong())
+            .atStartOfDay(zoneId).toInstant().toEpochMilli()
     }
     return UsageRange(fromMs, nowMs)
 }
+
+internal fun effectiveUsageRange(
+    response: MonitoringResponseDto,
+    requestedRange: UsageRange,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+): UsageEffectiveRange? {
+    val firstPoint = response.timeline
+        .asSequence()
+        .filter { it.calls > 0 || it.totalTokens > 0 || it.tokens > 0 }
+        .minByOrNull { it.bucketMs }
+        ?: return null
+    val firstDate = Instant.ofEpochMilli(firstPoint.bucketMs).atZone(zoneId).toLocalDate()
+    val endDate = Instant.ofEpochMilli(requestedRange.toMs).atZone(zoneId).toLocalDate()
+    if (firstDate.isAfter(endDate)) return null
+    val effectiveFrom = maxOf(
+        requestedRange.fromMs,
+        firstDate.atStartOfDay(zoneId).toInstant().toEpochMilli(),
+    )
+    return UsageEffectiveRange(
+        fromMs = effectiveFrom,
+        toMs = requestedRange.toMs,
+        actualDays = (ChronoUnit.DAYS.between(firstDate, endDate) + 1).toInt()
+            .coerceIn(1, UsageWindow.Month.days),
+    )
+}
+
+private val UsageWindow.days: Int
+    get() = when (this) {
+        UsageWindow.Day -> 1
+        UsageWindow.Week -> 7
+        UsageWindow.Month -> 30
+    }
