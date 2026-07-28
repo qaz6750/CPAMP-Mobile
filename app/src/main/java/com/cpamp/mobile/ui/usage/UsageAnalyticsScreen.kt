@@ -1,8 +1,8 @@
 package com.cpamp.mobile.ui.usage
 
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -266,7 +266,7 @@ private fun ExpandedUsageTrend(
     nowMs: Long,
     onDismiss: () -> Unit,
 ) {
-    val activity = LocalContext.current as? Activity
+    val activity = LocalActivity.current
     var previousOrientation by rememberSaveable {
         mutableIntStateOf(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
     }
