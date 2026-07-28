@@ -43,9 +43,9 @@ import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
-import com.cpamp.mobile.ui.components.AnalyticsTrendCard
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.ConnectionPill
+import com.cpamp.mobile.ui.components.DashboardTrafficChart
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
@@ -112,7 +112,7 @@ fun DashboardScreen(
             summary?.let { data ->
                 item { DashboardMetrics(data) }
                 item {
-                    AnalyticsTrendCard(
+                    DashboardTrafficChart(
                         title = stringResource(R.string.preview_trend),
                         points = data.trafficTimeline.map { point ->
                             AnalyticsTrendPoint(
@@ -123,6 +123,7 @@ fun DashboardScreen(
                                 failure = point.failure,
                             )
                         },
+                        nowMs = data.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
                         emptyText = stringResource(R.string.no_traffic),
                     )
                 }
@@ -234,4 +235,3 @@ private fun TopModelRow(model: TopModelDto) {
         HorizontalDivider()
     }
 }
-
