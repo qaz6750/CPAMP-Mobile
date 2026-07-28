@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class SystemTab { Status, Logs, Servers }
@@ -54,19 +55,23 @@ class SystemViewModel @Inject constructor(
                 runCatching { repository.status(session) }
                     .onSuccess { snapshot ->
                         if (sessionRepository.session.value?.profile?.id == session.profile.id) {
-                            mutableState.value = mutableState.value.copy(
-                                info = snapshot.info,
-                                status = snapshot.status,
-                                loading = false,
-                            )
+                            mutableState.update {
+                                it.copy(
+                                    info = snapshot.info,
+                                    status = snapshot.status,
+                                    loading = false,
+                                )
+                            }
                         }
                     }
                     .onFailure {
                         if (sessionRepository.session.value?.profile?.id == session.profile.id) {
-                            mutableState.value = mutableState.value.copy(
-                                loading = false,
-                                error = "SYSTEM_REQUEST_FAILED",
-                            )
+                            mutableState.update {
+                                it.copy(
+                                    loading = false,
+                                    error = "SYSTEM_REQUEST_FAILED",
+                                )
+                            }
                         }
                     }
             }
@@ -74,38 +79,46 @@ class SystemViewModel @Inject constructor(
     }
 
     fun selectTab(tab: SystemTab) {
-        mutableState.value = mutableState.value.copy(tab = tab)
+        mutableState.update { it.copy(tab = tab) }
     }
 
     fun setLogFilter(value: String) {
-        mutableState.value = mutableState.value.copy(logFilter = value.take(160))
+        mutableState.update { it.copy(logFilter = value.take(160)) }
     }
 
     fun refresh() {
         if (mutableState.value.loading || mutableState.value.loadingMore || mutableState.value.mutating) return
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutableState.value = mutableState.value.copy(loading = true, error = null, message = null)
+            mutableState.update { it.copy(loading = true, error = null, message = null) }
             when (mutableState.value.tab) {
                 SystemTab.Status -> runCatching { repository.status(session) }
                     .onSuccess { snapshot ->
-                        mutableState.value = mutableState.value.copy(
-                            info = snapshot.info,
-                            status = snapshot.status,
-                            loading = false,
-                        )
+                        mutableState.update {
+                            it.copy(
+                                info = snapshot.info,
+                                status = snapshot.status,
+                                loading = false,
+                            )
+                        }
                     }
-                    .onFailure { mutableState.value = mutableState.value.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
+                    .onFailure {
+                        mutableState.update { it.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
+                    }
                 SystemTab.Logs -> runCatching { repository.logs(session) }
                     .onSuccess { page ->
-                        mutableState.value = mutableState.value.copy(
-                            logs = page.lines,
-                            nextCursor = page.nextCursor,
-                            loading = false,
-                        )
+                        mutableState.update {
+                            it.copy(
+                                logs = page.lines,
+                                nextCursor = page.nextCursor,
+                                loading = false,
+                            )
+                        }
                     }
-                    .onFailure { mutableState.value = mutableState.value.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
-                SystemTab.Servers -> mutableState.value = mutableState.value.copy(loading = false)
+                    .onFailure {
+                        mutableState.update { it.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
+                    }
+                SystemTab.Servers -> mutableState.update { it.copy(loading = false) }
             }
         }
     }
@@ -115,37 +128,41 @@ class SystemViewModel @Inject constructor(
         if (mutableState.value.loadingMore) return
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutableState.value = mutableState.value.copy(loadingMore = true, error = null)
+            mutableState.update { it.copy(loadingMore = true, error = null) }
             runCatching { repository.logs(session, cursor) }
                 .onSuccess { page ->
-                    mutableState.value = mutableState.value.copy(
-                        logs = (mutableState.value.logs + page.lines).distinct(),
-                        nextCursor = page.nextCursor,
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            logs = (state.logs + page.lines).distinct(),
+                            nextCursor = page.nextCursor,
+                        )
+                    }
                 }
-                .onFailure { mutableState.value = mutableState.value.copy(error = "SYSTEM_REQUEST_FAILED") }
-            mutableState.value = mutableState.value.copy(loadingMore = false)
+                .onFailure { mutableState.update { it.copy(error = "SYSTEM_REQUEST_FAILED") } }
+            mutableState.update { it.copy(loadingMore = false) }
         }
     }
 
     fun clearLogs() {
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutableState.value = mutableState.value.copy(mutating = true, error = null, message = null)
+            mutableState.update { it.copy(mutating = true, error = null, message = null) }
             runCatching { repository.clearLogs(session) }
                 .onSuccess {
-                    mutableState.value = mutableState.value.copy(
-                        logs = emptyList(),
-                        nextCursor = null,
-                        message = "LOGS_CLEARED",
-                    )
+                    mutableState.update {
+                        it.copy(
+                            logs = emptyList(),
+                            nextCursor = null,
+                            message = "LOGS_CLEARED",
+                        )
+                    }
                 }
-                .onFailure { mutableState.value = mutableState.value.copy(error = "SYSTEM_REQUEST_FAILED") }
-            mutableState.value = mutableState.value.copy(mutating = false)
+                .onFailure { mutableState.update { it.copy(error = "SYSTEM_REQUEST_FAILED") } }
+            mutableState.update { it.copy(mutating = false) }
         }
     }
 
     fun clearNotice() {
-        mutableState.value = mutableState.value.copy(error = null, message = null)
+        mutableState.update { it.copy(error = null, message = null) }
     }
 }

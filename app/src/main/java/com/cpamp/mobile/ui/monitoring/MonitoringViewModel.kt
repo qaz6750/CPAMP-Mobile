@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class TrafficWindow(val durationMs: Long) {
@@ -78,11 +79,13 @@ class MonitoringViewModel @Inject constructor(
                     loading = true,
                 )
                 monitoringRepository.cached(session.profile.id)?.let { cached ->
-                    mutableState.value = mutableState.value.copy(
-                        response = cached.response,
-                        fromCache = true,
-                        updatedAt = cached.updatedAt,
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            response = cached.response,
+                            fromCache = true,
+                            updatedAt = cached.updatedAt,
+                        )
+                    }
                 }
                 loadCredentialQuotas(session)
                 refreshInternal(defaultFilter, session)
@@ -91,13 +94,13 @@ class MonitoringViewModel @Inject constructor(
     }
 
     fun setFailedOnly(value: Boolean) {
-        filter.value = filter.value.copy(failedOnly = value)
-        mutableState.value = mutableState.value.copy(filter = filter.value)
+        filter.update { it.copy(failedOnly = value) }
+        mutableState.update { it.copy(filter = filter.value) }
     }
 
     fun setWindow(value: TrafficWindow) {
-        filter.value = filter.value.copy(window = value)
-        mutableState.value = mutableState.value.copy(filter = filter.value)
+        filter.update { it.copy(window = value) }
+        mutableState.update { it.copy(filter = filter.value) }
     }
 
     fun refresh() {
@@ -108,25 +111,31 @@ class MonitoringViewModel @Inject constructor(
     }
 
     private fun loadCredentialQuotas(session: AuthenticatedSession) {
-        mutableState.value = mutableState.value.copy(
-            credentialQuotasLoading = true,
-            credentialQuotasError = false,
-        )
+        mutableState.update {
+            it.copy(
+                credentialQuotasLoading = true,
+                credentialQuotasError = false,
+            )
+        }
         viewModelScope.launch {
             runCatching { credentialQuotaRepository.load(session) }
                 .onSuccess { quotas ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
-                    mutableState.value = mutableState.value.copy(
-                        credentialQuotas = quotas,
-                        credentialQuotasLoading = false,
-                    )
+                    mutableState.update {
+                        it.copy(
+                            credentialQuotas = quotas,
+                            credentialQuotasLoading = false,
+                        )
+                    }
                 }
                 .onFailure {
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
-                    mutableState.value = mutableState.value.copy(
-                        credentialQuotasLoading = false,
-                        credentialQuotasError = true,
-                    )
+                    mutableState.update {
+                        it.copy(
+                            credentialQuotasLoading = false,
+                            credentialQuotasError = true,
+                        )
+                    }
                 }
         }
     }
@@ -135,11 +144,13 @@ class MonitoringViewModel @Inject constructor(
         currentFilter: TrafficFilter,
         session: AuthenticatedSession,
     ) {
-        mutableState.value = mutableState.value.copy(
-            refreshing = mutableState.value.response != null,
-            loading = mutableState.value.response == null,
-            error = null,
-        )
+        mutableState.update { state ->
+            state.copy(
+                refreshing = state.response != null,
+                loading = state.response == null,
+                error = null,
+            )
+        }
         val now = System.currentTimeMillis()
         val request = MonitoringRequestDto(
             fromMs = now - currentFilter.window.durationMs,
@@ -158,24 +169,28 @@ class MonitoringViewModel @Inject constructor(
             if (filter.value != currentFilter || sessionRepository.session.value?.profile?.id != session.profile.id) {
                 return@onSuccess
             }
-            mutableState.value = mutableState.value.copy(
-                profile = session.profile,
-                response = response,
-                loading = false,
-                refreshing = false,
-                fromCache = false,
-                updatedAt = System.currentTimeMillis(),
-                error = null,
-            )
+            mutableState.update { state ->
+                state.copy(
+                    profile = session.profile,
+                    response = response,
+                    loading = false,
+                    refreshing = false,
+                    fromCache = false,
+                    updatedAt = System.currentTimeMillis(),
+                    error = null,
+                )
+            }
         }.onFailure { error ->
             if (filter.value != currentFilter || sessionRepository.session.value?.profile?.id != session.profile.id) {
                 return@onFailure
             }
-            mutableState.value = mutableState.value.copy(
-                loading = false,
-                refreshing = false,
-                error = error.toMonitoringError(),
-            )
+            mutableState.update { state ->
+                state.copy(
+                    loading = false,
+                    refreshing = false,
+                    error = error.toMonitoringError(),
+                )
+            }
         }
     }
 }

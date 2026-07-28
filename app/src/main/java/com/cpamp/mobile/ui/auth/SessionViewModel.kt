@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class SessionUiState(
@@ -47,47 +48,55 @@ class SessionViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             repository.profiles.collectLatest { stored ->
-                mutableState.value = mutableState.value.copy(profiles = stored.profiles)
+                mutableState.update { it.copy(profiles = stored.profiles) }
             }
         }
         viewModelScope.launch {
             val restored = repository.restore()
-            mutableState.value = mutableState.value.copy(
-                initializing = false,
-                session = restored.getOrNull(),
-                error = restored.exceptionOrNull()
-                    ?.takeUnless { it.message == "NO_ACTIVE_PROFILE" }
-                    ?.toAuthUiError(),
-            )
+            mutableState.update { state ->
+                state.copy(
+                    initializing = false,
+                    session = restored.getOrNull(),
+                    error = restored.exceptionOrNull()
+                        ?.takeUnless { it.message == "NO_ACTIVE_PROFILE" }
+                        ?.toAuthUiError(),
+                )
+            }
         }
     }
 
     fun login(name: String, address: String, adminKey: String, allowCleartext: Boolean) {
         viewModelScope.launch {
-            mutableState.value = mutableState.value.copy(submitting = true, error = null)
+            mutableState.update { it.copy(submitting = true, error = null) }
             runCatching { repository.login(name, address, adminKey, allowCleartext) }
                 .onSuccess { session ->
-                    mutableState.value = mutableState.value.copy(submitting = false, session = session)
+                    mutableState.update { it.copy(submitting = false, session = session) }
                 }
                 .onFailure { error ->
-                    mutableState.value = mutableState.value.copy(
-                        submitting = false,
-                        error = error.toAuthUiError(),
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            submitting = false,
+                            error = error.toAuthUiError(),
+                        )
+                    }
                 }
         }
     }
 
     fun switchTo(profileId: String) {
         viewModelScope.launch {
-            mutableState.value = mutableState.value.copy(submitting = true, session = null, error = null)
+            mutableState.update { it.copy(submitting = true, session = null, error = null) }
             runCatching { repository.switchTo(profileId) }
-                .onSuccess { mutableState.value = mutableState.value.copy(submitting = false, session = it) }
-                .onFailure {
-                    mutableState.value = mutableState.value.copy(
-                        submitting = false,
-                        error = it.toAuthUiError(),
-                    )
+                .onSuccess { session ->
+                    mutableState.update { it.copy(submitting = false, session = session) }
+                }
+                .onFailure { error ->
+                    mutableState.update { state ->
+                        state.copy(
+                            submitting = false,
+                            error = error.toAuthUiError(),
+                        )
+                    }
                 }
         }
     }
@@ -95,20 +104,22 @@ class SessionViewModel @Inject constructor(
     fun delete(profileId: String) {
         viewModelScope.launch {
             repository.delete(profileId)
-            mutableState.value = mutableState.value.copy(
-                session = repository.session.value,
-                error = null,
-            )
+            mutableState.update {
+                it.copy(
+                    session = repository.session.value,
+                    error = null,
+                )
+            }
         }
     }
 
     fun disconnect() {
         repository.disconnect()
-        mutableState.value = mutableState.value.copy(session = null, error = null)
+        mutableState.update { it.copy(session = null, error = null) }
     }
 
     fun clearError() {
-        mutableState.value = mutableState.value.copy(error = null)
+        mutableState.update { it.copy(error = null) }
     }
 }
 
@@ -128,4 +139,3 @@ private fun Throwable.toAuthUiError(): AuthUiError = when {
     this is IllegalArgumentException -> AuthUiError.InvalidAddress
     else -> AuthUiError.Unknown
 }
-

@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -91,13 +92,13 @@ class UsageAnalyticsViewModel @Inject constructor(
 
     fun setWindow(window: UsageWindow) {
         if (mutableState.value.window == window) return
-        mutableState.value = mutableState.value.copy(window = window)
+        mutableState.update { it.copy(window = window) }
         val session = sessionRepository.session.value ?: return
         scheduleRefresh(session, window, mutableState.value.ranking)
     }
 
     fun setRanking(ranking: UsageRanking) {
-        mutableState.value = mutableState.value.copy(ranking = ranking)
+        mutableState.update { it.copy(ranking = ranking) }
     }
 
     fun refresh() {
@@ -124,7 +125,7 @@ class UsageAnalyticsViewModel @Inject constructor(
         val session = sessionRepository.session.value ?: return
         val window = current.window
         viewModelScope.launch {
-            mutableState.value = mutableState.value.copy(sharing = true, shareError = false, shareUri = null)
+            mutableState.update { it.copy(sharing = true, shareError = false, shareUri = null) }
             val reusable = current.response?.takeIf {
                 current.loadedWindow == window && current.loadedRange != null && it.modelStats.isNotEmpty()
             }
@@ -157,15 +158,15 @@ class UsageAnalyticsViewModel @Inject constructor(
                 )
                 shareImageWriter.write(report)
             }.onSuccess { uri ->
-                mutableState.value = mutableState.value.copy(sharing = false, shareUri = uri)
+                mutableState.update { it.copy(sharing = false, shareUri = uri) }
             }.onFailure {
-                mutableState.value = mutableState.value.copy(sharing = false, shareError = true)
+                mutableState.update { it.copy(sharing = false, shareError = true) }
             }
         }
     }
 
     fun consumeShare() {
-        mutableState.value = mutableState.value.copy(shareUri = null)
+        mutableState.update { it.copy(shareUri = null) }
     }
 
     private suspend fun refreshInternal(
@@ -174,7 +175,7 @@ class UsageAnalyticsViewModel @Inject constructor(
         ranking: UsageRanking,
         generation: Long = ++refreshGeneration,
     ) {
-        mutableState.value = mutableState.value.copy(loading = true, error = false)
+        mutableState.update { it.copy(loading = true, error = false) }
         val now = System.currentTimeMillis()
         val range = usageWindowRange(window, now)
         val request = MonitoringRequestDto(
@@ -196,12 +197,14 @@ class UsageAnalyticsViewModel @Inject constructor(
                     mutableState.value.window == window && mutableState.value.ranking == ranking &&
                     refreshGeneration == generation
                 ) {
-                    mutableState.value = mutableState.value.copy(
-                        response = response,
-                        loadedWindow = window,
-                        loadedRange = range,
-                        loading = false,
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            response = response,
+                            loadedWindow = window,
+                            loadedRange = range,
+                            loading = false,
+                        )
+                    }
                 }
             }
             .onFailure {
@@ -209,7 +212,7 @@ class UsageAnalyticsViewModel @Inject constructor(
                     mutableState.value.window == window && mutableState.value.ranking == ranking &&
                     refreshGeneration == generation
                 ) {
-                    mutableState.value = mutableState.value.copy(loading = false, error = true)
+                    mutableState.update { it.copy(loading = false, error = true) }
                 }
             }
     }

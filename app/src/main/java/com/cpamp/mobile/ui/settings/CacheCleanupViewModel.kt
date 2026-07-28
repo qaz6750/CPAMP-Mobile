@@ -8,6 +8,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class CacheCleanupResult { Success, Failure }
@@ -37,6 +38,6 @@ class CacheCleanupViewModel @Inject constructor(
     }
 
     fun clearResult() {
-        mutableState.value = mutableState.value.copy(result = null)
+        mutableState.update { it.copy(result = null) }
     }
 }

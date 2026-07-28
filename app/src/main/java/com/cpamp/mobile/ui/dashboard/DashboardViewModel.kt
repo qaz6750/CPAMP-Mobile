@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -58,12 +59,14 @@ class DashboardViewModel @Inject constructor(
                 }
                 mutableState.value = DashboardUiState(profile = session.profile, loading = true)
                 dashboardRepository.cached(session.profile.id)?.let { cached ->
-                    mutableState.value = mutableState.value.copy(
-                        summary = cached.summary,
-                        loading = false,
-                        fromCache = true,
-                        updatedAt = cached.updatedAt,
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            summary = cached.summary,
+                            loading = false,
+                            fromCache = true,
+                            updatedAt = cached.updatedAt,
+                        )
+                    }
                 }
                 refreshInternal(session)
             }
@@ -78,11 +81,13 @@ class DashboardViewModel @Inject constructor(
 
     private suspend fun refreshInternal(session: AuthenticatedSession) {
         refreshMutex.withLock {
-            mutableState.value = mutableState.value.copy(
-                refreshing = mutableState.value.summary != null,
-                loading = mutableState.value.summary == null,
-                error = null,
-            )
+            mutableState.update { state ->
+                state.copy(
+                    refreshing = state.summary != null,
+                    loading = state.summary == null,
+                    error = null,
+                )
+            }
             val now = System.currentTimeMillis()
             val start = LocalDate.now()
                 .atStartOfDay(ZoneId.systemDefault())
@@ -111,24 +116,28 @@ class DashboardViewModel @Inject constructor(
             }
                 .onSuccess { (summary, timeline) ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
-                    mutableState.value = mutableState.value.copy(
-                        profile = session.profile,
-                        summary = summary,
-                        analyticsTimeline = timeline,
-                        loading = false,
-                        refreshing = false,
-                        fromCache = false,
-                        updatedAt = System.currentTimeMillis(),
-                        error = null,
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            profile = session.profile,
+                            summary = summary,
+                            analyticsTimeline = timeline,
+                            loading = false,
+                            refreshing = false,
+                            fromCache = false,
+                            updatedAt = System.currentTimeMillis(),
+                            error = null,
+                        )
+                    }
                 }
                 .onFailure { error ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
-                    mutableState.value = mutableState.value.copy(
-                        loading = false,
-                        refreshing = false,
-                        error = error.toDashboardError(),
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            loading = false,
+                            refreshing = false,
+                            error = error.toDashboardError(),
+                        )
+                    }
                 }
         }
     }

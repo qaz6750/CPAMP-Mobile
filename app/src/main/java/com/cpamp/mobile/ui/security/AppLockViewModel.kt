@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class AppLockUiState(
@@ -34,24 +35,26 @@ class AppLockViewModel @Inject constructor(
         viewModelScope.launch {
             repository.settings.collectLatest { settings ->
                 repository.synchronizeRuntimeMode(settings.enabled)
-                mutableState.value = mutableState.value.copy(
-                    loading = false,
-                    enabled = settings.enabled,
-                    locked = if (!initialized) settings.enabled else mutableState.value.locked && settings.enabled,
-                    timeoutMinutes = settings.timeoutMinutes,
-                )
+                mutableState.update { state ->
+                    state.copy(
+                        loading = false,
+                        enabled = settings.enabled,
+                        locked = if (!initialized) settings.enabled else state.locked && settings.enabled,
+                        timeoutMinutes = settings.timeoutMinutes,
+                    )
+                }
                 initialized = true
             }
         }
     }
 
     fun unlock() {
-        mutableState.value = mutableState.value.copy(locked = false, error = false)
+        mutableState.update { it.copy(locked = false, error = false) }
         backgroundedAt = null
     }
 
     fun authenticationFailed() {
-        mutableState.value = mutableState.value.copy(error = true)
+        mutableState.update { it.copy(error = true) }
     }
 
     fun onBackground() {
@@ -63,30 +66,32 @@ class AppLockViewModel @Inject constructor(
     fun onForeground() {
         val elapsed = backgroundedAt?.let { SystemClock.elapsedRealtime() - it } ?: return
         if (elapsed >= mutableState.value.timeoutMinutes * 60_000L) {
-            mutableState.value = mutableState.value.copy(locked = true)
+            mutableState.update { it.copy(locked = true) }
         }
         backgroundedAt = null
     }
 
     fun setEnabledAfterAuthentication(enabled: Boolean) {
         viewModelScope.launch {
-            mutableState.value = mutableState.value.copy(mutating = true, error = false)
+            mutableState.update { it.copy(mutating = true, error = false) }
             runCatching { repository.setEnabled(enabled) }
                 .onSuccess {
-                    mutableState.value = mutableState.value.copy(
-                        mutating = false,
-                        enabled = enabled,
-                        locked = false,
-                    )
+                    mutableState.update {
+                        it.copy(
+                            mutating = false,
+                            enabled = enabled,
+                            locked = false,
+                        )
+                    }
                 }
-                .onFailure { mutableState.value = mutableState.value.copy(mutating = false, error = true) }
+                .onFailure { mutableState.update { it.copy(mutating = false, error = true) } }
         }
     }
 
     fun setTimeoutMinutes(minutes: Int) {
         viewModelScope.launch {
             runCatching { repository.setTimeoutMinutes(minutes) }
-                .onFailure { mutableState.value = mutableState.value.copy(error = true) }
+                .onFailure { mutableState.update { it.copy(error = true) } }
         }
     }
 }
