@@ -54,6 +54,7 @@ import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
 import com.cpamp.mobile.ui.components.MetricCard
+import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
 
 @Composable
@@ -229,7 +230,7 @@ fun UsageAnalyticsScreen(
                 }
                 when (state.ranking) {
                     UsageRanking.Models -> items(response.modelStats.sortedByDescending(ModelStatDto::calls).take(10)) {
-                        RankingRow(it.model, it.calls, it.totalTokens, it.cost, it.successRate)
+                        RankingRow(it.model, it.calls, it.totalTokens, it.cost, it.successRate, model = it.model)
                     }
                     UsageRanking.ApiKeys -> items(response.apiKeyStats.sortedByDescending(ApiKeyStatDto::calls).take(10)) {
                         RankingRow(it.displayName, it.calls, it.totalTokens, it.cost, it.successRate)
@@ -244,15 +245,29 @@ fun UsageAnalyticsScreen(
 }
 
 @Composable
-private fun RankingRow(name: String, calls: Long, tokens: Long, cost: Double, successRate: Double) {
+private fun RankingRow(
+    name: String,
+    calls: Long,
+    tokens: Long,
+    cost: Double,
+    successRate: Double,
+    model: String? = null,
+) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            Text(name.ifBlank { stringResource(R.string.unknown_value) }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(stringResource(R.string.usage_calls_value, calls.compactNumber()), style = MaterialTheme.typography.bodySmall)
-                Text(tokens.compactNumber(), style = MaterialTheme.typography.bodySmall)
-                Text(cost.asCost(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
-                Text(successRate.asPercent(), style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            model?.let { ModelProviderIcon(it) }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Text(name.ifBlank { stringResource(R.string.unknown_value) }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(stringResource(R.string.usage_calls_value, calls.compactNumber()), style = MaterialTheme.typography.bodySmall)
+                    Text(tokens.compactNumber(), style = MaterialTheme.typography.bodySmall)
+                    Text(cost.asCost(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Text(successRate.asPercent(), style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }
