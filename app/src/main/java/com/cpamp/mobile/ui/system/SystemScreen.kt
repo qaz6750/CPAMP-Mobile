@@ -115,12 +115,15 @@ fun SystemScreen(
                     }
                 }
             }
-            if (state.error != null || state.message != null) {
+            state.notice?.let { notice ->
                 item {
-                    SystemNotice(
-                        isError = state.error != null,
+                    SystemNoticeCard(
+                        isError = notice == SystemNotice.RequestFailed,
                         text = stringResource(
-                            if (state.error != null) R.string.system_request_failed else R.string.logs_cleared,
+                            when (notice) {
+                                SystemNotice.RequestFailed -> R.string.system_request_failed
+                                SystemNotice.LogsCleared -> R.string.logs_cleared
+                            },
                         ),
                         onDismiss = viewModel::clearNotice,
                     )
@@ -383,7 +386,7 @@ private fun EmptySystemCard(text: String) {
 }
 
 @Composable
-private fun SystemNotice(isError: Boolean, text: String, onDismiss: () -> Unit) {
+private fun SystemNoticeCard(isError: Boolean, text: String, onDismiss: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = if (isError) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,

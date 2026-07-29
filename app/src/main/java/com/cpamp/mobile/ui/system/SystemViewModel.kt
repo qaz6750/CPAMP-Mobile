@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 
 enum class SystemTab { Status, Logs, Servers }
 
+enum class SystemNotice { RequestFailed, LogsCleared }
+
 data class SystemUiState(
     val tab: SystemTab = SystemTab.Status,
     val info: ManagerInfoDto? = null,
@@ -28,8 +30,7 @@ data class SystemUiState(
     val loading: Boolean = false,
     val loadingMore: Boolean = false,
     val mutating: Boolean = false,
-    val error: String? = null,
-    val message: String? = null,
+    val notice: SystemNotice? = null,
 ) {
     val visibleLogs: List<String>
         get() = logFilter.trim().takeIf(String::isNotEmpty)?.let { query ->
@@ -70,7 +71,7 @@ class SystemViewModel @Inject constructor(
                             mutableState.update {
                                 it.copy(
                                     loading = false,
-                                    error = "SYSTEM_REQUEST_FAILED",
+                                    notice = SystemNotice.RequestFailed,
                                 )
                             }
                         }
@@ -91,7 +92,7 @@ class SystemViewModel @Inject constructor(
         if (mutableState.value.loading || mutableState.value.loadingMore || mutableState.value.mutating) return
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutableState.update { it.copy(loading = true, error = null, message = null) }
+            mutableState.update { it.copy(loading = true, notice = null) }
             when (mutableState.value.tab) {
                 SystemTab.Status -> runSuspendCatching { repository.status(session) }
                     .onSuccess { snapshot ->
@@ -104,7 +105,9 @@ class SystemViewModel @Inject constructor(
                         }
                     }
                     .onFailure {
-                        mutableState.update { it.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
+                        mutableState.update {
+                            it.copy(loading = false, notice = SystemNotice.RequestFailed)
+                        }
                     }
                 SystemTab.Logs -> runSuspendCatching { repository.logs(session) }
                     .onSuccess { page ->
@@ -117,7 +120,9 @@ class SystemViewModel @Inject constructor(
                         }
                     }
                     .onFailure {
-                        mutableState.update { it.copy(loading = false, error = "SYSTEM_REQUEST_FAILED") }
+                        mutableState.update {
+                            it.copy(loading = false, notice = SystemNotice.RequestFailed)
+                        }
                     }
                 SystemTab.Servers -> mutableState.update { it.copy(loading = false) }
             }
@@ -129,7 +134,7 @@ class SystemViewModel @Inject constructor(
         if (mutableState.value.loadingMore) return
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutableState.update { it.copy(loadingMore = true, error = null) }
+            mutableState.update { it.copy(loadingMore = true, notice = null) }
             runSuspendCatching { repository.logs(session, cursor) }
                 .onSuccess { page ->
                     mutableState.update { state ->
@@ -139,7 +144,9 @@ class SystemViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure { mutableState.update { it.copy(error = "SYSTEM_REQUEST_FAILED") } }
+                .onFailure {
+                    mutableState.update { it.copy(notice = SystemNotice.RequestFailed) }
+                }
             mutableState.update { it.copy(loadingMore = false) }
         }
     }
@@ -147,23 +154,25 @@ class SystemViewModel @Inject constructor(
     fun clearLogs() {
         viewModelScope.launch {
             val session = sessionRepository.session.value ?: return@launch
-            mutableState.update { it.copy(mutating = true, error = null, message = null) }
+            mutableState.update { it.copy(mutating = true, notice = null) }
             runSuspendCatching { repository.clearLogs(session) }
                 .onSuccess {
                     mutableState.update {
                         it.copy(
                             logs = emptyList(),
                             nextCursor = null,
-                            message = "LOGS_CLEARED",
+                            notice = SystemNotice.LogsCleared,
                         )
                     }
                 }
-                .onFailure { mutableState.update { it.copy(error = "SYSTEM_REQUEST_FAILED") } }
+                .onFailure {
+                    mutableState.update { it.copy(notice = SystemNotice.RequestFailed) }
+                }
             mutableState.update { it.copy(mutating = false) }
         }
     }
 
     fun clearNotice() {
-        mutableState.update { it.copy(error = null, message = null) }
+        mutableState.update { it.copy(notice = null) }
     }
 }
