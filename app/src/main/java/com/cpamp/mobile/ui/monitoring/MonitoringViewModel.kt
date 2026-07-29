@@ -2,6 +2,9 @@ package com.cpamp.mobile.ui.monitoring
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.MILLIS_PER_DAY
+import com.cpamp.mobile.common.MILLIS_PER_HOUR
+import com.cpamp.mobile.common.MILLIS_PER_WEEK
 import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.CredentialQuota
@@ -26,9 +29,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class TrafficWindow(val durationMs: Long) {
-    Hour(60 * 60 * 1000L),
-    Day(24 * 60 * 60 * 1000L),
-    Week(7 * 24 * 60 * 60 * 1000L),
+    Hour(MILLIS_PER_HOUR),
+    Day(MILLIS_PER_DAY),
+    Week(MILLIS_PER_WEEK),
 }
 
 data class TrafficFilter(

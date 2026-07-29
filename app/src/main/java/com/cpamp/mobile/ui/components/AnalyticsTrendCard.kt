@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
+import com.cpamp.mobile.common.MILLIS_PER_HOUR
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.compactNumber
 import java.time.Instant
@@ -228,7 +229,7 @@ internal fun trendBucketEnd(points: List<AnalyticsTrendPoint>, index: Int): Long
     point.bucketEndMs?.takeIf { it > point.timestampMs }?.let { return it }
     points.getOrNull(index + 1)?.timestampMs?.takeIf { it > point.timestampMs }?.let { return it }
     val interval = points.getOrNull(index - 1)?.let { point.timestampMs - it.timestampMs }
-        ?.takeIf { it > 0 } ?: 60 * 60 * 1000L
+        ?.takeIf { it > 0 } ?: MILLIS_PER_HOUR
     return point.timestampMs + interval
 }
 

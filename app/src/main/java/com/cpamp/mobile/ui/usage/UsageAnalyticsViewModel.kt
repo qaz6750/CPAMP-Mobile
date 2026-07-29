@@ -3,6 +3,8 @@ package com.cpamp.mobile.ui.usage
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpamp.mobile.common.MILLIS_PER_DAY
+import com.cpamp.mobile.common.MILLIS_PER_WEEK
 import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
@@ -27,9 +29,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class UsageWindow(val durationMs: Long) {
-    Day(24 * 60 * 60 * 1000L),
-    Week(7 * 24 * 60 * 60 * 1000L),
-    Month(30 * 24 * 60 * 60 * 1000L),
+    Day(MILLIS_PER_DAY),
+    Week(MILLIS_PER_WEEK),
+    Month(30 * MILLIS_PER_DAY),
 }
 
 data class UsageRange(val fromMs: Long, val toMs: Long)
@@ -283,7 +285,7 @@ private fun usageRangeDayCount(
 
 private fun List<MonitoringTimelineDto>.usesHourlyBuckets(): Boolean =
     size <= 1 || zipWithNext().any { (previous, current) ->
-        current.bucketMs - previous.bucketMs in 1 until 24 * 60 * 60 * 1000L
+        current.bucketMs - previous.bucketMs in 1 until MILLIS_PER_DAY
     }
 
 private val UsageWindow.days: Int

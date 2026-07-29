@@ -35,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.cpamp.mobile.common.MILLIS_PER_DAY
+import com.cpamp.mobile.common.MILLIS_PER_WEEK
 import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.compactNumber
@@ -338,8 +340,8 @@ private fun categoryPosition(index: Int, count: Int, width: Float): Float =
 private fun Long.chartDate(timestamps: List<Long>): String {
     val span = (timestamps.lastOrNull() ?: this) - (timestamps.firstOrNull() ?: this)
     val pattern = when {
-        span <= 24 * 60 * 60 * 1000L -> "HH:mm"
-        span <= 7 * 24 * 60 * 60 * 1000L -> "MM/dd\nHH:mm"
+        span <= MILLIS_PER_DAY -> "HH:mm"
+        span <= MILLIS_PER_WEEK -> "MM/dd\nHH:mm"
         else -> "MM/dd"
     }
     return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern(pattern))

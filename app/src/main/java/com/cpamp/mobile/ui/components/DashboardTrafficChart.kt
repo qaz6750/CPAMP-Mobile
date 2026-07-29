@@ -46,6 +46,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
+import com.cpamp.mobile.common.MILLIS_PER_DAY
+import com.cpamp.mobile.common.MILLIS_PER_HOUR
+import com.cpamp.mobile.common.MILLIS_PER_WEEK
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.compactNumber
 import java.time.Instant
@@ -332,7 +335,7 @@ internal fun dashboardVisibleTrafficPoints(
 internal fun isCurrentTrafficBucket(
     point: AnalyticsTrendPoint,
     nowMs: Long,
-): Boolean = nowMs >= point.timestampMs && nowMs < point.timestampMs + DASHBOARD_BUCKET_MS
+): Boolean = nowMs >= point.timestampMs && nowMs < point.timestampMs + MILLIS_PER_HOUR
 
 private fun smoothChartPath(points: List<Offset>): Path = Path().apply {
     if (points.isEmpty()) return@apply
@@ -408,8 +411,8 @@ private fun dashboardChartTicks(points: List<AnalyticsTrendPoint>): List<Analyti
 private fun Long.asChartLabel(points: List<AnalyticsTrendPoint>): String {
     val span = (points.lastOrNull()?.timestampMs ?: this) - (points.firstOrNull()?.timestampMs ?: this)
     val pattern = when {
-        span <= 24 * 60 * 60 * 1000L -> "HH:mm"
-        span <= 7 * 24 * 60 * 60 * 1000L -> "MM/dd\nHH:mm"
+        span <= MILLIS_PER_DAY -> "HH:mm"
+        span <= MILLIS_PER_WEEK -> "MM/dd\nHH:mm"
         else -> "MM/dd"
     }
     return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern(pattern))
@@ -417,5 +420,3 @@ private fun Long.asChartLabel(points: List<AnalyticsTrendPoint>): String {
 
 private fun Long.asDashboardDateTime(): String = Instant.ofEpochMilli(this)
     .atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))
-
-private const val DASHBOARD_BUCKET_MS = 60 * 60 * 1000L

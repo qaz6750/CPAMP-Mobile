@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
+import com.cpamp.mobile.common.SECONDS_PER_DAY
+import com.cpamp.mobile.common.SECONDS_PER_HOUR
 import com.cpamp.mobile.data.monitoring.CredentialQuota
 import com.cpamp.mobile.data.monitoring.CredentialQuotaWindow
 import com.cpamp.mobile.ui.common.asTime
@@ -240,9 +242,9 @@ private fun CredentialQuotaDetailWindow(window: CredentialQuotaWindow) {
 
 @Composable
 private fun CredentialQuotaWindow.detailDurationLabel(): String = when {
-    durationSeconds > 0 && durationSeconds % (24 * 60 * 60) == 0L ->
-        stringResource(R.string.credential_quota_window_days, durationSeconds / (24 * 60 * 60))
-    durationSeconds > 0 && durationSeconds % (60 * 60) == 0L ->
-        stringResource(R.string.credential_quota_window_hours, durationSeconds / (60 * 60))
+    durationSeconds > 0 && durationSeconds % SECONDS_PER_DAY == 0L ->
+        stringResource(R.string.credential_quota_window_days, durationSeconds / SECONDS_PER_DAY)
+    durationSeconds > 0 && durationSeconds % SECONDS_PER_HOUR == 0L ->
+        stringResource(R.string.credential_quota_window_hours, durationSeconds / SECONDS_PER_HOUR)
     else -> stringResource(R.string.credential_quota_window_other)
 }

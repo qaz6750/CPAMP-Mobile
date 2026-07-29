@@ -17,6 +17,7 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.DrawableCompat
 import com.cpamp.mobile.BuildConfig
 import com.cpamp.mobile.R
+import com.cpamp.mobile.common.MILLIS_PER_DAY
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
@@ -646,10 +647,10 @@ class UsageShareImageWriter @Inject constructor(
     private fun Long.chartLabel(points: List<UsageSharePoint>): String {
         val span = (points.lastOrNull()?.timestampMs ?: this) - (points.firstOrNull()?.timestampMs ?: this)
         val hourlyBuckets = points.zipWithNext().any { (previous, current) ->
-            current.timestampMs - previous.timestampMs in 1 until DAY_MS
+            current.timestampMs - previous.timestampMs in 1 until MILLIS_PER_DAY
         }
         val pattern = when {
-            span <= DAY_MS -> "HH:mm"
+            span <= MILLIS_PER_DAY -> "HH:mm"
             hourlyBuckets -> "MM-dd HH:mm"
             else -> "MM-dd"
         }
@@ -690,7 +691,6 @@ class UsageShareImageWriter @Inject constructor(
         const val RENDER_SCALE = 1.5f
         const val OUTPUT_WIDTH = 1620
         const val OUTPUT_HEIGHT = 4350
-        const val DAY_MS = 24 * 60 * 60 * 1000L
         val BACKGROUND_TOP = Color.rgb(246, 248, 252)
         val BACKGROUND_BOTTOM = Color.rgb(238, 243, 249)
         val CARD = Color.rgb(255, 255, 255)
