@@ -135,7 +135,7 @@ class CredentialQuotaRepository @Inject constructor(
 
     private val AuthFileDto.resolvedAuthIndex: String
         get() = sequenceOf(authIndex, camelAuthIndex, hyphenAuthIndex)
-            .mapNotNull(JsonElement?::scalarText)
+            .mapNotNull { it.scalarText() }
             .firstOrNull(String::isNotBlank)
             .orEmpty()
 
@@ -154,7 +154,7 @@ class CredentialQuotaRepository @Inject constructor(
                 attributes?.get("chatgptAccountId"),
                 attributes?.get("account_id"),
                 attributes?.get("accountId"),
-            ).mapNotNull(JsonElement?::scalarText).firstOrNull(String::isNotBlank)
+            ).mapNotNull { it.scalarText() }.firstOrNull(String::isNotBlank)
             if (!direct.isNullOrBlank()) return direct
             return sequenceOf(idToken, metadata?.get("id_token"), attributes?.get("id_token"))
                 .mapNotNull(::decodeIdToken)
@@ -165,7 +165,7 @@ class CredentialQuotaRepository @Inject constructor(
 
     private val com.cpamp.mobile.data.remote.model.ApiCallResponseDto.resolvedStatusCode: Int
         get() = sequenceOf(statusCode, camelStatusCode)
-            .mapNotNull(JsonElement?::scalarText)
+            .mapNotNull { it.scalarText() }
             .mapNotNull(String::toIntOrNull)
             .firstOrNull { it != 0 }
             ?: 0
@@ -198,7 +198,7 @@ class CredentialQuotaRepository @Inject constructor(
         ?.trim()
 
     private fun firstNumber(vararg values: JsonElement?): Double? = values.asSequence()
-        .mapNotNull(JsonElement?::scalarText)
+        .mapNotNull { it.scalarText() }
         .map { it.removeSuffix("%").trim() }
         .mapNotNull(String::toDoubleOrNull)
         .firstOrNull(Double::isFinite)
@@ -219,7 +219,7 @@ class CredentialQuotaRepository @Inject constructor(
         value["chatgptAccountId"],
         value["account_id"],
         value["accountId"],
-    ).mapNotNull(JsonElement?::scalarText).firstOrNull(String::isNotBlank)
+    ).mapNotNull { it.scalarText() }.firstOrNull(String::isNotBlank)
 
     private companion object {
         const val CODEX_PROVIDER = "codex"
