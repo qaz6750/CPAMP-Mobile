@@ -1,11 +1,11 @@
 package com.cpamp.mobile.data.auth
 
-import com.cpamp.mobile.data.profile.ServerProfileStore
-import com.cpamp.mobile.data.cache.CacheDao
 import com.cpamp.mobile.common.runSuspendCatching
+import com.cpamp.mobile.data.cache.CacheDao
+import com.cpamp.mobile.data.profile.ServerProfileStore
+import com.cpamp.mobile.data.remote.SessionApiClientFactory
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
-import com.cpamp.mobile.data.remote.SessionApiClientFactory
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton

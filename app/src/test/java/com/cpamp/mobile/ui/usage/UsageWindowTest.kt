@@ -1,9 +1,9 @@
 package com.cpamp.mobile.ui.usage
 
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
 import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

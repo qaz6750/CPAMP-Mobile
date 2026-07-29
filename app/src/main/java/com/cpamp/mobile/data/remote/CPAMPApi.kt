@@ -1,9 +1,9 @@
 package com.cpamp.mobile.data.remote
 
-import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
 import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
 import com.cpamp.mobile.data.remote.model.AuthFilesResponseDto
+import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.LogsDto
 import com.cpamp.mobile.data.remote.model.ManagerInfoDto
 import com.cpamp.mobile.data.remote.model.ManagerStatusDto

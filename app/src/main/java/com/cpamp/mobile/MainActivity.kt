@@ -18,12 +18,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cpamp.mobile.data.settings.AppTheme
 import com.cpamp.mobile.ui.CPAMPMobileApp
 import com.cpamp.mobile.ui.security.AppLockScreen
 import com.cpamp.mobile.ui.security.AppLockViewModel
 import com.cpamp.mobile.ui.settings.AppearanceViewModel
 import com.cpamp.mobile.ui.theme.CPAMPMobileTheme
-import com.cpamp.mobile.data.settings.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

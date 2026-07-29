@@ -51,10 +51,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
 import com.cpamp.mobile.domain.model.ServerProfile
+import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.BrandMark
 import com.cpamp.mobile.ui.components.ConnectionPill
-import com.cpamp.mobile.ui.common.safeServerName
 
 @Composable
 fun SessionLoadingScreen() {

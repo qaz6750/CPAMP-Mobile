@@ -8,14 +8,14 @@ import com.cpamp.mobile.data.security.SecretStore
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.domain.model.StoredProfiles
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import javax.inject.Inject
-import javax.inject.Singleton
 
 private val Context.profileDataStore by preferencesDataStore(name = "server_profiles")
 

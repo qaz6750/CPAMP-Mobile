@@ -1,16 +1,16 @@
 package com.cpamp.mobile.di
 
-import com.cpamp.mobile.data.security.AndroidKeystoreSecretStore
-import com.cpamp.mobile.data.security.SecretStore
 import android.content.Context
 import androidx.room.Room
 import com.cpamp.mobile.data.cache.CPAMPCacheDatabase
 import com.cpamp.mobile.data.cache.CacheDao
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.cpamp.mobile.data.security.AndroidKeystoreSecretStore
+import com.cpamp.mobile.data.security.SecretStore
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import kotlinx.serialization.json.Json
