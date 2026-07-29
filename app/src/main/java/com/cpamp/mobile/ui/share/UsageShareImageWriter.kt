@@ -20,6 +20,7 @@ import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.components.modelProviderVisual
 import androidx.compose.ui.graphics.toArgb
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -130,7 +131,7 @@ class UsageShareImageWriter @Inject constructor(
         canvas.drawRoundRect(bounds, 44f, 44f, paint)
         paint.shader = null
 
-        paint.color = Color.argb(36, 255, 255, 255)
+        paint.color = Color.argb(64, 255, 255, 255)
         canvas.drawRoundRect(RectF(64f, 62f, 330f, 122f), 30f, 30f, paint)
         paint.color = Color.WHITE
         paint.textSize = 24f
@@ -141,10 +142,10 @@ class UsageShareImageWriter @Inject constructor(
 
         paint.isFakeBoldText = false
         paint.textSize = 24f
-        paint.color = Color.argb(225, 255, 255, 255)
+        paint.color = Color.argb(242, 255, 255, 255)
         canvas.drawText(report.rangeLabel(), 64f, 228f, paint)
 
-        paint.color = Color.argb(46, 255, 255, 255)
+        paint.color = Color.argb(76, 255, 255, 255)
         canvas.drawRoundRect(RectF(64f, 260f, 286f, 330f), 35f, 35f, paint)
         paint.color = Color.WHITE
         paint.textSize = 26f
@@ -171,7 +172,7 @@ class UsageShareImageWriter @Inject constructor(
         val metrics = listOf(
             context.getString(R.string.usage_requests) to report.requests.compactNumber(),
             context.getString(R.string.metric_success) to report.successRate.asPercent(),
-            context.getString(R.string.usage_tokens) to report.tokens.compactNumber(),
+            context.getString(R.string.usage_tokens) to report.tokens.compactTokens(),
             context.getString(R.string.usage_cost) to report.cost.asCost(),
         )
         metrics.forEachIndexed { index, (label, value) ->
@@ -185,7 +186,7 @@ class UsageShareImageWriter @Inject constructor(
                 else -> BLUE
             }
             drawSurface(canvas, paint, RectF(left, top, left + 466f, top + 148f), 32f)
-            paint.color = Color.argb(24, Color.red(accent), Color.green(accent), Color.blue(accent))
+            paint.color = accent
             canvas.drawRoundRect(RectF(left + 28f, top + 25f, left + 76f, top + 35f), 5f, 5f, paint)
             paint.color = MUTED
             paint.textSize = 24f
@@ -600,7 +601,7 @@ class UsageShareImageWriter @Inject constructor(
             paint.color = MUTED
             paint.textSize = 21f
             canvas.drawText(
-                context.getString(R.string.share_model_value, model.requests.compactNumber(), model.tokens.compactNumber()),
+                context.getString(R.string.share_model_value, model.requests.compactNumber(), model.tokens.compactTokens()),
                 136f,
                 top + 62f,
                 paint,
