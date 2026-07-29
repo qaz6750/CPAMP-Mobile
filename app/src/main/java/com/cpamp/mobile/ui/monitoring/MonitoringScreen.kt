@@ -35,7 +35,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -43,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,14 +53,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
-import com.cpamp.mobile.data.monitoring.CredentialQuota
-import com.cpamp.mobile.data.monitoring.CredentialQuotaWindow
 import com.cpamp.mobile.data.remote.model.RequestEventDto
 import com.cpamp.mobile.ui.common.SensitiveText
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.LoadingIconButton
@@ -73,11 +70,11 @@ import com.cpamp.mobile.ui.components.PageHeader
 fun MonitoringScreen(
     contentPadding: PaddingValues,
     hideAddresses: Boolean,
+    onOpenCredentialQuotas: () -> Unit,
     viewModel: MonitoringViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var selectedEvent by remember { mutableStateOf<RequestEventDto?>(null) }
-    var showCredentialQuotas by rememberSaveable { mutableStateOf(false) }
 
     AppBackground {
         LazyColumn(
@@ -196,7 +193,7 @@ fun MonitoringScreen(
             item {
                 CredentialQuotaEntry(
                     state = state,
-                    onClick = { showCredentialQuotas = true },
+                    onClick = onOpenCredentialQuotas,
                 )
             }
             val events = state.response?.events?.items.orEmpty()
@@ -251,11 +248,6 @@ fun MonitoringScreen(
             RequestEventDetails(event)
         }
     }
-    if (showCredentialQuotas) {
-        ModalBottomSheet(onDismissRequest = { showCredentialQuotas = false }) {
-            CredentialQuotaDetails(state)
-        }
-    }
 }
 
 @Composable
@@ -292,110 +284,6 @@ private fun CredentialQuotaEntry(state: MonitoringUiState, onClick: () -> Unit) 
             }
         }
     }
-}
-
-@Composable
-private fun CredentialQuotaDetails(state: MonitoringUiState) {
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        item {
-            Text(stringResource(R.string.credential_quota_details), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(
-                stringResource(R.string.credential_quota_summary),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        when {
-            state.credentialQuotasLoading -> item {
-                Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
-            state.credentialQuotasError -> item { CredentialQuotaMessage(R.string.credential_quota_unavailable) }
-            state.credentialQuotas.isEmpty() -> item { CredentialQuotaMessage(R.string.credential_quota_empty) }
-            else -> items(state.credentialQuotas, key = CredentialQuota::name) { quota ->
-                CredentialQuotaCard(quota)
-            }
-        }
-    }
-}
-
-@Composable
-private fun CredentialQuotaMessage(message: Int) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-        Text(stringResource(message), modifier = Modifier.fillMaxWidth().padding(18.dp))
-    }
-}
-
-@Composable
-private fun CredentialQuotaCard(quota: CredentialQuota) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(quota.account.ifBlank { quota.name }, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    if (quota.planType.isBlank()) quota.name else stringResource(R.string.credential_quota_plan, quota.planType),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            if (quota.error) {
-                Text(
-                    stringResource(R.string.credential_quota_item_error),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            } else if (quota.windows.isEmpty()) {
-                Text(
-                    stringResource(R.string.credential_quota_no_windows),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                quota.windows.forEach { window -> CredentialQuotaWindowRow(window) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CredentialQuotaWindowRow(window: CredentialQuotaWindow) {
-    val used = window.usedPercent ?: 0.0
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(window.durationLabel(), style = MaterialTheme.typography.labelLarge)
-            Text(
-                stringResource(R.string.credential_quota_used, used, 100.0 - used),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        LinearProgressIndicator(
-            progress = { (used / 100.0).toFloat() },
-            modifier = Modifier.fillMaxWidth().height(8.dp),
-        )
-        window.resetAtMs?.let {
-            Text(
-                stringResource(R.string.credential_quota_reset, it.asTime()),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun CredentialQuotaWindow.durationLabel(): String = when {
-    durationSeconds > 0 && durationSeconds % (24 * 60 * 60) == 0L ->
-        stringResource(R.string.credential_quota_window_days, durationSeconds / (24 * 60 * 60))
-    durationSeconds > 0 && durationSeconds % (60 * 60) == 0L ->
-        stringResource(R.string.credential_quota_window_hours, durationSeconds / (60 * 60))
-    else -> stringResource(R.string.credential_quota_window_other)
 }
 
 @Composable
@@ -460,15 +348,8 @@ private fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                     Spacer(Modifier.width(8.dp))
                     Text(event.timestampMs.asTime(), style = MaterialTheme.typography.labelSmall)
                 }
-                Text(
-                    event.endpoint.ifBlank { event.path.ifBlank { "—" } },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(R.string.event_tokens_value, event.totalTokens.compactNumber()), style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.event_tokens_value, event.totalTokens.compactTokens()), style = MaterialTheme.typography.labelSmall)
                     event.latencyMs?.let { Text(stringResource(R.string.event_latency_value, it.asLatency()), style = MaterialTheme.typography.labelSmall) }
                     event.failStatusCode?.let { Text("HTTP $it", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error) }
                 }
@@ -493,7 +374,7 @@ private fun RequestEventDetails(event: RequestEventDto) {
         item { DetailRow(stringResource(R.string.detail_endpoint), event.endpoint.ifBlank { event.path.ifBlank { "—" } }) }
         item { DetailRow(stringResource(R.string.detail_provider), event.authProviderSnapshot.ifBlank { event.source.ifBlank { "—" } }) }
         item { DetailRow(stringResource(R.string.detail_account), event.authLabelSnapshot.ifBlank { event.accountSnapshot.ifBlank { "—" } }) }
-        item { DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactNumber()) }
+        item { DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens()) }
         item { DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.asLatency() ?: "—") }
         if (event.failed) {
             item { DetailRow(stringResource(R.string.detail_error), SensitiveText.redact(event.failSummary).ifBlank { stringResource(R.string.request_failed) }) }

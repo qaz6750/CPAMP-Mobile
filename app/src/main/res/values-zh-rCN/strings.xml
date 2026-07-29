@@ -257,6 +257,10 @@
     <string name="credential_quota_window_other">额度周期</string>
     <string name="credential_quota_item_error">无法读取此凭证的额度。</string>
     <string name="credential_quota_no_windows">此凭证暂未返回额度窗口。</string>
+    <string name="credential_quota_active">已启用</string>
+    <string name="credential_quota_disabled">未启用</string>
+    <string name="credential_quota_disabled_badge">未启用</string>
+    <string name="credential_quota_disabled_hint">该凭证已停用，不会查询额度。</string>
     <string name="request_details">请求详情</string>
     <string name="detail_status">状态</string>
     <string name="detail_model">模型</string>

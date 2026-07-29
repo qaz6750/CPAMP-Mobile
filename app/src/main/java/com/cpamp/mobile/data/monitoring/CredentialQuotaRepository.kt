@@ -27,6 +27,7 @@ data class CredentialQuota(
     val planType: String,
     val windows: List<CredentialQuotaWindow>,
     val error: Boolean = false,
+    val disabled: Boolean = false,
 )
 
 data class CredentialQuotaWindow(
@@ -43,11 +44,15 @@ class CredentialQuotaRepository @Inject constructor(
     suspend fun load(session: AuthenticatedSession): List<CredentialQuota> = coroutineScope {
         val api = clientFactory.api(session)
         val files = remoteCall { api.authFiles() }.files
-            .filter { it.providerName == CODEX_PROVIDER && !it.isDisabled }
+            .filter { it.providerName == CODEX_PROVIDER }
 
         files.map { file ->
             async {
-                if (file.resolvedAuthIndex.isBlank()) file.missingAuthIndexQuota() else loadCodexQuota(file, api)
+                when {
+                    file.isDisabled -> file.disabledQuota()
+                    file.resolvedAuthIndex.isBlank() -> file.missingAuthIndexQuota()
+                    else -> loadCodexQuota(file, api)
+                }
             }
         }.awaitAll()
     }
@@ -132,6 +137,15 @@ class CredentialQuotaRepository @Inject constructor(
             windows = emptyList(),
             error = true,
         )
+
+    private fun AuthFileDto.disabledQuota(): CredentialQuota = CredentialQuota(
+        name = name,
+        account = account.ifBlank { email },
+        provider = CODEX_PROVIDER,
+        planType = "",
+        windows = emptyList(),
+        disabled = true,
+    )
 
     private val AuthFileDto.resolvedAuthIndex: String
         get() = sequenceOf(authIndex, camelAuthIndex, hyphenAuthIndex)

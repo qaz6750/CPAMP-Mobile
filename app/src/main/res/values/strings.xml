@@ -257,6 +257,10 @@
     <string name="credential_quota_window_other">Quota window</string>
     <string name="credential_quota_item_error">Unable to read this credential quota.</string>
     <string name="credential_quota_no_windows">No rate-limit window was reported for this credential.</string>
+    <string name="credential_quota_active">Active</string>
+    <string name="credential_quota_disabled">Disabled</string>
+    <string name="credential_quota_disabled_badge">Disabled</string>
+    <string name="credential_quota_disabled_hint">This credential is disabled, so no quota is requested.</string>
     <string name="request_details">Request details</string>
     <string name="detail_status">Status</string>
     <string name="detail_model">Model</string>

@@ -3,6 +3,7 @@ package com.cpamp.mobile.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -13,6 +14,7 @@ import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
 import com.cpamp.mobile.ui.system.SystemScreen
+import com.cpamp.mobile.ui.monitoring.CredentialQuotaScreen
 import com.cpamp.mobile.ui.monitoring.MonitoringScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
 import com.cpamp.mobile.ui.auth.LoginScreen
@@ -118,6 +120,15 @@ private fun ConnectedApp(
                 MonitoringScreen(
                     contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
+                    onOpenCredentialQuotas = { navController.navigate(CREDENTIAL_QUOTA_ROUTE) },
+                )
+            }
+            composable(CREDENTIAL_QUOTA_ROUTE) { entry ->
+                val parentEntry = remember(entry) { navController.getBackStackEntry(AppDestination.Traffic.route) }
+                CredentialQuotaScreen(
+                    contentPadding = contentPadding,
+                    onBack = navController::popBackStack,
+                    viewModel = hiltViewModel(parentEntry),
                 )
             }
             composable(AppDestination.Usage.route) {
@@ -151,3 +162,5 @@ private fun ConnectedApp(
         }
     }
 }
+
+private const val CREDENTIAL_QUOTA_ROUTE = "credential-quota"
