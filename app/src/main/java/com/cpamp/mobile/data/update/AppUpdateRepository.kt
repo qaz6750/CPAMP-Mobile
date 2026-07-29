@@ -39,28 +39,6 @@ import okhttp3.ResponseBody
 
 private val Context.updateDataStore by preferencesDataStore(name = "app_update")
 
-enum class UpdateStatus {
-    Idle,
-    Checking,
-    NoRelease,
-    UpToDate,
-    Available,
-    Downloading,
-    Verifying,
-    ReadyToInstall,
-    Failed,
-}
-
-data class AppUpdateState(
-    val status: UpdateStatus = UpdateStatus.Idle,
-    val release: GitHubReleaseDto? = null,
-    val progressPercent: Int? = null,
-    val installUri: Uri? = null,
-    val error: UpdateError? = null,
-)
-
-enum class UpdateError { Network, RateLimited, InvalidRelease, Download, Checksum, Signature }
-
 @Singleton
 class AppUpdateRepository @Inject constructor(
     @ApplicationContext private val context: Context,
