@@ -1,10 +1,5 @@
 package com.cpamp.mobile.ui.settings
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -467,26 +462,6 @@ private fun statusColor(state: AppUpdateState) = when (state.status) {
     UpdateStatus.Failed -> MaterialTheme.colorScheme.error
     UpdateStatus.Available, UpdateStatus.ReadyToInstall -> MaterialTheme.colorScheme.primary
     else -> MaterialTheme.colorScheme.onSurfaceVariant
-}
-
-private fun Context.installUpdate(uri: Uri) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-        !packageManager.canRequestPackageInstalls()
-    ) {
-        startActivity(
-            Intent(
-                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                Uri.parse("package:$packageName"),
-            ),
-        )
-        return
-    }
-    startActivity(
-        Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-        },
-    )
 }
 
 @Composable
