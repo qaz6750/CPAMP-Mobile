@@ -89,7 +89,7 @@ fun PageHeader(
 fun MetricCard(
     label: String,
     value: String,
-    supporting: String,
+    supporting: String?,
     icon: ImageVector,
     modifier: Modifier = Modifier,
     accent: Color = MaterialTheme.colorScheme.primary,
@@ -149,23 +149,27 @@ fun MetricCard(
                 overflow = TextOverflow.Ellipsis,
             )
             if (compact) {
-                Text(
-                    text = supporting,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(text = label, style = MaterialTheme.typography.labelLarge)
+                if (supporting != null) {
                     Text(
                         text = supporting,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(text = label, style = MaterialTheme.typography.labelLarge)
+                    if (supporting != null) {
+                        Text(
+                            text = supporting,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }

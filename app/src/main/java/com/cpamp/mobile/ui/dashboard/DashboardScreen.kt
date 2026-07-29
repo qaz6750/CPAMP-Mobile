@@ -39,6 +39,7 @@ import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
@@ -143,7 +144,7 @@ private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardS
             MetricCard(
                 label = stringResource(R.string.metric_requests),
                 value = data.today.totalCalls.compactNumber(),
-                supporting = stringResource(R.string.rpm_value, data.rolling30m.rpm),
+                supporting = null,
                 icon = Icons.Outlined.DataUsage,
                 modifier = modifier,
                 compact = true,
@@ -163,7 +164,7 @@ private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardS
         { modifier ->
             MetricCard(
                 label = stringResource(R.string.metric_tokens),
-                value = data.today.totalTokens.compactNumber(),
+                value = data.today.totalTokens.compactTokens(),
                 supporting = stringResource(R.string.tpm_value, data.rolling30m.tpm),
                 icon = Icons.Outlined.Speed,
                 modifier = modifier,
@@ -226,7 +227,7 @@ private fun TopModelRow(model: TopModelDto) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(model.model, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    stringResource(R.string.model_usage, model.calls, model.tokens.compactNumber()),
+                    stringResource(R.string.model_usage, model.calls, model.tokens.compactTokens()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

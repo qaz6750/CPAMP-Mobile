@@ -61,6 +61,7 @@ import com.cpamp.mobile.data.remote.model.ModelStatDto
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
@@ -180,7 +181,7 @@ fun UsageAnalyticsScreen(
                             )
                             MetricCard(
                                 label = stringResource(R.string.usage_tokens),
-                                value = summary.totalTokens.compactNumber(),
+                                value = summary.totalTokens.compactTokens(),
                                 supporting = stringResource(R.string.usage_success_rate),
                                 icon = Icons.Outlined.Token,
                                 modifier = Modifier.weight(1f),
@@ -398,7 +399,7 @@ private fun RankingRow(
                 Text(name.ifBlank { stringResource(R.string.unknown_value) }, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(stringResource(R.string.usage_calls_value, calls.compactNumber()), style = MaterialTheme.typography.bodySmall)
-                    Text(tokens.compactNumber(), style = MaterialTheme.typography.bodySmall)
+                    Text(tokens.compactTokens(), style = MaterialTheme.typography.bodySmall)
                     Text(cost.asCost(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
                     Text(successRate.asPercent(), style = MaterialTheme.typography.bodySmall)
                 }

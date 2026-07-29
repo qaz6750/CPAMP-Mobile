@@ -20,6 +20,20 @@ private fun formatCompact(value: Double, suffix: String): String =
     if (value >= 100 || value % 1.0 == 0.0) "%.0f%s".format(Locale.US, value, suffix)
     else "%.1f%s".format(Locale.US, value, suffix)
 
+fun Long.compactTokens(): String {
+    val value = this.toDouble()
+    return when {
+        this >= 1_000_000_000 -> formatTokens(value / 1_000_000_000, "B")
+        this >= 1_000_000 -> formatTokens(value / 1_000_000, "M")
+        this >= 10_000 -> formatTokens(value / 1_000, "K")
+        else -> NumberFormat.getIntegerInstance().format(this)
+    }
+}
+
+private fun formatTokens(value: Double, suffix: String): String =
+    if (value >= 100) "%.0f%s".format(Locale.US, value, suffix)
+    else "%.2f%s".format(Locale.US, value, suffix).replace(Regex("\\.?0+(?=[A-Z]$)"), "")
+
 fun Double.asPercent(): String = "%.1f%%".format(Locale.US, this * 100.0)
 
 fun Double.asCost(): String = when {
