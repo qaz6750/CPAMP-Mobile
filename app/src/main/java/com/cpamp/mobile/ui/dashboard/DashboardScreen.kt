@@ -38,6 +38,7 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.TopModelDto
 import com.cpamp.mobile.ui.common.asCost
+import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
@@ -177,7 +178,8 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
             MetricCard(
                 label = stringResource(R.string.metric_cost),
                 value = data.today.totalCost.asCost(),
-                supporting = data.today.averageLatencyMs?.let { stringResource(R.string.latency_value, it) }
+                supporting = data.today.averageLatencyMs
+                    ?.let { stringResource(R.string.latency_value, it.asLatency()) }
                     ?: stringResource(R.string.no_latency),
                 icon = Icons.Outlined.Payments,
                 modifier = modifier,

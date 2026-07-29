@@ -201,7 +201,7 @@
     <string name="rpm_value">%.1f 请求/分钟 · 最近 30 分钟</string>
     <string name="tpm_value">%.0f Token/分钟 · 最近 30 分钟</string>
     <string name="failed_value">今日失败 %1$d 次</string>
-    <string name="latency_value">平均延迟 %.0f ms</string>
+    <string name="latency_value">平均延迟 %1$s</string>
     <string name="no_latency">暂无延迟样本</string>
     <string name="top_models">今日热门模型</string>
     <string name="recent_failures">近期失败</string>
