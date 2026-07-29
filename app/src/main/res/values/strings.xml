@@ -115,6 +115,7 @@
     <string name="dark_theme">Dark</string>
     <string name="dynamic_color">Dynamic color</string>
     <string name="dynamic_color_help">Use colors derived from the device wallpaper on supported Android versions.</string>
+    <string name="settings_change_failed">The settings change could not be saved.</string>
     <string name="allow_screenshots">Allow screenshots</string>
     <string name="allow_screenshots_help">Allow screenshots and recent-task previews. Disable this on devices where server data must remain private.</string>
     <string name="hide_addresses">Hide addresses</string>

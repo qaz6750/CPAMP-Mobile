@@ -115,6 +115,7 @@
     <string name="dark_theme">深色</string>
     <string name="dynamic_color">动态颜色</string>
     <string name="dynamic_color_help">在支持的 Android 版本上使用由设备壁纸生成的颜色。</string>
+    <string name="settings_change_failed">无法保存设置变更。</string>
     <string name="allow_screenshots">允许截图</string>
     <string name="allow_screenshots_help">允许截图和最近任务预览；设备需要保护服务器数据时可关闭。</string>
     <string name="hide_addresses">隐藏地址</string>

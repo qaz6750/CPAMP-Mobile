@@ -107,6 +107,18 @@ fun SettingsScreen(
                     Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            if (appearanceState.error) {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                        Text(
+                            stringResource(R.string.settings_change_failed),
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+            }
             item {
                 SettingsCard(stringResource(R.string.system_security)) {
                     SettingSwitchRow(
