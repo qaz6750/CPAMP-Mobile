@@ -22,15 +22,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asLatency
@@ -81,7 +84,7 @@ fun RequestHealthChart(
                     drawRect(
                         color = colors.healthLatency.copy(alpha = 0.64f),
                         topLeft = Offset(center - latencyBarWidth / 2f, top),
-                        size = androidx.compose.ui.geometry.Size(latencyBarWidth, size.height - top),
+                        size = Size(latencyBarWidth, size.height - top),
                     )
                 }
                 val successOffsets = points.mapIndexed { index, point ->
@@ -156,7 +159,7 @@ fun TokenStructureChart(
                             drawRect(
                                 color = segmentColors[valueIndex],
                                 topLeft = Offset(center - barWidth / 2f, top),
-                                size = androidx.compose.ui.geometry.Size(barWidth, segmentHeight),
+                                size = Size(barWidth, segmentHeight),
                             )
                             bottom = top
                         }
@@ -264,7 +267,7 @@ private fun NumberAxis(maximum: Long) {
 }
 
 @Composable
-private fun TimeTicks(timestamps: List<Long>, endPadding: androidx.compose.ui.unit.Dp = 48.dp) {
+private fun TimeTicks(timestamps: List<Long>, endPadding: Dp = 48.dp) {
     val indices = chartTickIndices(timestamps.size)
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 42.dp, end = endPadding),
@@ -286,7 +289,7 @@ private fun TimeTicks(timestamps: List<Long>, endPadding: androidx.compose.ui.un
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawChartGrid(color: Color) {
+private fun DrawScope.drawChartGrid(color: Color) {
     repeat(3) { row ->
         val y = size.height * row / 2f
         drawLine(
@@ -299,7 +302,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawChartGrid(color
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSmoothLine(
+private fun DrawScope.drawSmoothLine(
     points: List<Offset>,
     color: Color,
     surfaceColor: Color,

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DataUsage
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
+import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.TopModelDto
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
@@ -138,7 +140,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashboardMetrics(data: com.cpamp.mobile.data.remote.model.DashboardSummaryDto) {
+private fun DashboardMetrics(data: DashboardSummaryDto) {
     val cards: List<@Composable (Modifier) -> Unit> = listOf(
         { modifier ->
             MetricCard(
@@ -214,7 +216,7 @@ private fun DashboardNotice(state: DashboardUiState) {
 @Composable
 private fun TopModelRow(model: TopModelDto) {
     Card(
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {

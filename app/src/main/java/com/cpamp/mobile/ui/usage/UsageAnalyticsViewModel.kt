@@ -9,6 +9,7 @@ import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
+import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.ui.share.UsageShareImageWriter
 import com.cpamp.mobile.ui.share.toUsageShareReport
@@ -280,7 +281,7 @@ private fun usageRangeDayCount(
     return (ChronoUnit.DAYS.between(fromDate, toDate) + 1).toInt().coerceAtLeast(1)
 }
 
-private fun List<com.cpamp.mobile.data.remote.model.MonitoringTimelineDto>.usesHourlyBuckets(): Boolean =
+private fun List<MonitoringTimelineDto>.usesHourlyBuckets(): Boolean =
     size <= 1 || zipWithNext().any { (previous, current) ->
         current.bucketMs - previous.bucketMs in 1 until 24 * 60 * 60 * 1000L
     }

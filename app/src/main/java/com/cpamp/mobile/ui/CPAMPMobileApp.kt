@@ -14,6 +14,7 @@ import com.cpamp.mobile.data.settings.AppLanguage
 import com.cpamp.mobile.data.settings.AppTheme
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
+import com.cpamp.mobile.ui.auth.SessionUiState
 import com.cpamp.mobile.ui.auth.SessionViewModel
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
 import com.cpamp.mobile.ui.monitoring.CredentialQuotaScreen
@@ -77,7 +78,7 @@ fun CPAMPMobileApp(
 
 @Composable
 private fun ConnectedApp(
-    sessionState: com.cpamp.mobile.ui.auth.SessionUiState,
+    sessionState: SessionUiState,
     onSwitchServer: (String) -> Unit,
     onDeleteServer: (String) -> Unit,
     onDisconnect: () -> Unit,

@@ -59,6 +59,7 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.ApiKeyStatDto
 import com.cpamp.mobile.data.remote.model.CredentialStatDto
 import com.cpamp.mobile.data.remote.model.ModelStatDto
+import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
@@ -303,7 +304,7 @@ private enum class ExpandedChart { UsageTrend, RequestHealth, TokenStructure }
 @Composable
 private fun ExpandedUsageChartDialog(
     chart: ExpandedChart,
-    timeline: List<com.cpamp.mobile.data.remote.model.MonitoringTimelineDto>,
+    timeline: List<MonitoringTimelineDto>,
     nowMs: Long,
     onDismiss: () -> Unit,
 ) {
@@ -368,7 +369,7 @@ private fun ExpandedUsageChartDialog(
     }
 }
 
-private fun List<com.cpamp.mobile.data.remote.model.MonitoringTimelineDto>.toAnalyticsTrendPoints() = map { point ->
+private fun List<MonitoringTimelineDto>.toAnalyticsTrendPoints() = map { point ->
     AnalyticsTrendPoint(
         timestampMs = point.bucketMs,
         requests = point.calls,

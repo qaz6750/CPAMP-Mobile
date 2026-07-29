@@ -1,7 +1,9 @@
 package com.cpamp.mobile.ui.settings
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
@@ -467,8 +469,8 @@ private fun statusColor(state: AppUpdateState) = when (state.status) {
     else -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
-private fun android.content.Context.installUpdate(uri: Uri) {
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+private fun Context.installUpdate(uri: Uri) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
         !packageManager.canRequestPackageInstalls()
     ) {
         startActivity(

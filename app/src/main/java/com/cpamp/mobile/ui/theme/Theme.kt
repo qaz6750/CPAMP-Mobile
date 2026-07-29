@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
@@ -64,22 +65,22 @@ private val DarkColors = darkColorScheme(
 )
 
 private object ColorTokens {
-    val Secondary = androidx.compose.ui.graphics.Color(0xFF3F6EB8)
-    val SecondaryDark = androidx.compose.ui.graphics.Color(0xFFB5C8F4)
-    val SecondaryContainerLight = androidx.compose.ui.graphics.Color(0xFFE9EFFA)
-    val PrimaryContainerDark = androidx.compose.ui.graphics.Color(0xFF173A78)
-    val SurfaceVariantLight = androidx.compose.ui.graphics.Color(0xFFF1F3F5)
-    val SurfaceVariantDark = androidx.compose.ui.graphics.Color(0xFF292B2E)
-    val OnSurfaceVariantLight = androidx.compose.ui.graphics.Color(0x99000000)
-    val OutlineLight = androidx.compose.ui.graphics.Color(0x33000000)
-    val OutlineDark = androidx.compose.ui.graphics.Color(0x33FFFFFF)
-    val OnDark = androidx.compose.ui.graphics.Color(0xE6FFFFFF)
-    val TertiaryContainerLight = androidx.compose.ui.graphics.Color(0xFFEAF6E8)
-    val OnTertiaryContainerLight = androidx.compose.ui.graphics.Color(0xFF245A20)
-    val InversePrimaryLight = androidx.compose.ui.graphics.Color(0xFF7DD3FC)
-    val SuccessDark = androidx.compose.ui.graphics.Color(0xFF83D47B)
-    val Error = androidx.compose.ui.graphics.Color(0xFFE84026)
-    val ErrorDark = androidx.compose.ui.graphics.Color(0xFFFFB4A8)
+    val Secondary = Color(0xFF3F6EB8)
+    val SecondaryDark = Color(0xFFB5C8F4)
+    val SecondaryContainerLight = Color(0xFFE9EFFA)
+    val PrimaryContainerDark = Color(0xFF173A78)
+    val SurfaceVariantLight = Color(0xFFF1F3F5)
+    val SurfaceVariantDark = Color(0xFF292B2E)
+    val OnSurfaceVariantLight = Color(0x99000000)
+    val OutlineLight = Color(0x33000000)
+    val OutlineDark = Color(0x33FFFFFF)
+    val OnDark = Color(0xE6FFFFFF)
+    val TertiaryContainerLight = Color(0xFFEAF6E8)
+    val OnTertiaryContainerLight = Color(0xFF245A20)
+    val InversePrimaryLight = Color(0xFF7DD3FC)
+    val SuccessDark = Color(0xFF83D47B)
+    val Error = Color(0xFFE84026)
+    val ErrorDark = Color(0xFFFFB4A8)
 }
 
 @Composable

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -329,7 +330,7 @@ class AppUpdateRepository @Inject constructor(
     }
 
     @Suppress("DEPRECATION")
-    private fun signatureDigests(info: android.content.pm.PackageInfo): Set<String> {
+    private fun signatureDigests(info: PackageInfo): Set<String> {
         val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             info.signingInfo?.apkContentsSigners.orEmpty()
         } else {

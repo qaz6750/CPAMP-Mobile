@@ -1,6 +1,7 @@
 package com.cpamp.mobile.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -27,7 +28,7 @@ fun ModelProviderIcon(model: String, modifier: Modifier = Modifier) {
         color = provider.color.copy(alpha = 0.14f),
         contentColor = provider.color,
     ) {
-        androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+        Box(contentAlignment = Alignment.Center) {
             when {
                 provider.icon != null -> Icon(
                     painter = painterResource(provider.icon),

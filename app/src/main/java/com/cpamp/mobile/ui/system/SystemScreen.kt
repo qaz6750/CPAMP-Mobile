@@ -41,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -414,7 +415,7 @@ private val SystemTab.labelResource: Int
         SystemTab.Servers -> R.string.system_servers
     }
 
-private val SystemTab.icon: androidx.compose.ui.graphics.vector.ImageVector
+private val SystemTab.icon: ImageVector
     get() = when (this) {
         SystemTab.Status -> Icons.Outlined.MonitorHeart
         SystemTab.Logs -> Icons.AutoMirrored.Outlined.ListAlt
