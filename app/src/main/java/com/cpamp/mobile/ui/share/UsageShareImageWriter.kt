@@ -10,6 +10,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
+import android.graphics.Typeface
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -49,12 +50,13 @@ class UsageShareImageWriter @Inject constructor(
     private fun render(report: UsageShareReport): Bitmap {
         val bitmap = Bitmap.createBitmap(OUTPUT_WIDTH, OUTPUT_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        canvas.drawColor(BACKGROUND)
         canvas.scale(RENDER_SCALE, RENDER_SCALE)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG or Paint.LINEAR_TEXT_FLAG).apply {
             isFilterBitmap = true
+            typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         }
 
+        drawBackground(canvas, paint)
         drawHeader(canvas, paint, report)
         drawMetrics(canvas, paint, report)
         drawTrendSection(canvas, paint, report)
@@ -65,37 +67,89 @@ class UsageShareImageWriter @Inject constructor(
         return bitmap
     }
 
-    private fun drawHeader(canvas: Canvas, paint: Paint, report: UsageShareReport) {
+    private fun drawBackground(canvas: Canvas, paint: Paint) {
         paint.shader = LinearGradient(
             0f,
             0f,
-            WIDTH.toFloat(),
-            390f,
-            intArrayOf(SKY_BLUE, BLUE),
+            0f,
+            HEIGHT.toFloat(),
+            intArrayOf(BACKGROUND_TOP, BACKGROUND_BOTTOM),
             null,
             Shader.TileMode.CLAMP,
         )
-        canvas.drawRoundRect(RectF(32f, 32f, 1048f, 390f), 36f, 36f, paint)
+        canvas.drawRect(0f, 0f, WIDTH.toFloat(), HEIGHT.toFloat(), paint)
+        paint.shader = null
+    }
+
+    private fun drawSurface(canvas: Canvas, paint: Paint, bounds: RectF, radius: Float, color: Int = CARD) {
+        paint.style = Paint.Style.FILL
+        paint.shader = null
+        paint.pathEffect = null
+        paint.color = SHADOW
+        val shadowBounds = RectF(bounds).apply { offset(0f, 9f) }
+        canvas.drawRoundRect(shadowBounds, radius, radius, paint)
+        paint.color = color
+        canvas.drawRoundRect(bounds, radius, radius, paint)
+    }
+
+    private fun drawSectionHeading(
+        canvas: Canvas,
+        paint: Paint,
+        title: String,
+        subtitle: String,
+        baseline: Float,
+        accent: Int,
+    ) {
+        paint.style = Paint.Style.FILL
+        paint.pathEffect = null
+        paint.color = accent
+        canvas.drawRoundRect(RectF(56f, baseline - 27f, 66f, baseline + 1f), 5f, 5f, paint)
+        paint.color = TEXT
+        paint.textSize = 32f
+        paint.isFakeBoldText = true
+        canvas.drawText(title, 82f, baseline, paint)
+        paint.isFakeBoldText = false
+        paint.color = MUTED
+        paint.textSize = 21f
+        canvas.drawText(subtitle, 82f, baseline + 34f, paint)
+    }
+
+    private fun drawHeader(canvas: Canvas, paint: Paint, report: UsageShareReport) {
+        val bounds = RectF(32f, 32f, 1048f, 390f)
+        paint.color = HEADER_SHADOW
+        canvas.drawRoundRect(RectF(bounds).apply { offset(0f, 12f) }, 44f, 44f, paint)
+        paint.shader = LinearGradient(
+            bounds.left,
+            bounds.top,
+            bounds.right,
+            bounds.bottom,
+            intArrayOf(HEADER_BLUE, BLUE, CYAN_BLUE),
+            floatArrayOf(0f, 0.58f, 1f),
+            Shader.TileMode.CLAMP,
+        )
+        canvas.drawRoundRect(bounds, 44f, 44f, paint)
         paint.shader = null
 
+        paint.color = Color.argb(36, 255, 255, 255)
+        canvas.drawRoundRect(RectF(64f, 62f, 330f, 122f), 30f, 30f, paint)
         paint.color = Color.WHITE
-        paint.textSize = 34f
+        paint.textSize = 24f
         paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.app_name), 74f, 108f, paint)
-        paint.textSize = 44f
-        canvas.drawText(context.getString(R.string.share_report_title), 74f, 166f, paint)
+        canvas.drawText(context.getString(R.string.app_name), 92f, 102f, paint)
+        paint.textSize = 46f
+        canvas.drawText(context.getString(R.string.share_report_title), 64f, 184f, paint)
 
         paint.isFakeBoldText = false
         paint.textSize = 24f
         paint.color = Color.argb(225, 255, 255, 255)
-        canvas.drawText(report.rangeLabel(), 74f, 212f, paint)
+        canvas.drawText(report.rangeLabel(), 64f, 228f, paint)
 
-        paint.color = Color.argb(42, 255, 255, 255)
-        canvas.drawRoundRect(RectF(64f, 232f, 280f, 310f), 39f, 39f, paint)
+        paint.color = Color.argb(46, 255, 255, 255)
+        canvas.drawRoundRect(RectF(64f, 260f, 286f, 330f), 35f, 35f, paint)
         paint.color = Color.WHITE
-        paint.textSize = 27f
+        paint.textSize = 26f
         paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.share_days_badge, report.actualDays), 94f, 282f, paint)
+        canvas.drawText(context.getString(R.string.share_days_badge, report.actualDays), 94f, 306f, paint)
 
         paint.isFakeBoldText = false
         paint.textSize = 24f
@@ -107,7 +161,7 @@ class UsageShareImageWriter @Inject constructor(
                 report.failedRequests,
             ),
             1016f,
-            278f,
+            306f,
             paint,
         )
         paint.textAlign = Paint.Align.LEFT
@@ -125,33 +179,35 @@ class UsageShareImageWriter @Inject constructor(
             val row = index / 2
             val left = 56f + column * 496f
             val top = 438f + row * 172f
-            paint.color = CARD
-            canvas.drawRoundRect(RectF(left, top, left + 466f, top + 148f), 24f, 24f, paint)
-            paint.color = if (index == 1) GREEN else BLUE
-            canvas.drawRoundRect(RectF(left, top, left + 9f, top + 148f), 5f, 5f, paint)
+            val accent = when (index) {
+                1 -> GREEN
+                3 -> ORANGE
+                else -> BLUE
+            }
+            drawSurface(canvas, paint, RectF(left, top, left + 466f, top + 148f), 32f)
+            paint.color = Color.argb(24, Color.red(accent), Color.green(accent), Color.blue(accent))
+            canvas.drawRoundRect(RectF(left + 28f, top + 25f, left + 76f, top + 35f), 5f, 5f, paint)
             paint.color = MUTED
             paint.textSize = 24f
             paint.isFakeBoldText = false
-            canvas.drawText(label, left + 34f, top + 46f, paint)
+            canvas.drawText(label, left + 92f, top + 43f, paint)
             paint.color = TEXT
             paint.textSize = if (value.length > 10) 37f else 43f
             paint.isFakeBoldText = true
-            canvas.drawText(value, left + 34f, top + 108f, paint)
+            canvas.drawText(value, left + 28f, top + 112f, paint)
         }
         paint.isFakeBoldText = false
     }
 
     private fun drawTrendSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
-        paint.style = Paint.Style.FILL
-        paint.pathEffect = null
-        paint.color = TEXT
-        paint.textSize = 32f
-        paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.share_trend_title), 56f, 812f, paint)
-        paint.isFakeBoldText = false
-        paint.color = MUTED
-        paint.textSize = 21f
-        canvas.drawText(context.getString(R.string.share_trend_subtitle), 56f, 846f, paint)
+        drawSectionHeading(
+            canvas,
+            paint,
+            context.getString(R.string.share_trend_title),
+            context.getString(R.string.share_trend_subtitle),
+            812f,
+            BLUE,
+        )
 
         drawLegend(canvas, paint, 600f, 812f, BLUE, context.getString(R.string.trend_requests))
         drawLegend(canvas, paint, 748f, 812f, GREEN, context.getString(R.string.trend_tokens))
@@ -186,8 +242,7 @@ class UsageShareImageWriter @Inject constructor(
         bounds: RectF,
     ) {
         paint.style = Paint.Style.FILL
-        paint.color = CARD
-        canvas.drawRoundRect(bounds, 24f, 24f, paint)
+        drawSurface(canvas, paint, bounds, 32f)
         if (points.isEmpty() || points.none { it.requests > 0 || it.tokens > 0 || it.cost > 0 }) {
             paint.color = MUTED
             paint.textSize = 25f
@@ -315,16 +370,14 @@ class UsageShareImageWriter @Inject constructor(
     }
 
     private fun drawHealthSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
-        paint.style = Paint.Style.FILL
-        paint.pathEffect = null
-        paint.color = TEXT
-        paint.textSize = 32f
-        paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.request_health_trend), 56f, 1310f, paint)
-        paint.isFakeBoldText = false
-        paint.color = MUTED
-        paint.textSize = 21f
-        canvas.drawText(context.getString(R.string.request_health_subtitle), 56f, 1344f, paint)
+        drawSectionHeading(
+            canvas,
+            paint,
+            context.getString(R.string.request_health_trend),
+            context.getString(R.string.request_health_subtitle),
+            1310f,
+            GREEN,
+        )
         drawHealthChart(canvas, paint, report.timeline, RectF(56f, 1366f, 1024f, 1716f))
         drawLegend(canvas, paint, 170f, 1760f, HEALTH_SUCCESS, context.getString(R.string.health_success_rate))
         drawLegend(canvas, paint, 430f, 1760f, HEALTH_FAILURE, context.getString(R.string.health_failure_rate))
@@ -338,8 +391,7 @@ class UsageShareImageWriter @Inject constructor(
         bounds: RectF,
     ) {
         paint.style = Paint.Style.FILL
-        paint.color = CARD
-        canvas.drawRoundRect(bounds, 24f, 24f, paint)
+        drawSurface(canvas, paint, bounds, 32f)
         val hasData = points.any {
             it.successfulRequests > 0 || it.failedRequests > 0 || it.averageLatencyMs != null
         }
@@ -389,16 +441,14 @@ class UsageShareImageWriter @Inject constructor(
     }
 
     private fun drawTokenSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
-        paint.style = Paint.Style.FILL
-        paint.pathEffect = null
-        paint.color = TEXT
-        paint.textSize = 32f
-        paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.token_structure), 56f, 1800f, paint)
-        paint.isFakeBoldText = false
-        paint.color = MUTED
-        paint.textSize = 21f
-        canvas.drawText(context.getString(R.string.token_structure_subtitle), 56f, 1834f, paint)
+        drawSectionHeading(
+            canvas,
+            paint,
+            context.getString(R.string.token_structure),
+            context.getString(R.string.token_structure_subtitle),
+            1800f,
+            CYAN_BLUE,
+        )
         drawTokenChart(canvas, paint, report.timeline, RectF(56f, 1856f, 1024f, 2206f))
         drawLegend(canvas, paint, 100f, 2250f, TOKEN_INPUT, context.getString(R.string.token_input))
         drawLegend(canvas, paint, 350f, 2250f, TOKEN_OUTPUT, context.getString(R.string.token_output))
@@ -413,8 +463,7 @@ class UsageShareImageWriter @Inject constructor(
         bounds: RectF,
     ) {
         paint.style = Paint.Style.FILL
-        paint.color = CARD
-        canvas.drawRoundRect(bounds, 24f, 24f, paint)
+        drawSurface(canvas, paint, bounds, 32f)
         val hasData = points.any {
             it.inputTokens > 0 || it.outputTokens > 0 || it.cachedTokens > 0 || it.reasoningTokens > 0
         }
@@ -521,13 +570,14 @@ class UsageShareImageWriter @Inject constructor(
     private fun drawModels(canvas: Canvas, paint: Paint, report: UsageShareReport) {
         paint.style = Paint.Style.FILL
         paint.pathEffect = null
+        paint.color = ORANGE
+        canvas.drawRoundRect(RectF(56f, 2283f, 66f, 2311f), 5f, 5f, paint)
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.share_top_models, report.shortRangeLabel()), 56f, 2310f, paint)
+        canvas.drawText(context.getString(R.string.share_top_models, report.shortRangeLabel()), 82f, 2310f, paint)
         paint.isFakeBoldText = false
-        paint.color = CARD
-        canvas.drawRoundRect(RectF(56f, 2340f, 1024f, 2780f), 24f, 24f, paint)
+        drawSurface(canvas, paint, RectF(56f, 2340f, 1024f, 2780f), 32f)
 
         if (report.topModels.isEmpty()) {
             paint.color = MUTED
@@ -640,21 +690,25 @@ class UsageShareImageWriter @Inject constructor(
         const val OUTPUT_WIDTH = 1620
         const val OUTPUT_HEIGHT = 4350
         const val DAY_MS = 24 * 60 * 60 * 1000L
-        val BACKGROUND = Color.rgb(239, 248, 255)
-        val CARD = Color.WHITE
-        val SKY_BLUE = Color.rgb(56, 189, 248)
-        val BLUE = Color.rgb(64, 158, 255)
-        val GREEN = Color.rgb(20, 184, 166)
-        val ORANGE = Color.rgb(245, 158, 11)
-        val HEALTH_SUCCESS = Color.rgb(103, 194, 58)
-        val HEALTH_FAILURE = Color.rgb(245, 108, 108)
-        val HEALTH_LATENCY = Color.rgb(14, 165, 233)
-        val TOKEN_INPUT = Color.rgb(96, 165, 250)
-        val TOKEN_OUTPUT = Color.rgb(34, 197, 94)
-        val TOKEN_CACHED = Color.rgb(6, 182, 212)
-        val TOKEN_REASONING = Color.rgb(245, 158, 11)
-        val TEXT = Color.rgb(15, 41, 66)
-        val MUTED = Color.rgb(89, 112, 136)
-        val GRID = Color.rgb(222, 235, 246)
+        val BACKGROUND_TOP = Color.rgb(246, 248, 252)
+        val BACKGROUND_BOTTOM = Color.rgb(238, 243, 249)
+        val CARD = Color.rgb(255, 255, 255)
+        val SHADOW = Color.argb(18, 29, 57, 94)
+        val HEADER_SHADOW = Color.argb(36, 28, 102, 211)
+        val HEADER_BLUE = Color.rgb(41, 121, 255)
+        val BLUE = Color.rgb(36, 104, 242)
+        val CYAN_BLUE = Color.rgb(0, 174, 239)
+        val GREEN = Color.rgb(0, 191, 165)
+        val ORANGE = Color.rgb(255, 146, 43)
+        val HEALTH_SUCCESS = Color.rgb(42, 190, 118)
+        val HEALTH_FAILURE = Color.rgb(255, 93, 93)
+        val HEALTH_LATENCY = Color.rgb(0, 174, 239)
+        val TOKEN_INPUT = Color.rgb(36, 104, 242)
+        val TOKEN_OUTPUT = Color.rgb(42, 190, 118)
+        val TOKEN_CACHED = Color.rgb(0, 174, 239)
+        val TOKEN_REASONING = Color.rgb(255, 146, 43)
+        val TEXT = Color.rgb(27, 33, 43)
+        val MUTED = Color.rgb(103, 112, 128)
+        val GRID = Color.rgb(229, 234, 242)
     }
 }
