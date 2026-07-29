@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.ConnectionException
+import com.cpamp.mobile.data.auth.SessionException
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
@@ -59,7 +60,9 @@ class SessionViewModel @Inject constructor(
                     initializing = false,
                     session = restored.getOrNull(),
                     error = restored.exceptionOrNull()
-                        ?.takeUnless { it.message == "NO_ACTIVE_PROFILE" }
+                        ?.takeUnless {
+                            it is SessionException && it.reason == SessionException.Reason.NoActiveProfile
+                        }
                         ?.toAuthUiError(),
                 )
             }
@@ -135,8 +138,14 @@ private fun Throwable.toAuthUiError(): AuthUiError = when {
         ConnectionException.Reason.Network -> AuthUiError.Network
         ConnectionException.Reason.Server, ConnectionException.Reason.InvalidResponse -> AuthUiError.Server
     }
-    message == "ADMIN_KEY_REQUIRED" -> AuthUiError.MissingKey
-    message == "SAVED_KEY_UNAVAILABLE" -> AuthUiError.SavedKeyUnavailable
+    this is SessionException -> when (reason) {
+        SessionException.Reason.MissingAdminKey -> AuthUiError.MissingKey
+        SessionException.Reason.SavedKeyUnavailable -> AuthUiError.SavedKeyUnavailable
+        SessionException.Reason.CleartextConfirmationRequired -> AuthUiError.InvalidAddress
+        SessionException.Reason.NoActiveProfile,
+        SessionException.Reason.ProfileNotFound,
+        -> AuthUiError.Unknown
+    }
     this is IllegalArgumentException -> AuthUiError.InvalidAddress
     else -> AuthUiError.Unknown
 }

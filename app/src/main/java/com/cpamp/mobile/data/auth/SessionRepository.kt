@@ -27,7 +27,7 @@ class SessionRepository @Inject constructor(
     suspend fun restore(): Result<AuthenticatedSession> = runSuspendCatching {
         val stored = profileStore.snapshot()
         val profile = stored.profiles.firstOrNull { it.id == stored.activeProfileId }
-            ?: error("NO_ACTIVE_PROFILE")
+            ?: throw SessionException(SessionException.Reason.NoActiveProfile)
         connect(profile)
     }
 
@@ -39,10 +39,12 @@ class SessionRepository @Inject constructor(
     ): AuthenticatedSession {
         val baseUrl = ConnectionAddress.normalize(rawAddress)
         if (baseUrl.startsWith("http://") && !allowCleartext) {
-            throw IllegalArgumentException("CLEARTEXT_CONFIRMATION_REQUIRED")
+            throw SessionException(SessionException.Reason.CleartextConfirmationRequired)
         }
         val trimmedKey = adminKey.trim()
-        require(trimmedKey.isNotEmpty()) { "ADMIN_KEY_REQUIRED" }
+        if (trimmedKey.isEmpty()) {
+            throw SessionException(SessionException.Reason.MissingAdminKey)
+        }
         val probe = connectionTester.test(baseUrl, trimmedKey)
         val stored = profileStore.snapshot()
         val existing = stored.profiles.firstOrNull { it.baseUrl.equals(baseUrl, ignoreCase = true) }
@@ -59,7 +61,7 @@ class SessionRepository @Inject constructor(
 
     suspend fun switchTo(profileId: String): AuthenticatedSession {
         val profile = profileStore.snapshot().profiles.firstOrNull { it.id == profileId }
-            ?: error("PROFILE_NOT_FOUND")
+            ?: throw SessionException(SessionException.Reason.ProfileNotFound)
         return connect(profile)
     }
 
@@ -80,7 +82,7 @@ class SessionRepository @Inject constructor(
     private suspend fun connect(profile: ServerProfile): AuthenticatedSession {
         disconnect()
         val adminKey = profileStore.secret(profile.id)?.takeIf(String::isNotBlank)
-            ?: error("SAVED_KEY_UNAVAILABLE")
+            ?: throw SessionException(SessionException.Reason.SavedKeyUnavailable)
         val probe = connectionTester.test(profile.baseUrl, adminKey)
         val refreshed = profile.copy(
             lastConnectedAt = System.currentTimeMillis(),
