@@ -4,7 +4,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,7 +51,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
-import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.CategoryListRow
@@ -227,94 +225,6 @@ fun SystemScreen(
                 onDeleteServer(profile.id)
             },
         )
-    }
-}
-
-@Composable
-private fun ConnectionCard(session: AuthenticatedSession, hideAddress: Boolean) {
-    val displayName = safeServerName(
-        session.profile.name,
-        session.profile.baseUrl,
-        hideAddress,
-        stringResource(R.string.system_servers),
-    )
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(displayName, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                ConnectionPill(
-                    label = stringResource(if (session.profile.usesCleartext) R.string.http_connection else R.string.https_connection),
-                    secure = !session.profile.usesCleartext,
-                )
-            }
-            if (!hideAddress) {
-                Text(session.profile.baseUrl, style = MaterialTheme.typography.bodySmall)
-            }
-            Text(
-                stringResource(R.string.last_connected, session.profile.lastConnectedAt.asTime()),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ManagerStatusCard(state: SystemUiState) {
-    val status = state.status
-    val info = state.info
-    StatusCard(stringResource(R.string.system_status)) {
-        StatusRow(stringResource(R.string.service_name), info?.service.orEmpty().ifBlank { stringResource(R.string.unknown_value) })
-        StatusRow(stringResource(R.string.service_mode), info?.mode.orEmpty().ifBlank { stringResource(R.string.unknown_value) })
-        StatusRow(stringResource(R.string.event_count_label), status?.events?.toString() ?: "—")
-        StatusRow(stringResource(R.string.dead_letters), status?.deadLetters?.toString() ?: "—")
-        StatusRow(
-            stringResource(R.string.configuration_state),
-            stringResource(if (info?.configured == true) R.string.configured else R.string.not_configured),
-        )
-    }
-}
-
-@Composable
-private fun CollectorStatusCard(state: SystemUiState) {
-    val collector = state.status?.collector
-    StatusCard(stringResource(R.string.collector_status)) {
-        StatusRow(
-            stringResource(R.string.collector_running),
-            stringResource(if (collector?.running == true) R.string.running else R.string.stopped),
-        )
-        StatusRow(stringResource(R.string.collector_mode), collector?.mode.orEmpty().ifBlank { "—" })
-        if ((collector?.lastEventAt ?: 0) > 0) {
-            StatusRow(stringResource(R.string.last_event), requireNotNull(collector).lastEventAt.asTime())
-        }
-        if (!collector?.error.isNullOrBlank()) {
-            Text(
-                collector?.error.orEmpty(),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-    }
-}
-
-@Composable
-private fun StatusCard(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            content()
-        }
-    }
-}
-
-@Composable
-private fun StatusRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
