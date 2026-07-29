@@ -107,11 +107,13 @@ class SessionViewModel @Inject constructor(
 
     fun delete(profileId: String) {
         viewModelScope.launch {
-            repository.delete(profileId)
-            mutableState.update {
-                it.copy(
+            mutableState.update { it.copy(submitting = true, error = null) }
+            val result = runSuspendCatching { repository.delete(profileId) }
+            mutableState.update { state ->
+                state.copy(
+                    submitting = false,
                     session = repository.session.value,
-                    error = null,
+                    error = result.exceptionOrNull()?.toAuthUiError(),
                 )
             }
         }
