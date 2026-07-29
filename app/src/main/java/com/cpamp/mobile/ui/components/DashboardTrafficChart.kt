@@ -29,10 +29,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -59,6 +62,7 @@ fun DashboardTrafficChart(
     chartHeight: Dp = 220.dp,
     titleAction: (@Composable () -> Unit)? = null,
 ) {
+    val chartColors = usageTrendChartColors()
     val visiblePoints = remember(points, nowMs, compactToData) {
         if (compactToData) dashboardVisibleTrafficPoints(points, nowMs)
         else points.filter { it.timestampMs <= nowMs }
@@ -89,9 +93,9 @@ fun DashboardTrafficChart(
                 titleAction?.invoke()
             }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                ChartLegend(MaterialTheme.colorScheme.primary, stringResource(R.string.trend_requests))
-                ChartLegend(MaterialTheme.colorScheme.tertiary, stringResource(R.string.trend_tokens))
-                ChartLegend(CostLineColor, stringResource(R.string.trend_cost))
+                ChartLegend(chartColors.requests, stringResource(R.string.trend_requests))
+                ChartLegend(chartColors.tokens, stringResource(R.string.trend_tokens))
+                ChartLegend(chartColors.cost, stringResource(R.string.trend_cost))
             }
             if (!hasData) {
                 Box(Modifier.fillMaxWidth().height(chartHeight), contentAlignment = Alignment.Center) {
@@ -100,18 +104,25 @@ fun DashboardTrafficChart(
                 return@Column
             }
 
-            val requestColor = MaterialTheme.colorScheme.primary
-            val tokenColor = MaterialTheme.colorScheme.tertiary
-            val costColor = CostLineColor
-            val gridColor = MaterialTheme.colorScheme.outlineVariant
+            val requestColor = chartColors.requests
+            val tokenColor = chartColors.tokens
+            val costColor = chartColors.cost
+            val gridColor = chartColors.grid
             val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
             val surfaceColor = MaterialTheme.colorScheme.surface
-            val maxTokens = visiblePoints.maxOf { it.tokens }.coerceAtLeast(1)
-            val maxRequests = visiblePoints.maxOf { it.requests }.coerceAtLeast(1)
+            val requestRange = chartRange(visiblePoints.map { it.requests.toDouble() })
+            val tokenRange = chartRange(visiblePoints.map { it.tokens.toDouble() })
             val hasCost = visiblePoints.any { it.cost != null }
-            val maxCost = visiblePoints.maxOf { it.cost ?: 0.0 }.coerceAtLeast(0.0001)
+            val costRange = chartRange(visiblePoints.map { it.cost ?: 0.0 }, minimumSpan = 0.0001)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                ChartAxisLabels(maxRequests, chartHeight, Modifier.width(30.dp), Alignment.End, requestColor)
+                ChartAxisLabels(
+                    range = requestRange,
+                    height = chartHeight,
+                    modifier = Modifier.width(34.dp),
+                    alignment = Alignment.End,
+                    color = requestColor,
+                    formatter = { it.toLong().compactNumber() },
+                )
                 Canvas(
                     modifier = Modifier.weight(1f).height(chartHeight).padding(horizontal = 2.dp)
                         .pointerInput(visiblePoints) {
@@ -126,32 +137,52 @@ fun DashboardTrafficChart(
                 ) {
                     repeat(3) { row ->
                         val y = size.height * row / 2f
-                        drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                        drawLine(
+                            gridColor,
+                            Offset(0f, y),
+                            Offset(size.width, y),
+                            strokeWidth = 1.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx())),
+                        )
                     }
                     val requestOffsets = visiblePoints.mapIndexed { index, point ->
-                        Offset(chartX(index, visiblePoints.size, size.width), size.height * (1f - point.requests / maxRequests.toFloat()))
+                        Offset(chartX(index, visiblePoints.size, size.width), requestRange.y(point.requests.toDouble(), size.height))
                     }
                     val tokenOffsets = visiblePoints.mapIndexed { index, point ->
-                        Offset(chartX(index, visiblePoints.size, size.width), size.height * (1f - point.tokens / maxTokens.toFloat()))
+                        Offset(chartX(index, visiblePoints.size, size.width), tokenRange.y(point.tokens.toDouble(), size.height))
                     }
                     val costOffsets = visiblePoints.mapIndexed { index, point ->
-                        Offset(chartX(index, visiblePoints.size, size.width), size.height * (1f - (point.cost ?: 0.0) / maxCost).toFloat())
+                        Offset(chartX(index, visiblePoints.size, size.width), costRange.y(point.cost ?: 0.0, size.height))
+                    }
+                    listOf(requestOffsets to requestColor, tokenOffsets to tokenColor).forEach { (offsets, color) ->
+                        val areaPath = smoothChartPath(offsets).apply {
+                            lineTo(offsets.last().x, size.height)
+                            lineTo(offsets.first().x, size.height)
+                            close()
+                        }
+                        drawPath(
+                            path = areaPath,
+                            brush = Brush.verticalGradient(
+                                colors = listOf(color.copy(alpha = 0.18f), Color.Transparent),
+                                endY = size.height,
+                            ),
+                        )
                     }
                     drawPath(
                         smoothChartPath(requestOffsets),
                         requestColor,
-                        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                        style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                     )
                     drawPath(
                         smoothChartPath(tokenOffsets),
                         tokenColor,
-                        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                        style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                     )
                     if (hasCost) {
                         drawPath(
                             smoothChartPath(costOffsets),
                             costColor,
-                            style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
+                            style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                         )
                     }
                     selectedIndex?.let { index ->
@@ -171,8 +202,8 @@ fun DashboardTrafficChart(
                     }
                 }
                 CombinedAxisLabels(
-                    tokenMaximum = maxTokens,
-                    costMaximum = maxCost,
+                    tokenRange = tokenRange,
+                    costRange = costRange,
                     showCost = hasCost,
                     height = chartHeight,
                     modifier = Modifier.width(48.dp),
@@ -188,7 +219,12 @@ fun DashboardTrafficChart(
                     Text(point.timestampMs.asChartLabel(visiblePoints), style = MaterialTheme.typography.labelSmall, color = labelColor)
                 }
             }
-            selectedIndex?.let { index -> DashboardPointDetails(visiblePoints[index]) }
+            selectedIndex?.let { index ->
+                DashboardPointDetails(
+                    point = visiblePoints[index],
+                    endMs = trendBucketEnd(visiblePoints, index),
+                )
+            }
         }
     }
 }
@@ -203,44 +239,46 @@ private fun ChartLegend(color: Color, label: String) {
 
 @Composable
 private fun ChartAxisLabels(
-    maximum: Long,
+    range: ChartRange,
     height: Dp,
     modifier: Modifier,
     alignment: Alignment.Horizontal = Alignment.End,
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    formatter: (Double) -> String,
 ) {
     Column(
         modifier = modifier.height(height),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = alignment,
     ) {
-        Text(maximum.compactNumber(), style = MaterialTheme.typography.labelSmall, color = color)
-        Text((maximum / 2).compactNumber(), style = MaterialTheme.typography.labelSmall, color = color)
-        Text("0", style = MaterialTheme.typography.labelSmall, color = color)
+        range.levels().forEach { value ->
+            Text(formatter(value), style = MaterialTheme.typography.labelSmall, color = color)
+        }
     }
 }
 
 @Composable
 private fun CombinedAxisLabels(
-    tokenMaximum: Long,
-    costMaximum: Double,
+    tokenRange: ChartRange,
+    costRange: ChartRange,
     showCost: Boolean,
     height: Dp,
     modifier: Modifier,
     tokenColor: Color,
     costColor: Color,
 ) {
-    val levels = listOf(1.0, 0.5, 0.0)
+    val tokenLevels = tokenRange.levels()
+    val costLevels = costRange.levels()
     Column(
         modifier = modifier.height(height),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.Start,
     ) {
-        levels.forEach { level ->
+        tokenLevels.indices.forEach { index ->
             Column {
-                Text((tokenMaximum * level).toLong().compactNumber(), style = MaterialTheme.typography.labelSmall, color = tokenColor)
+                Text(tokenLevels[index].toLong().compactNumber(), style = MaterialTheme.typography.labelSmall, color = tokenColor)
                 if (showCost) {
-                    Text((costMaximum * level).asCost(), style = MaterialTheme.typography.labelSmall, color = costColor)
+                    Text(costLevels[index].asCost(), style = MaterialTheme.typography.labelSmall, color = costColor)
                 }
             }
         }
@@ -248,13 +286,13 @@ private fun CombinedAxisLabels(
 }
 
 @Composable
-private fun DashboardPointDetails(point: AnalyticsTrendPoint) {
+private fun DashboardPointDetails(point: AnalyticsTrendPoint, endMs: Long) {
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(
             stringResource(
                 R.string.trend_time_range,
                 point.timestampMs.asDashboardDateTime(),
-                (point.timestampMs + DASHBOARD_BUCKET_MS).asDashboardDateTime(),
+                endMs.asDashboardDateTime(),
             ),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
@@ -288,8 +326,62 @@ private fun smoothChartPath(points: List<Offset>): Path = Path().apply {
     if (points.isEmpty()) return@apply
     moveTo(points.first().x, points.first().y)
     points.zipWithNext().forEach { (previous, current) ->
-        val midpoint = (previous.x + current.x) / 2f
-        cubicTo(midpoint, previous.y, midpoint, current.y, current.x, current.y)
+        val controlOffset = (current.x - previous.x) * 0.25f
+        cubicTo(
+            previous.x + controlOffset,
+            previous.y,
+            current.x - controlOffset,
+            current.y,
+            current.x,
+            current.y,
+        )
+    }
+}
+
+private data class ChartRange(val minimum: Double, val maximum: Double) {
+    fun y(value: Double, height: Float): Float =
+        (height * (1.0 - (value - minimum) / (maximum - minimum))).toFloat().coerceIn(0f, height)
+
+    fun levels(): List<Double> = listOf(maximum, (minimum + maximum) / 2.0, minimum)
+}
+
+private fun chartRange(values: List<Double>, minimumSpan: Double = 1.0): ChartRange {
+    val finite = values.filter(Double::isFinite)
+    if (finite.isEmpty()) return ChartRange(0.0, minimumSpan)
+    val minimum = finite.min()
+    val maximum = finite.max()
+    if (maximum > minimum) {
+        val padding = (maximum - minimum) * 0.06
+        return ChartRange((minimum - padding).coerceAtLeast(0.0), maximum + padding)
+    }
+    val padding = maxOf(kotlin.math.abs(maximum) * 0.08, minimumSpan / 2.0)
+    return ChartRange((minimum - padding).coerceAtLeast(0.0), maximum + padding)
+}
+
+private data class UsageTrendChartColors(
+    val requests: Color,
+    val tokens: Color,
+    val cost: Color,
+    val grid: Color,
+)
+
+@Composable
+private fun usageTrendChartColors(): UsageTrendChartColors {
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return if (dark) {
+        UsageTrendChartColors(
+            requests = Color(0xFF79BBFF),
+            tokens = Color(0xFF2DD4BF),
+            cost = Color(0xFFFBBF24),
+            grid = Color.White.copy(alpha = 0.10f),
+        )
+    } else {
+        UsageTrendChartColors(
+            requests = Color(0xFF409EFF),
+            tokens = Color(0xFF14B8A6),
+            cost = Color(0xFFF59E0B),
+            grid = Color(0xFFD3E1EF),
+        )
     }
 }
 
@@ -315,4 +407,3 @@ private fun Long.asDashboardDateTime(): String = Instant.ofEpochMilli(this)
     .atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))
 
 private const val DASHBOARD_BUCKET_MS = 60 * 60 * 1000L
-private val CostLineColor = Color(0xFFF59E0B)

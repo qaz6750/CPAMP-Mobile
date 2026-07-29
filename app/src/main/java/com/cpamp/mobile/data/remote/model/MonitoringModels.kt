@@ -112,15 +112,24 @@ data class MonitoringTimelineDto(
     val calls: Long = 0,
     val success: Long = 0,
     val failure: Long = 0,
+    @SerialName("success_rate") val successRate: Double? = null,
+    @SerialName("failure_rate") val failureRate: Double? = null,
     val tokens: Long = 0,
     @SerialName("total_tokens") val totalTokens: Long = 0,
     @SerialName("input_tokens") val inputTokens: Long = 0,
     @SerialName("output_tokens") val outputTokens: Long = 0,
     @SerialName("cached_tokens") val cachedTokens: Long = 0,
+    @SerialName("cache_read_tokens") val cacheReadTokens: Long = 0,
+    @SerialName("cache_creation_tokens") val cacheCreationTokens: Long = 0,
     @SerialName("reasoning_tokens") val reasoningTokens: Long = 0,
     @SerialName("average_latency_ms") val averageLatencyMs: Double? = null,
     val cost: Double = 0.0,
-)
+) {
+    val allCachedTokens: Long
+        get() = cachedTokens.coerceAtLeast(0) +
+            cacheReadTokens.coerceAtLeast(0) +
+            cacheCreationTokens.coerceAtLeast(0)
+}
 
 @Serializable
 data class ModelShareDto(

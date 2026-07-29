@@ -22,6 +22,8 @@ data class UsageSharePoint(
     val requests: Long,
     val successfulRequests: Long,
     val failedRequests: Long,
+    val successRate: Double,
+    val failureRate: Double,
     val averageLatencyMs: Double?,
     val tokens: Long,
     val inputTokens: Long,
@@ -60,11 +62,15 @@ fun MonitoringResponseDto.toUsageShareReport(
                 requests = point.calls,
                 successfulRequests = point.success,
                 failedRequests = point.failure,
+                successRate = point.successRate?.coerceIn(0.0, 1.0)
+                    ?: if (point.calls > 0) point.success.toDouble() / point.calls else 0.0,
+                failureRate = point.failureRate?.coerceIn(0.0, 1.0)
+                    ?: if (point.calls > 0) point.failure.toDouble() / point.calls else 0.0,
                 averageLatencyMs = point.averageLatencyMs,
                 tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
                 inputTokens = point.inputTokens,
                 outputTokens = point.outputTokens,
-                cachedTokens = point.cachedTokens,
+                cachedTokens = point.allCachedTokens,
                 reasoningTokens = point.reasoningTokens,
                 cost = point.cost,
             )

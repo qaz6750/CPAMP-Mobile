@@ -78,7 +78,7 @@ fun UsageAnalyticsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var showExpandedTrend by rememberSaveable { mutableStateOf(false) }
+    var expandedChart by rememberSaveable { mutableStateOf<ExpandedChart?>(null) }
     LaunchedEffect(state.shareUri) {
         state.shareUri?.let { uri ->
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -219,8 +219,8 @@ fun UsageAnalyticsScreen(
                         emptyText = stringResource(R.string.no_traffic),
                         compactToData = false,
                         titleAction = {
-                            IconButton(onClick = { showExpandedTrend = true }) {
-                                Icon(Icons.Outlined.Fullscreen, contentDescription = stringResource(R.string.expand_usage_trend))
+                            IconButton(onClick = { expandedChart = ExpandedChart.UsageTrend }) {
+                                Icon(Icons.Outlined.Fullscreen, contentDescription = stringResource(R.string.expand_chart))
                             }
                         },
                     )
@@ -234,6 +234,11 @@ fun UsageAnalyticsScreen(
                         successLabel = stringResource(R.string.health_success_rate),
                         failureLabel = stringResource(R.string.health_failure_rate),
                         latencyLabel = stringResource(R.string.health_average_latency),
+                        titleAction = {
+                            IconButton(onClick = { expandedChart = ExpandedChart.RequestHealth }) {
+                                Icon(Icons.Outlined.Fullscreen, contentDescription = stringResource(R.string.expand_chart))
+                            }
+                        },
                     )
                 }
                 item {
@@ -246,6 +251,11 @@ fun UsageAnalyticsScreen(
                         outputLabel = stringResource(R.string.token_output),
                         cachedLabel = stringResource(R.string.token_cached),
                         reasoningLabel = stringResource(R.string.token_reasoning),
+                        titleAction = {
+                            IconButton(onClick = { expandedChart = ExpandedChart.TokenStructure }) {
+                                Icon(Icons.Outlined.Fullscreen, contentDescription = stringResource(R.string.expand_chart))
+                            }
+                        },
                     )
                 }
                 item {
@@ -276,18 +286,22 @@ fun UsageAnalyticsScreen(
             }
         }
     }
-    if (showExpandedTrend) {
-        ExpandedUsageTrend(
-            points = state.response?.timeline.orEmpty().toAnalyticsTrendPoints(),
+    expandedChart?.let { chart ->
+        ExpandedUsageChartDialog(
+            chart = chart,
+            timeline = state.response?.timeline.orEmpty(),
             nowMs = state.response?.generatedAtMs?.takeIf { it > 0 } ?: System.currentTimeMillis(),
-            onDismiss = { showExpandedTrend = false },
+            onDismiss = { expandedChart = null },
         )
     }
 }
 
+private enum class ExpandedChart { UsageTrend, RequestHealth, TokenStructure }
+
 @Composable
-private fun ExpandedUsageTrend(
-    points: List<AnalyticsTrendPoint>,
+private fun ExpandedUsageChartDialog(
+    chart: ExpandedChart,
+    timeline: List<com.cpamp.mobile.data.remote.model.MonitoringTimelineDto>,
     nowMs: Long,
     onDismiss: () -> Unit,
 ) {
@@ -307,20 +321,46 @@ private fun ExpandedUsageTrend(
                     .padding(16.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                DashboardTrafficChart(
-                    title = stringResource(R.string.usage_trend),
-                    points = points,
-                    nowMs = nowMs,
-                    emptyText = stringResource(R.string.no_traffic),
-                    modifier = Modifier.fillMaxWidth(),
-                    compactToData = false,
-                    chartHeight = 220.dp,
-                    titleAction = {
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.close_expanded_trend))
-                        }
-                    },
-                )
+                val closeAction: @Composable () -> Unit = {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.close_expanded_chart))
+                    }
+                }
+                when (chart) {
+                    ExpandedChart.UsageTrend -> DashboardTrafficChart(
+                        title = stringResource(R.string.usage_trend),
+                        points = timeline.toAnalyticsTrendPoints(),
+                        nowMs = nowMs,
+                        emptyText = stringResource(R.string.no_traffic),
+                        modifier = Modifier.fillMaxWidth(),
+                        compactToData = false,
+                        chartHeight = 220.dp,
+                        titleAction = closeAction,
+                    )
+                    ExpandedChart.RequestHealth -> RequestHealthChart(
+                        title = stringResource(R.string.request_health_trend),
+                        subtitle = stringResource(R.string.request_health_subtitle),
+                        points = timeline,
+                        emptyText = stringResource(R.string.no_range_traffic),
+                        successLabel = stringResource(R.string.health_success_rate),
+                        failureLabel = stringResource(R.string.health_failure_rate),
+                        latencyLabel = stringResource(R.string.health_average_latency),
+                        modifier = Modifier.fillMaxWidth(),
+                        titleAction = closeAction,
+                    )
+                    ExpandedChart.TokenStructure -> TokenStructureChart(
+                        title = stringResource(R.string.token_structure),
+                        subtitle = stringResource(R.string.token_structure_subtitle),
+                        points = timeline,
+                        emptyText = stringResource(R.string.no_token_structure),
+                        inputLabel = stringResource(R.string.token_input),
+                        outputLabel = stringResource(R.string.token_output),
+                        cachedLabel = stringResource(R.string.token_cached),
+                        reasoningLabel = stringResource(R.string.token_reasoning),
+                        modifier = Modifier.fillMaxWidth(),
+                        titleAction = closeAction,
+                    )
+                }
             }
         }
     }

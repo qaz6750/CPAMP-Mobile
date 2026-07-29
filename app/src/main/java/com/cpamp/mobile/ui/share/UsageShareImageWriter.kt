@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -46,10 +47,13 @@ class UsageShareImageWriter @Inject constructor(
     }
 
     private fun render(report: UsageShareReport): Bitmap {
-        val bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(OUTPUT_WIDTH, OUTPUT_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(BACKGROUND)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        canvas.scale(RENDER_SCALE, RENDER_SCALE)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG or Paint.LINEAR_TEXT_FLAG).apply {
+            isFilterBitmap = true
+        }
 
         drawHeader(canvas, paint, report)
         drawMetrics(canvas, paint, report)
@@ -138,6 +142,8 @@ class UsageShareImageWriter @Inject constructor(
     }
 
     private fun drawTrendSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
+        paint.style = Paint.Style.FILL
+        paint.pathEffect = null
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
@@ -292,17 +298,27 @@ class UsageShareImageWriter @Inject constructor(
                 }
             }
         }
+        paint.style = Paint.Style.FILL
     }
 
     private fun smoothTrendPath(points: List<Pair<Float, Float>>) = Path().apply {
         moveTo(points.first().first, points.first().second)
         points.zipWithNext().forEach { (previous, current) ->
-            val midpoint = (previous.first + current.first) / 2f
-            cubicTo(midpoint, previous.second, midpoint, current.second, current.first, current.second)
+            val controlOffset = (current.first - previous.first) * 0.25f
+            cubicTo(
+                previous.first + controlOffset,
+                previous.second,
+                current.first - controlOffset,
+                current.second,
+                current.first,
+                current.second,
+            )
         }
     }
 
     private fun drawHealthSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
+        paint.style = Paint.Style.FILL
+        paint.pathEffect = null
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
@@ -327,21 +343,25 @@ class UsageShareImageWriter @Inject constructor(
         paint.style = Paint.Style.FILL
         paint.color = CARD
         canvas.drawRoundRect(bounds, 24f, 24f, paint)
-        val visible = points.filter {
+        val hasData = points.any {
             it.successfulRequests > 0 || it.failedRequests > 0 || it.averageLatencyMs != null
         }
-        if (visible.isEmpty()) {
+        if (!hasData) {
             drawEmptyChart(canvas, paint, bounds, context.getString(R.string.no_range_traffic))
             return
         }
         val plot = RectF(bounds.left + 78f, bounds.top + 30f, bounds.right - 108f, bounds.bottom - 58f)
-        val maxLatency = visible.maxOf { it.averageLatencyMs ?: 0.0 }.coerceAtLeast(1.0)
+        val maxLatency = points.maxOf { it.averageLatencyMs ?: 0.0 }.coerceAtLeast(1.0)
         repeat(4) { index ->
             val fraction = index / 3f
             val y = plot.top + plot.height() * fraction
+            paint.style = Paint.Style.STROKE
             paint.color = GRID
             paint.strokeWidth = 2f
+            paint.pathEffect = DashPathEffect(floatArrayOf(8f, 7f), 0f)
             canvas.drawLine(plot.left, y, plot.right, y, paint)
+            paint.style = Paint.Style.FILL
+            paint.pathEffect = null
             paint.textSize = 18f
             paint.color = MUTED
             paint.textAlign = Paint.Align.RIGHT
@@ -350,24 +370,30 @@ class UsageShareImageWriter @Inject constructor(
             paint.textAlign = Paint.Align.LEFT
             canvas.drawText((maxLatency * (1f - fraction)).asLatency(), plot.right + 12f, y + 6f, paint)
         }
-        val successPoints = visible.mapIndexed { index, point ->
-            val total = (point.successfulRequests + point.failedRequests).coerceAtLeast(1)
-            chartPoint(index, visible.size, point.successfulRequests.toDouble(), total.toDouble(), plot)
+        val groupWidth = plot.width() / points.size.coerceAtLeast(1)
+        val barWidth = (groupWidth * 0.48f).coerceIn(2f, 16f)
+        points.forEachIndexed { index, point ->
+            val latency = point.averageLatencyMs ?: 0.0
+            if (latency <= 0.0) return@forEachIndexed
+            val center = categoryChartX(index, points.size, plot)
+            val top = plot.bottom - plot.height() * (latency / maxLatency).toFloat()
+            paint.color = Color.argb(164, Color.red(HEALTH_LATENCY), Color.green(HEALTH_LATENCY), Color.blue(HEALTH_LATENCY))
+            canvas.drawRect(center - barWidth / 2f, top, center + barWidth / 2f, plot.bottom, paint)
         }
-        val failurePoints = visible.mapIndexed { index, point ->
-            val total = (point.successfulRequests + point.failedRequests).coerceAtLeast(1)
-            chartPoint(index, visible.size, point.failedRequests.toDouble(), total.toDouble(), plot)
+        val successPoints = points.mapIndexed { index, point ->
+            categoryChartPoint(index, points.size, point.successRate, 1.0, plot)
         }
-        val latencyPoints = visible.mapIndexed { index, point ->
-            chartPoint(index, visible.size, point.averageLatencyMs ?: 0.0, maxLatency, plot)
+        val failurePoints = points.mapIndexed { index, point ->
+            categoryChartPoint(index, points.size, point.failureRate, 1.0, plot)
         }
         drawTrendLine(canvas, paint, successPoints, HEALTH_SUCCESS, showPoints = false)
         drawTrendLine(canvas, paint, failurePoints, HEALTH_FAILURE, showPoints = false)
-        drawTrendLine(canvas, paint, latencyPoints, HEALTH_LATENCY, showPoints = false)
-        drawTimeLabels(canvas, paint, visible, plot, bounds.bottom - 18f, useHourLabels)
+        drawTimeLabels(canvas, paint, points, plot, bounds.bottom - 18f, useHourLabels, categoryAxis = true)
     }
 
     private fun drawTokenSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
+        paint.style = Paint.Style.FILL
+        paint.pathEffect = null
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
@@ -393,44 +419,50 @@ class UsageShareImageWriter @Inject constructor(
         paint.style = Paint.Style.FILL
         paint.color = CARD
         canvas.drawRoundRect(bounds, 24f, 24f, paint)
-        val visible = points.filter {
+        val hasData = points.any {
             it.inputTokens > 0 || it.outputTokens > 0 || it.cachedTokens > 0 || it.reasoningTokens > 0
         }
-        if (visible.isEmpty()) {
+        if (!hasData) {
             drawEmptyChart(canvas, paint, bounds, context.getString(R.string.no_token_structure))
             return
         }
         val plot = RectF(bounds.left + 82f, bounds.top + 30f, bounds.right - 24f, bounds.bottom - 58f)
-        val maximum = visible.maxOf {
-            maxOf(it.inputTokens, it.outputTokens, it.cachedTokens, it.reasoningTokens)
+        val maximum = points.maxOf {
+            it.inputTokens + it.outputTokens + it.cachedTokens + it.reasoningTokens
         }.coerceAtLeast(1)
         repeat(4) { index ->
             val fraction = index / 3f
             val y = plot.top + plot.height() * fraction
+            paint.style = Paint.Style.STROKE
             paint.color = GRID
             paint.strokeWidth = 2f
+            paint.pathEffect = DashPathEffect(floatArrayOf(8f, 7f), 0f)
             canvas.drawLine(plot.left, y, plot.right, y, paint)
+            paint.style = Paint.Style.FILL
+            paint.pathEffect = null
             paint.color = MUTED
             paint.textSize = 18f
             paint.textAlign = Paint.Align.RIGHT
             canvas.drawText((maximum * (1f - fraction)).toLong().compactNumber(), plot.left - 12f, y + 6f, paint)
         }
-        val groupWidth = plot.width() / visible.size.coerceAtLeast(1)
-        val barWidth = (groupWidth * 0.16f).coerceIn(2f, 9f)
-        val gap = barWidth * 0.18f
-        visible.forEachIndexed { index, point ->
-            val center = plot.left + groupWidth * (index + 0.5f)
+        val groupWidth = plot.width() / points.size.coerceAtLeast(1)
+        val barWidth = (groupWidth * 0.64f).coerceIn(2f, 22f)
+        points.forEachIndexed { index, point ->
+            val center = categoryChartX(index, points.size, plot)
             val values = listOf(point.inputTokens, point.outputTokens, point.cachedTokens, point.reasoningTokens)
             val colors = listOf(TOKEN_INPUT, TOKEN_OUTPUT, TOKEN_CACHED, TOKEN_REASONING)
-            val totalWidth = barWidth * 4 + gap * 3
+            var bottom = plot.bottom
             values.forEachIndexed { valueIndex, value ->
-                val left = center - totalWidth / 2 + valueIndex * (barWidth + gap)
-                val top = plot.bottom - plot.height() * value / maximum.toFloat()
-                paint.color = colors[valueIndex]
-                canvas.drawRect(left, top, left + barWidth, plot.bottom, paint)
+                if (value > 0) {
+                    val segmentHeight = plot.height() * value / maximum.toFloat()
+                    val top = bottom - segmentHeight
+                    paint.color = colors[valueIndex]
+                    canvas.drawRect(center - barWidth / 2f, top, center + barWidth / 2f, bottom, paint)
+                    bottom = top
+                }
             }
         }
-        drawTimeLabels(canvas, paint, visible, plot, bounds.bottom - 18f, useHourLabels)
+        drawTimeLabels(canvas, paint, points, plot, bounds.bottom - 18f, useHourLabels, categoryAxis = true)
     }
 
     private fun drawTimeLabels(
@@ -440,10 +472,11 @@ class UsageShareImageWriter @Inject constructor(
         plot: RectF,
         baseline: Float,
         useHourLabels: Boolean,
+        categoryAxis: Boolean = false,
     ) {
         chartTicks(points).forEach { point ->
             val index = points.indexOf(point)
-            val x = chartX(index, points.size, plot)
+            val x = if (categoryAxis) categoryChartX(index, points.size, plot) else chartX(index, points.size, plot)
             paint.color = MUTED
             paint.textSize = 18f
             paint.textAlign = when (index) {
@@ -491,6 +524,8 @@ class UsageShareImageWriter @Inject constructor(
     }
 
     private fun drawModels(canvas: Canvas, paint: Paint, report: UsageShareReport) {
+        paint.style = Paint.Style.FILL
+        paint.pathEffect = null
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
@@ -583,22 +618,37 @@ class UsageShareImageWriter @Inject constructor(
         return (0..4).map { step -> points[points.lastIndex * step / 4] }.distinct()
     }
 
+    private fun categoryChartPoint(
+        index: Int,
+        count: Int,
+        value: Double,
+        maximum: Double,
+        plot: RectF,
+    ): Pair<Float, Float> =
+        categoryChartX(index, count, plot) to (plot.bottom - plot.height() * (value / maximum).toFloat())
+
+    private fun categoryChartX(index: Int, count: Int, plot: RectF): Float =
+        if (count <= 1) plot.centerX() else plot.left + plot.width() * (index + 0.5f) / count
+
     private companion object {
         const val WIDTH = 1080
         const val HEIGHT = 2900
+        const val RENDER_SCALE = 1.5f
+        const val OUTPUT_WIDTH = 1620
+        const val OUTPUT_HEIGHT = 4350
         val BACKGROUND = Color.rgb(239, 248, 255)
         val CARD = Color.WHITE
         val SKY_BLUE = Color.rgb(56, 189, 248)
-        val BLUE = Color.rgb(14, 165, 233)
-        val GREEN = Color.rgb(16, 185, 129)
+        val BLUE = Color.rgb(64, 158, 255)
+        val GREEN = Color.rgb(20, 184, 166)
         val ORANGE = Color.rgb(245, 158, 11)
-        val HEALTH_SUCCESS = Color.rgb(85, 185, 56)
-        val HEALTH_FAILURE = Color.rgb(255, 107, 107)
-        val HEALTH_LATENCY = Color.rgb(17, 168, 226)
-        val TOKEN_INPUT = Color.rgb(91, 155, 243)
-        val TOKEN_OUTPUT = Color.rgb(36, 190, 107)
-        val TOKEN_CACHED = Color.rgb(18, 169, 191)
-        val TOKEN_REASONING = Color.rgb(240, 161, 26)
+        val HEALTH_SUCCESS = Color.rgb(103, 194, 58)
+        val HEALTH_FAILURE = Color.rgb(245, 108, 108)
+        val HEALTH_LATENCY = Color.rgb(14, 165, 233)
+        val TOKEN_INPUT = Color.rgb(96, 165, 250)
+        val TOKEN_OUTPUT = Color.rgb(34, 197, 94)
+        val TOKEN_CACHED = Color.rgb(6, 182, 212)
+        val TOKEN_REASONING = Color.rgb(245, 158, 11)
         val TEXT = Color.rgb(15, 41, 66)
         val MUTED = Color.rgb(89, 112, 136)
         val GRID = Color.rgb(222, 235, 246)

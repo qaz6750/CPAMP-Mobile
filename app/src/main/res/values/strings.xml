@@ -41,8 +41,8 @@
     <string name="token_reasoning">Reasoning tokens</string>
     <string name="no_range_traffic">No request health data in the selected range</string>
     <string name="no_token_structure">No token structure data in the selected range</string>
-    <string name="expand_usage_trend">View full trend in landscape</string>
-    <string name="close_expanded_trend">Close full trend</string>
+    <string name="expand_chart">View chart in landscape</string>
+    <string name="close_expanded_chart">Close landscape chart</string>
     <string name="usage_models">Models</string>
     <string name="usage_api_keys">API keys</string>
     <string name="usage_credentials">Credentials</string>

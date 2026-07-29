@@ -41,8 +41,8 @@
     <string name="token_reasoning">推理 Token</string>
     <string name="no_range_traffic">所选时段暂无请求健康数据</string>
     <string name="no_token_structure">所选时段暂无 Token 结构数据</string>
-    <string name="expand_usage_trend">横屏查看完整趋势</string>
-    <string name="close_expanded_trend">关闭完整趋势</string>
+    <string name="expand_chart">横屏查看图表</string>
+    <string name="close_expanded_chart">关闭横屏图表</string>
     <string name="usage_models">模型</string>
     <string name="usage_api_keys">API Key</string>
     <string name="usage_credentials">凭据</string>
