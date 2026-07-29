@@ -35,16 +35,21 @@ class AppLockViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             repository.settings.collectLatest { settings ->
-                repository.synchronizeRuntimeMode(settings.enabled)
-                mutableState.update { state ->
-                    state.copy(
-                        loading = false,
-                        enabled = settings.enabled,
-                        locked = if (!initialized) settings.enabled else state.locked && settings.enabled,
-                        timeoutMinutes = settings.timeoutMinutes,
-                    )
-                }
-                initialized = true
+                runSuspendCatching { repository.synchronizeRuntimeMode(settings.enabled) }
+                    .onSuccess {
+                        mutableState.update { state ->
+                            state.copy(
+                                loading = false,
+                                enabled = settings.enabled,
+                                locked = if (!initialized) settings.enabled else state.locked && settings.enabled,
+                                timeoutMinutes = settings.timeoutMinutes,
+                            )
+                        }
+                        initialized = true
+                    }
+                    .onFailure {
+                        mutableState.update { it.copy(loading = false, error = true) }
+                    }
             }
         }
     }
