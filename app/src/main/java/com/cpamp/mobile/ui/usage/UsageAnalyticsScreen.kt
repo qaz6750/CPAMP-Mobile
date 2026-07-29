@@ -2,27 +2,19 @@ package com.cpamp.mobile.ui.usage
 
 import android.content.Intent
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DataUsage
 import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material.icons.outlined.Payments
@@ -45,26 +37,21 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.ApiKeyStatDto
 import com.cpamp.mobile.data.remote.model.CredentialStatDto
 import com.cpamp.mobile.data.remote.model.ModelStatDto
-import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.compactTokens
-import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
 import com.cpamp.mobile.ui.components.LoadingIconButton
@@ -297,88 +284,6 @@ fun UsageAnalyticsScreen(
             onDismiss = { expandedChart = null },
         )
     }
-}
-
-private enum class ExpandedChart { UsageTrend, RequestHealth, TokenStructure }
-
-@Composable
-private fun ExpandedUsageChartDialog(
-    chart: ExpandedChart,
-    timeline: List<MonitoringTimelineDto>,
-    nowMs: Long,
-    onDismiss: () -> Unit,
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
-    ) {
-        BoxWithConstraints(
-            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .requiredWidth(maxHeight)
-                    .requiredHeight(maxWidth)
-                    .graphicsLayer(rotationZ = 90f)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                val closeAction: @Composable () -> Unit = {
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.close_expanded_chart))
-                    }
-                }
-                when (chart) {
-                    ExpandedChart.UsageTrend -> DashboardTrafficChart(
-                        title = stringResource(R.string.usage_trend),
-                        points = timeline.toAnalyticsTrendPoints(),
-                        nowMs = nowMs,
-                        emptyText = stringResource(R.string.no_traffic),
-                        modifier = Modifier.fillMaxWidth(),
-                        compactToData = false,
-                        chartHeight = 220.dp,
-                        titleAction = closeAction,
-                    )
-                    ExpandedChart.RequestHealth -> RequestHealthChart(
-                        title = stringResource(R.string.request_health_trend),
-                        subtitle = stringResource(R.string.request_health_subtitle),
-                        points = timeline,
-                        emptyText = stringResource(R.string.no_range_traffic),
-                        successLabel = stringResource(R.string.health_success_rate),
-                        failureLabel = stringResource(R.string.health_failure_rate),
-                        latencyLabel = stringResource(R.string.health_average_latency),
-                        modifier = Modifier.fillMaxWidth(),
-                        titleAction = closeAction,
-                    )
-                    ExpandedChart.TokenStructure -> TokenStructureChart(
-                        title = stringResource(R.string.token_structure),
-                        subtitle = stringResource(R.string.token_structure_subtitle),
-                        points = timeline,
-                        emptyText = stringResource(R.string.no_token_structure),
-                        inputLabel = stringResource(R.string.token_input),
-                        outputLabel = stringResource(R.string.token_output),
-                        cachedLabel = stringResource(R.string.token_cached),
-                        reasoningLabel = stringResource(R.string.token_reasoning),
-                        modifier = Modifier.fillMaxWidth(),
-                        titleAction = closeAction,
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun List<MonitoringTimelineDto>.toAnalyticsTrendPoints() = map { point ->
-    AnalyticsTrendPoint(
-        timestampMs = point.bucketMs,
-        requests = point.calls,
-        tokens = point.totalTokens.takeIf { it > 0 } ?: point.tokens,
-        bucketEndMs = point.bucketEndMs,
-        success = point.success,
-        failure = point.failure,
-        cost = point.cost,
-    )
 }
 
 @Composable
