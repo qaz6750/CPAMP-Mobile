@@ -1,5 +1,6 @@
 package com.cpamp.mobile.ui.monitoring
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Refresh
@@ -40,7 +42,6 @@ import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
-import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun CredentialQuotaScreen(
@@ -115,7 +116,7 @@ fun CredentialQuotaScreen(
 }
 
 @Composable
-private fun CredentialQuotaSectionTitle(label: Int, count: Int) {
+private fun CredentialQuotaSectionTitle(@StringRes label: Int, count: Int) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -135,7 +136,7 @@ private fun CredentialQuotaSectionTitle(label: Int, count: Int) {
 }
 
 @Composable
-private fun CredentialQuotaNotice(message: Int) {
+private fun CredentialQuotaNotice(@StringRes message: Int) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
         Text(stringResource(message), modifier = Modifier.fillMaxWidth().padding(18.dp))
     }
