@@ -1,16 +1,19 @@
 package com.cpamp.mobile.data.monitoring
 
 import com.cpamp.mobile.common.runSuspendCatching
+import com.cpamp.mobile.data.remote.CPAMPApi
 import com.cpamp.mobile.data.remote.SessionApiClientFactory
 import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
+import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
 import com.cpamp.mobile.data.remote.model.AuthFileDto
 import com.cpamp.mobile.data.remote.model.CodexQuotaWindowDto
+import com.cpamp.mobile.data.remote.model.CodexRateLimitDto
 import com.cpamp.mobile.data.remote.model.CodexUsageDto
 import com.cpamp.mobile.data.remote.remoteCall
 import com.cpamp.mobile.domain.model.AuthenticatedSession
+import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
-import java.util.Base64
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -59,7 +62,7 @@ class CredentialQuotaRepository @Inject constructor(
 
     private suspend fun loadCodexQuota(
         file: AuthFileDto,
-        api: com.cpamp.mobile.data.remote.CPAMPApi,
+        api: CPAMPApi,
     ): CredentialQuota = runSuspendCatching {
         val accountId = file.resolvedAccountId
         val headers = buildMap {
@@ -129,14 +132,14 @@ class CredentialQuotaRepository @Inject constructor(
             }
         }
 
-        private fun AuthFileDto.missingAuthIndexQuota(): CredentialQuota = CredentialQuota(
-            name = name,
-            account = account.ifBlank { email },
-            provider = CODEX_PROVIDER,
-            planType = "",
-            windows = emptyList(),
-            error = true,
-        )
+    private fun AuthFileDto.missingAuthIndexQuota(): CredentialQuota = CredentialQuota(
+        name = name,
+        account = account.ifBlank { email },
+        provider = CODEX_PROVIDER,
+        planType = "",
+        windows = emptyList(),
+        error = true,
+    )
 
     private fun AuthFileDto.disabledQuota(): CredentialQuota = CredentialQuota(
         name = name,
@@ -177,23 +180,23 @@ class CredentialQuotaRepository @Inject constructor(
                 .orEmpty()
         }
 
-    private val com.cpamp.mobile.data.remote.model.ApiCallResponseDto.resolvedStatusCode: Int
+    private val ApiCallResponseDto.resolvedStatusCode: Int
         get() = sequenceOf(statusCode, camelStatusCode)
             .mapNotNull { it.scalarText() }
             .mapNotNull(String::toIntOrNull)
             .firstOrNull { it != 0 }
             ?: 0
 
-    private val com.cpamp.mobile.data.remote.model.ApiCallResponseDto.resolvedBodyText: String
+    private val ApiCallResponseDto.resolvedBodyText: String
         get() = bodyText.ifBlank { camelBodyText }
 
-    private val CodexUsageDto.resolvedRateLimit: com.cpamp.mobile.data.remote.model.CodexRateLimitDto?
+    private val CodexUsageDto.resolvedRateLimit: CodexRateLimitDto?
         get() = rateLimit ?: camelRateLimit
 
-    private val com.cpamp.mobile.data.remote.model.CodexRateLimitDto.resolvedPrimaryWindow: CodexQuotaWindowDto?
+    private val CodexRateLimitDto.resolvedPrimaryWindow: CodexQuotaWindowDto?
         get() = primaryWindow ?: camelPrimaryWindow
 
-    private val com.cpamp.mobile.data.remote.model.CodexRateLimitDto.resolvedSecondaryWindow: CodexQuotaWindowDto?
+    private val CodexRateLimitDto.resolvedSecondaryWindow: CodexQuotaWindowDto?
         get() = secondaryWindow ?: camelSecondaryWindow
 
     private fun JsonElement.decodeCodexUsage(): CodexUsageDto? = when (this) {
