@@ -26,9 +26,8 @@ class ServerProfileStore @Inject constructor(
     private val secretStore: SecretStore,
 ) {
     val profiles: Flow<StoredProfiles> = context.profileDataStore.data.map { preferences ->
-        preferences[PROFILES_KEY]
-            ?.let { encoded -> runCatching { json.decodeFromString<StoredProfiles>(encoded) }.getOrNull() }
-            ?: StoredProfiles()
+        runCatching { decodeProfiles(preferences[PROFILES_KEY]) }
+            .getOrElse { StoredProfiles() }
     }
 
     suspend fun snapshot(): StoredProfiles = profiles.first()
@@ -38,12 +37,10 @@ class ServerProfileStore @Inject constructor(
         try {
             secretStore.put(profile.id, adminKey)
             context.profileDataStore.edit { preferences ->
-                val current = preferences[PROFILES_KEY]
-                    ?.let { json.decodeFromString<StoredProfiles>(it) }
-                    ?: StoredProfiles()
+                val current = decodeProfiles(preferences[PROFILES_KEY])
                 val nextProfiles = (current.profiles.filterNot { it.id == profile.id } + profile)
                     .sortedByDescending(ServerProfile::lastConnectedAt)
-                preferences[PROFILES_KEY] = json.encodeToString(
+                preferences[PROFILES_KEY] = encodeProfiles(
                     StoredProfiles(nextProfiles, activeProfileId = profile.id),
                 )
             }
@@ -67,11 +64,9 @@ class ServerProfileStore @Inject constructor(
 
     suspend fun markActive(profileId: String) {
         context.profileDataStore.edit { preferences ->
-            val current = preferences[PROFILES_KEY]
-                ?.let { json.decodeFromString<StoredProfiles>(it) }
-                ?: StoredProfiles()
+            val current = decodeProfiles(preferences[PROFILES_KEY])
             if (current.profiles.any { it.id == profileId }) {
-                preferences[PROFILES_KEY] = json.encodeToString(current.copy(activeProfileId = profileId))
+                preferences[PROFILES_KEY] = encodeProfiles(current.copy(activeProfileId = profileId))
             }
         }
     }
@@ -79,11 +74,9 @@ class ServerProfileStore @Inject constructor(
     suspend fun delete(profileId: String) {
         try {
             context.profileDataStore.edit { preferences ->
-                val current = preferences[PROFILES_KEY]
-                    ?.let { json.decodeFromString<StoredProfiles>(it) }
-                    ?: StoredProfiles()
+                val current = decodeProfiles(preferences[PROFILES_KEY])
                 val remaining = current.profiles.filterNot { it.id == profileId }
-                preferences[PROFILES_KEY] = json.encodeToString(
+                preferences[PROFILES_KEY] = encodeProfiles(
                     StoredProfiles(
                         profiles = remaining,
                         activeProfileId = current.activeProfileId
@@ -104,6 +97,12 @@ class ServerProfileStore @Inject constructor(
     }
 
     suspend fun secret(profileId: String): String? = secretStore.get(profileId)
+
+    private fun decodeProfiles(encoded: String?): StoredProfiles = encoded
+        ?.let { json.decodeFromString<StoredProfiles>(it) }
+        ?: StoredProfiles()
+
+    private fun encodeProfiles(profiles: StoredProfiles): String = json.encodeToString(profiles)
 
     private suspend fun removeSecretIfProfileDeleted(profileId: String) {
         if (snapshot().profiles.none { it.id == profileId }) {
