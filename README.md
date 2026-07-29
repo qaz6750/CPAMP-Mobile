@@ -82,56 +82,44 @@ Instrumentation tests require an API 26+ emulator or device:
 
 ## APK signing
 
-Debug and release signing use separate environment-variable groups:
+Debug and release builds use the same release signing environment-variable group:
 
 ```text
-CPAMP_DEBUG_KEYSTORE_PATH
-CPAMP_DEBUG_KEYSTORE_PASSWORD
-CPAMP_DEBUG_KEY_ALIAS
-CPAMP_DEBUG_KEY_PASSWORD
-
 CPAMP_RELEASE_KEYSTORE_PATH
 CPAMP_RELEASE_KEYSTORE_PASSWORD
 CPAMP_RELEASE_KEY_ALIAS
 CPAMP_RELEASE_KEY_PASSWORD
 ```
 
-When all four values in a group are available, Gradle uses that keystore for the corresponding build type. Keystores, signing properties, and `local.properties` are ignored by Git.
+When all four values are available, Gradle uses the release keystore for both build types. Debug builds remain debuggable and retain the `.debug` application ID suffix; only their signing identity changes. Keystores, signing properties, and `local.properties` are ignored by Git.
 
 GitHub Actions accepts the following repository secrets:
 
 ```text
-CPAMP_DEBUG_KEYSTORE_BASE64
-CPAMP_DEBUG_KEYSTORE_PASSWORD
-CPAMP_DEBUG_KEY_ALIAS
-CPAMP_DEBUG_KEY_PASSWORD
-
 CPAMP_RELEASE_KEYSTORE_BASE64
 CPAMP_RELEASE_KEYSTORE_PASSWORD
 CPAMP_RELEASE_KEY_ALIAS
 CPAMP_RELEASE_KEY_PASSWORD
 ```
 
-Generate each `*_KEYSTORE_BASE64` secret directly from its binary keystore as a single-line value:
+Generate the `CPAMP_RELEASE_KEYSTORE_BASE64` secret directly from the binary release keystore as a single-line value:
 
 ```bash
-base64 -w 0 debug.keystore
 base64 -w 0 CPMP-Mobile-release.jks
 ```
 
 ```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("debug.keystore"))
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("CPMP-Mobile-release.jks"))
 ```
 
-Before saving each secret group, verify that its keystore, store password, and alias belong together:
+Before saving the secret group, verify that its keystore, store password, and alias belong together:
 
 ```bash
 keytool -list -keystore '<keystore-file>' -storepass '<keystore-password>'
 keytool -list -keystore '<keystore-file>' -storepass '<keystore-password>' -alias '<key-alias>'
 ```
 
-The debug workflow requires the debug secret group on pushes to `main` and manual runs. Pull requests run tests and lint without accessing signing secrets or building an APK. Release tags require the release secret group and fail before Gradle if the decoded keystore, password, or alias do not match.
+The debug workflow requires the release secret group on pushes to `main` and manual runs. Pull requests also require the release secret group, then run tests and lint and build a release-signed Debug APK. Because GitHub does not expose repository secrets to workflows from forks, pull requests from forks cannot complete this signed build. Release tags use the same secret group and fail before Gradle if the decoded keystore, password, or alias do not match.
 
 The workflow uploads debug and release APK artifacts. Its release artifact name explicitly includes `signed` or `unsigned`. Pull requests also run GitHub Dependency Review and reject newly introduced high-severity vulnerable dependencies.
 

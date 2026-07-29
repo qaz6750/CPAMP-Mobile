@@ -7,17 +7,6 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-val debugStorePath = providers.environmentVariable("CPAMP_DEBUG_KEYSTORE_PATH").orNull
-val debugStorePassword = providers.environmentVariable("CPAMP_DEBUG_KEYSTORE_PASSWORD").orNull
-val debugKeyAlias = providers.environmentVariable("CPAMP_DEBUG_KEY_ALIAS").orNull
-val debugKeyPassword = providers.environmentVariable("CPAMP_DEBUG_KEY_PASSWORD").orNull
-val hasDebugSigning = listOf(
-    debugStorePath,
-    debugStorePassword,
-    debugKeyAlias,
-    debugKeyPassword,
-).all { !it.isNullOrBlank() }
-
 val releaseStorePath = providers.environmentVariable("CPAMP_RELEASE_KEYSTORE_PATH").orNull
 val releaseStorePassword = providers.environmentVariable("CPAMP_RELEASE_KEYSTORE_PASSWORD").orNull
 val releaseKeyAlias = providers.environmentVariable("CPAMP_RELEASE_KEY_ALIAS").orNull
@@ -45,14 +34,6 @@ android {
     }
 
     signingConfigs {
-        if (hasDebugSigning) {
-            getByName("debug") {
-                storeFile = file(requireNotNull(debugStorePath))
-                storePassword = debugStorePassword
-                keyAlias = debugKeyAlias
-                keyPassword = debugKeyPassword
-            }
-        }
         if (hasReleaseSigning) {
             create("release") {
                 storeFile = file(requireNotNull(releaseStorePath))
@@ -71,8 +52,8 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-            if (hasDebugSigning) {
-                signingConfig = signingConfigs.getByName("debug")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
         release {
