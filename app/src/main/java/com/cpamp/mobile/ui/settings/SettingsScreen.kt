@@ -3,6 +3,7 @@ package com.cpamp.mobile.ui.settings
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -525,6 +526,7 @@ private fun SettingSwitchRow(
     }
 }
 
+@get:StringRes
 private val AppLanguage.labelResource: Int
     get() = when (this) {
         AppLanguage.System -> R.string.follow_system
@@ -532,6 +534,7 @@ private val AppLanguage.labelResource: Int
         AppLanguage.English -> R.string.english
     }
 
+@get:StringRes
 private val AppTheme.labelResource: Int
     get() = when (this) {
         AppTheme.System -> R.string.follow_system

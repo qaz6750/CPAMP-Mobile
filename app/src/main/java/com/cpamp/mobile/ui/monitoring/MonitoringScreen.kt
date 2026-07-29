@@ -1,5 +1,6 @@
 package com.cpamp.mobile.ui.monitoring
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -391,6 +392,7 @@ private fun DetailRow(label: String, value: String) {
     }
 }
 
+@StringRes
 private fun TrafficWindow.labelResource(): Int = when (this) {
     TrafficWindow.Hour -> R.string.last_hour
     TrafficWindow.Day -> R.string.last_24_hours

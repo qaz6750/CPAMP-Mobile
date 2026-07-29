@@ -1,6 +1,7 @@
 package com.cpamp.mobile.ui.usage
 
 import android.content.Intent
+import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -433,6 +434,7 @@ private val ApiKeyStatDto.displayName: String
 private val CredentialStatDto.displayName: String
     get() = authLabelSnapshot.ifBlank { accountSnapshot.ifBlank { authFileSnapshot.ifBlank { authIndex.ifBlank { id } } } }
 
+@get:StringRes
 private val UsageWindow.labelResource: Int
     get() = when (this) {
         UsageWindow.Day -> R.string.today
@@ -440,6 +442,7 @@ private val UsageWindow.labelResource: Int
         UsageWindow.Month -> R.string.this_month
     }
 
+@get:StringRes
 private val UsageRanking.labelResource: Int
     get() = when (this) {
         UsageRanking.Models -> R.string.usage_models

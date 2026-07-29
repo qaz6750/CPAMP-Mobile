@@ -1,5 +1,6 @@
 package com.cpamp.mobile.ui.system
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -405,6 +406,7 @@ private fun ConfirmSystemAction(title: String, message: String, onDismiss: () ->
     )
 }
 
+@get:StringRes
 private val SystemTab.labelResource: Int
     get() = when (this) {
         SystemTab.Status -> R.string.system_status
