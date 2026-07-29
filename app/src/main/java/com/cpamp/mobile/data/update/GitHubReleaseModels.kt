@@ -44,13 +44,33 @@ fun GitHubReleaseDto.releaseAssets(): ReleaseAssets? {
     return ReleaseAssets(version, apk, checksum)
 }
 
-fun GitHubReleaseDto.displayBody(): String? = body
-    ?.substringBefore("\n## Download / 下载")
-    ?.lineSequence()
+fun GitHubReleaseDto.displayBody(language: String): String? {
+    val content = body
+        ?.substringBefore("\n## Download / 下载")
+        ?.trim()
+        ?.takeIf(String::isNotEmpty)
+        ?: return null
+    val sections = LANGUAGE_SECTION.findAll(content).toList()
+    val localizedContent = if (sections.isEmpty()) {
+        content
+    } else {
+        val preferredHeading = if (language.equals("zh", ignoreCase = true)) "中文" else "English"
+        val selectedIndex = sections.indexOfFirst { it.groupValues[1] == preferredHeading }
+            .takeIf { it >= 0 }
+            ?: 0
+        val selected = sections[selectedIndex]
+        val intro = content.substring(0, sections.first().range.first).trim()
+        val sectionEnd = sections.getOrNull(selectedIndex + 1)?.range?.first ?: content.length
+        listOf(intro, content.substring(selected.range.last + 1, sectionEnd).trim())
+            .filter(String::isNotEmpty)
+            .joinToString("\n\n")
+    }
+    return localizedContent.lineSequence()
     ?.map { line -> line.replaceFirst(MARKDOWN_HEADING, "") }
     ?.joinToString("\n")
     ?.trim()
     ?.takeIf(String::isNotEmpty)
+}
 
 data class SemanticVersion(
     val major: Int,
@@ -94,3 +114,4 @@ private fun String.isTrustedReleaseAsset(tagName: String, assetName: String): Bo
 private const val RELEASE_HOST = "github.com"
 private const val RELEASE_DOWNLOAD_PATH = "/qaz6750/CPAMP-Mobile/releases/download"
 private val MARKDOWN_HEADING = Regex("^#{1,6}\\s+")
+private val LANGUAGE_SECTION = Regex("(?m)^##\\s+(中文|English)\\s*$")

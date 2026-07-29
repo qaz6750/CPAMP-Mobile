@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -379,6 +380,7 @@ private fun UpdateDetailsDialog(
     onDownload: () -> Unit,
 ) {
     val context = LocalContext.current
+    val language = LocalConfiguration.current.locales[0].language
     val release = state.release ?: return
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -392,7 +394,7 @@ private fun UpdateDetailsDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                release.displayBody()?.let { body ->
+                release.displayBody(language)?.let { body ->
                     Text(
                         body,
                         modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),

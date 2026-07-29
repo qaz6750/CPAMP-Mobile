@@ -49,7 +49,7 @@ class GitHubReleaseModelsTest {
     }
 
     @Test
-    fun `shows release notes without generated asset logs`() {
+    fun `shows localized release notes without generated asset logs`() {
         val release = GitHubReleaseDto(
             tagName = "v1.2.3",
             htmlUrl = "https://github.com/qaz6750/CPAMP-Mobile/releases/tag/v1.2.3",
@@ -59,6 +59,10 @@ class GitHubReleaseModelsTest {
                 ## 中文
 
                 - 修复更新检查。
+
+                ## English
+
+                - Fixed update checks.
 
                 ## Download / 下载
 
@@ -70,6 +74,24 @@ class GitHubReleaseModelsTest {
             """.trimIndent(),
         )
 
-        assertEquals("CPAMP Mobile 1.2.3\n\n中文\n\n- 修复更新检查。", release.displayBody())
+        assertEquals("CPAMP Mobile 1.2.3\n\n- 修复更新检查。", release.displayBody("zh"))
+        assertEquals("CPAMP Mobile 1.2.3\n\n- Fixed update checks.", release.displayBody("en"))
+    }
+
+    @Test
+    fun `falls back when the preferred release note language is unavailable`() {
+        val release = GitHubReleaseDto(
+            tagName = "v1.2.3",
+            htmlUrl = "https://github.com/qaz6750/CPAMP-Mobile/releases/tag/v1.2.3",
+            body = """
+                # CPAMP Mobile 1.2.3
+
+                ## 中文
+
+                - 修复更新检查。
+            """.trimIndent(),
+        )
+
+        assertEquals("CPAMP Mobile 1.2.3\n\n- 修复更新检查。", release.displayBody("en"))
     }
 }
