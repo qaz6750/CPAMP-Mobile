@@ -70,39 +70,13 @@ class SessionViewModel @Inject constructor(
     }
 
     fun login(name: String, address: String, adminKey: String, allowCleartext: Boolean) {
-        viewModelScope.launch {
-            mutableState.update { it.copy(submitting = true, error = null) }
-            runSuspendCatching { repository.login(name, address, adminKey, allowCleartext) }
-                .onSuccess { session ->
-                    mutableState.update { it.copy(submitting = false, session = session) }
-                }
-                .onFailure { error ->
-                    mutableState.update { state ->
-                        state.copy(
-                            submitting = false,
-                            error = error.toAuthUiError(),
-                        )
-                    }
-                }
+        launchSessionRequest {
+            repository.login(name, address, adminKey, allowCleartext)
         }
     }
 
     fun switchTo(profileId: String) {
-        viewModelScope.launch {
-            mutableState.update { it.copy(submitting = true, session = null, error = null) }
-            runSuspendCatching { repository.switchTo(profileId) }
-                .onSuccess { session ->
-                    mutableState.update { it.copy(submitting = false, session = session) }
-                }
-                .onFailure { error ->
-                    mutableState.update { state ->
-                        state.copy(
-                            submitting = false,
-                            error = error.toAuthUiError(),
-                        )
-                    }
-                }
-        }
+        launchSessionRequest(clearCurrentSession = true) { repository.switchTo(profileId) }
     }
 
     fun delete(profileId: String) {
@@ -126,6 +100,33 @@ class SessionViewModel @Inject constructor(
 
     fun clearError() {
         mutableState.update { it.copy(error = null) }
+    }
+
+    private fun launchSessionRequest(
+        clearCurrentSession: Boolean = false,
+        request: suspend () -> AuthenticatedSession,
+    ) {
+        viewModelScope.launch {
+            mutableState.update { state ->
+                state.copy(
+                    submitting = true,
+                    session = if (clearCurrentSession) null else state.session,
+                    error = null,
+                )
+            }
+            runSuspendCatching { request() }
+                .onSuccess { session ->
+                    mutableState.update { it.copy(submitting = false, session = session) }
+                }
+                .onFailure { error ->
+                    mutableState.update {
+                        it.copy(
+                            submitting = false,
+                            error = error.toAuthUiError(),
+                        )
+                    }
+                }
+        }
     }
 }
 
