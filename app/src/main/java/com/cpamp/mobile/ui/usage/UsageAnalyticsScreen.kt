@@ -146,7 +146,7 @@ fun UsageAnalyticsScreen(
             if (state.shareError) {
                 item { UsageNotice(stringResource(R.string.share_usage_failed)) }
             }
-            state.effectiveMonthRange?.takeIf { it.actualDays < 30 }?.let { range ->
+            state.partialMonthRange?.let { range ->
                 item { UsageRangeNotice(stringResource(R.string.usage_partial_range, range.actualDays)) }
             }
             val response = state.response
@@ -436,7 +436,7 @@ private val UsageWindow.labelResource: Int
     get() = when (this) {
         UsageWindow.Day -> R.string.today
         UsageWindow.Week -> R.string.last_7_days
-        UsageWindow.Month -> R.string.last_30_days
+        UsageWindow.Month -> R.string.this_month
     }
 
 private val UsageRanking.labelResource: Int

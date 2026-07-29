@@ -47,7 +47,7 @@
     <string name="usage_api_keys">API keys</string>
     <string name="usage_credentials">Credentials</string>
     <string name="usage_calls_value">%1$s calls</string>
-    <string name="last_30_days">30 days</string>
+    <string name="this_month">This month</string>
     <string name="today">Today</string>
     <string name="share_usage">Share usage report</string>
     <string name="share_usage_failed">The usage report could not be generated.</string>
@@ -256,6 +256,7 @@
     <string name="credential_quota_window_days">%1$d-day limit</string>
     <string name="credential_quota_window_other">Quota window</string>
     <string name="credential_quota_item_error">Unable to read this credential quota.</string>
+    <string name="credential_quota_no_windows">No rate-limit window was reported for this credential.</string>
     <string name="request_details">Request details</string>
     <string name="detail_status">Status</string>
     <string name="detail_model">Model</string>

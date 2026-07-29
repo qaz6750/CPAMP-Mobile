@@ -47,7 +47,7 @@
     <string name="usage_api_keys">API Key</string>
     <string name="usage_credentials">凭据</string>
     <string name="usage_calls_value">%1$s 次调用</string>
-    <string name="last_30_days">30 天</string>
+    <string name="this_month">本月</string>
     <string name="today">今天</string>
     <string name="share_usage">分享用量报告</string>
     <string name="share_usage_failed">无法生成用量报告。</string>
@@ -256,6 +256,7 @@
     <string name="credential_quota_window_days">%1$d 天限额</string>
     <string name="credential_quota_window_other">额度周期</string>
     <string name="credential_quota_item_error">无法读取此凭证的额度。</string>
+    <string name="credential_quota_no_windows">此凭证暂未返回额度窗口。</string>
     <string name="request_details">请求详情</string>
     <string name="detail_status">状态</string>
     <string name="detail_model">模型</string>

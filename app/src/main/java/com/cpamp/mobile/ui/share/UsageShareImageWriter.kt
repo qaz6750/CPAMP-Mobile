@@ -161,7 +161,6 @@ class UsageShareImageWriter @Inject constructor(
             paint = paint,
             points = report.timeline,
             bounds = RectF(56f, 868f, 1024f, 1228f),
-            useHourLabels = report.actualDays <= 1,
         )
     }
 
@@ -185,7 +184,6 @@ class UsageShareImageWriter @Inject constructor(
         paint: Paint,
         points: List<UsageSharePoint>,
         bounds: RectF,
-        useHourLabels: Boolean,
     ) {
         paint.style = Paint.Style.FILL
         paint.color = CARD
@@ -246,7 +244,7 @@ class UsageShareImageWriter @Inject constructor(
                 points.lastIndex -> Paint.Align.RIGHT
                 else -> Paint.Align.CENTER
             }
-            canvas.drawText(point.timestampMs.chartLabel(useHourLabels), x, bounds.bottom - 22f, paint)
+            canvas.drawText(point.timestampMs.chartLabel(points), x, bounds.bottom - 22f, paint)
         }
         paint.textAlign = Paint.Align.LEFT
     }
@@ -327,7 +325,7 @@ class UsageShareImageWriter @Inject constructor(
         paint.color = MUTED
         paint.textSize = 21f
         canvas.drawText(context.getString(R.string.request_health_subtitle), 56f, 1344f, paint)
-        drawHealthChart(canvas, paint, report.timeline, RectF(56f, 1366f, 1024f, 1716f), report.actualDays <= 1)
+        drawHealthChart(canvas, paint, report.timeline, RectF(56f, 1366f, 1024f, 1716f))
         drawLegend(canvas, paint, 170f, 1760f, HEALTH_SUCCESS, context.getString(R.string.health_success_rate))
         drawLegend(canvas, paint, 430f, 1760f, HEALTH_FAILURE, context.getString(R.string.health_failure_rate))
         drawLegend(canvas, paint, 690f, 1760f, HEALTH_LATENCY, context.getString(R.string.health_average_latency))
@@ -338,7 +336,6 @@ class UsageShareImageWriter @Inject constructor(
         paint: Paint,
         points: List<UsageSharePoint>,
         bounds: RectF,
-        useHourLabels: Boolean,
     ) {
         paint.style = Paint.Style.FILL
         paint.color = CARD
@@ -388,7 +385,7 @@ class UsageShareImageWriter @Inject constructor(
         }
         drawTrendLine(canvas, paint, successPoints, HEALTH_SUCCESS, showPoints = false)
         drawTrendLine(canvas, paint, failurePoints, HEALTH_FAILURE, showPoints = false)
-        drawTimeLabels(canvas, paint, points, plot, bounds.bottom - 18f, useHourLabels, categoryAxis = true)
+        drawTimeLabels(canvas, paint, points, plot, bounds.bottom - 18f, categoryAxis = true)
     }
 
     private fun drawTokenSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
@@ -402,7 +399,7 @@ class UsageShareImageWriter @Inject constructor(
         paint.color = MUTED
         paint.textSize = 21f
         canvas.drawText(context.getString(R.string.token_structure_subtitle), 56f, 1834f, paint)
-        drawTokenChart(canvas, paint, report.timeline, RectF(56f, 1856f, 1024f, 2206f), report.actualDays <= 1)
+        drawTokenChart(canvas, paint, report.timeline, RectF(56f, 1856f, 1024f, 2206f))
         drawLegend(canvas, paint, 100f, 2250f, TOKEN_INPUT, context.getString(R.string.token_input))
         drawLegend(canvas, paint, 350f, 2250f, TOKEN_OUTPUT, context.getString(R.string.token_output))
         drawLegend(canvas, paint, 600f, 2250f, TOKEN_CACHED, context.getString(R.string.token_cached))
@@ -414,7 +411,6 @@ class UsageShareImageWriter @Inject constructor(
         paint: Paint,
         points: List<UsageSharePoint>,
         bounds: RectF,
-        useHourLabels: Boolean,
     ) {
         paint.style = Paint.Style.FILL
         paint.color = CARD
@@ -462,7 +458,7 @@ class UsageShareImageWriter @Inject constructor(
                 }
             }
         }
-        drawTimeLabels(canvas, paint, points, plot, bounds.bottom - 18f, useHourLabels, categoryAxis = true)
+        drawTimeLabels(canvas, paint, points, plot, bounds.bottom - 18f, categoryAxis = true)
     }
 
     private fun drawTimeLabels(
@@ -471,7 +467,6 @@ class UsageShareImageWriter @Inject constructor(
         points: List<UsageSharePoint>,
         plot: RectF,
         baseline: Float,
-        useHourLabels: Boolean,
         categoryAxis: Boolean = false,
     ) {
         chartTicks(points).forEach { point ->
@@ -484,7 +479,7 @@ class UsageShareImageWriter @Inject constructor(
                 points.lastIndex -> Paint.Align.RIGHT
                 else -> Paint.Align.CENTER
             }
-            canvas.drawText(point.timestampMs.chartLabel(useHourLabels), x, baseline, paint)
+            canvas.drawText(point.timestampMs.chartLabel(points), x, baseline, paint)
         }
         paint.textAlign = Paint.Align.LEFT
     }
@@ -597,8 +592,16 @@ class UsageShareImageWriter @Inject constructor(
         return if (start == end) start else "$start – $end"
     }
 
-    private fun Long.chartLabel(reportUsesHours: Boolean): String {
-        val pattern = if (reportUsesHours) "HH:mm" else "MM-dd"
+    private fun Long.chartLabel(points: List<UsageSharePoint>): String {
+        val span = (points.lastOrNull()?.timestampMs ?: this) - (points.firstOrNull()?.timestampMs ?: this)
+        val hourlyBuckets = points.zipWithNext().any { (previous, current) ->
+            current.timestampMs - previous.timestampMs in 1 until DAY_MS
+        }
+        val pattern = when {
+            span <= DAY_MS -> "HH:mm"
+            hourlyBuckets -> "MM-dd HH:mm"
+            else -> "MM-dd"
+        }
         return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault())
             .format(DateTimeFormatter.ofPattern(pattern))
     }
@@ -636,6 +639,7 @@ class UsageShareImageWriter @Inject constructor(
         const val RENDER_SCALE = 1.5f
         const val OUTPUT_WIDTH = 1620
         const val OUTPUT_HEIGHT = 4350
+        const val DAY_MS = 24 * 60 * 60 * 1000L
         val BACKGROUND = Color.rgb(239, 248, 255)
         val CARD = Color.WHITE
         val SKY_BLUE = Color.rgb(56, 189, 248)

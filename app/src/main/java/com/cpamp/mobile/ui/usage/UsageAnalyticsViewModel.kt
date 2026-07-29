@@ -59,6 +59,11 @@ data class UsageAnalyticsUiState(
         } else {
             null
         }
+
+    val partialMonthRange: UsageEffectiveRange?
+        get() = effectiveMonthRange?.takeIf { effective ->
+            loadedRange?.let { effective.fromMs > it.fromMs } == true
+        }
 }
 
 @HiltViewModel
@@ -128,7 +133,8 @@ class UsageAnalyticsViewModel @Inject constructor(
         viewModelScope.launch {
             mutableState.update { it.copy(sharing = true, shareError = false, shareUri = null) }
             val reusable = current.response?.takeIf {
-                current.loadedWindow == window && current.loadedRange != null && it.modelStats.isNotEmpty()
+                current.loadedWindow == window && current.loadedRange != null && it.modelStats.isNotEmpty() &&
+                    it.timeline.usesHourlyBuckets()
             }
             val range = current.loadedRange?.takeIf { reusable != null }
                 ?: usageWindowRange(window, System.currentTimeMillis())
@@ -140,13 +146,18 @@ class UsageAnalyticsViewModel @Inject constructor(
                         toMs = range.toMs,
                         nowMs = range.toMs,
                         timeZone = ZoneId.systemDefault().id,
-                        include = MonitoringIncludeDto(summary = true, timeline = true, modelStats = true),
+                        include = MonitoringIncludeDto(
+                            summary = true,
+                            timeline = true,
+                            modelStats = true,
+                            granularity = "hour",
+                        ),
                     ),
                     cacheResult = false,
                 )
                 val effectiveRange = if (window == UsageWindow.Month) {
                     effectiveUsageRange(response, range)
-                        ?: UsageEffectiveRange(range.fromMs, range.toMs, UsageWindow.Month.days)
+                        ?: UsageEffectiveRange(range.fromMs, range.toMs, usageRangeDayCount(range))
                 } else {
                     UsageEffectiveRange(range.fromMs, range.toMs, window.days)
                 }
@@ -229,7 +240,7 @@ internal fun usageWindowRange(
             .atStartOfDay(zoneId).toInstant().toEpochMilli()
         UsageWindow.Week -> nowMs - window.durationMs
         UsageWindow.Month -> Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
-            .minusDays((UsageWindow.Month.days - 1).toLong())
+            .withDayOfMonth(1)
             .atStartOfDay(zoneId).toInstant().toEpochMilli()
     }
     return UsageRange(fromMs, nowMs)
@@ -256,13 +267,27 @@ internal fun effectiveUsageRange(
         fromMs = effectiveFrom,
         toMs = requestedRange.toMs,
         actualDays = (ChronoUnit.DAYS.between(firstDate, endDate) + 1).toInt()
-            .coerceIn(1, UsageWindow.Month.days),
+            .coerceIn(1, usageRangeDayCount(requestedRange, zoneId)),
     )
 }
+
+private fun usageRangeDayCount(
+    range: UsageRange,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+): Int {
+    val fromDate = Instant.ofEpochMilli(range.fromMs).atZone(zoneId).toLocalDate()
+    val toDate = Instant.ofEpochMilli(range.toMs).atZone(zoneId).toLocalDate()
+    return (ChronoUnit.DAYS.between(fromDate, toDate) + 1).toInt().coerceAtLeast(1)
+}
+
+private fun List<com.cpamp.mobile.data.remote.model.MonitoringTimelineDto>.usesHourlyBuckets(): Boolean =
+    size <= 1 || zipWithNext().any { (previous, current) ->
+        current.bucketMs - previous.bucketMs in 1 until 24 * 60 * 60 * 1000L
+    }
 
 private val UsageWindow.days: Int
     get() = when (this) {
         UsageWindow.Day -> 1
         UsageWindow.Week -> 7
-        UsageWindow.Month -> 30
+        UsageWindow.Month -> 31
     }

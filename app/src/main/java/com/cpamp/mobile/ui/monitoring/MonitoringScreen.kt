@@ -344,11 +344,17 @@ private fun CredentialQuotaCard(quota: CredentialQuota) {
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (quota.error || quota.windows.isEmpty()) {
+            if (quota.error) {
                 Text(
                     stringResource(R.string.credential_quota_item_error),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
+                )
+            } else if (quota.windows.isEmpty()) {
+                Text(
+                    stringResource(R.string.credential_quota_no_windows),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
                 quota.windows.forEach { window -> CredentialQuotaWindowRow(window) }

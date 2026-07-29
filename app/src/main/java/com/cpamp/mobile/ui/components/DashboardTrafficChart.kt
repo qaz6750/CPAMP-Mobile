@@ -42,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
@@ -213,10 +214,21 @@ fun DashboardTrafficChart(
             }
             Row(
                 Modifier.fillMaxWidth().padding(start = 32.dp, end = 50.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                dashboardChartTicks(visiblePoints).forEach { point ->
-                    Text(point.timestampMs.asChartLabel(visiblePoints), style = MaterialTheme.typography.labelSmall, color = labelColor)
+                val ticks = dashboardChartTicks(visiblePoints)
+                ticks.forEachIndexed { index, point ->
+                    Text(
+                        text = point.timestampMs.asChartLabel(visiblePoints),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = labelColor,
+                        textAlign = when (index) {
+                            0 -> TextAlign.Start
+                            ticks.lastIndex -> TextAlign.End
+                            else -> TextAlign.Center
+                        },
+                        maxLines = 2,
+                    )
                 }
             }
             selectedIndex?.let { index ->
@@ -389,15 +401,15 @@ private fun chartX(index: Int, pointCount: Int, width: Float): Float =
     if (pointCount <= 1) width / 2f else width * index / (pointCount - 1f)
 
 private fun dashboardChartTicks(points: List<AnalyticsTrendPoint>): List<AnalyticsTrendPoint> {
-    if (points.size <= 2) return points
-    return listOf(0, points.lastIndex / 2, points.lastIndex).distinct().map(points::get)
+    if (points.size <= 5) return points
+    return (0..4).map { step -> points[points.lastIndex * step / 4] }.distinct()
 }
 
 private fun Long.asChartLabel(points: List<AnalyticsTrendPoint>): String {
     val span = (points.lastOrNull()?.timestampMs ?: this) - (points.firstOrNull()?.timestampMs ?: this)
     val pattern = when {
         span <= 24 * 60 * 60 * 1000L -> "HH:mm"
-        span <= 7 * 24 * 60 * 60 * 1000L -> "MM/dd HH:mm"
+        span <= 7 * 24 * 60 * 60 * 1000L -> "MM/dd\nHH:mm"
         else -> "MM/dd"
     }
     return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern(pattern))

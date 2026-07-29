@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asLatency
@@ -267,13 +268,19 @@ private fun TimeTicks(timestamps: List<Long>, endPadding: androidx.compose.ui.un
     val indices = chartTickIndices(timestamps.size)
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 42.dp, end = endPadding),
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        indices.forEach { index ->
+        indices.forEachIndexed { tickIndex, index ->
             Text(
                 timestamps[index].chartDate(timestamps),
+                modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = when (tickIndex) {
+                    0 -> TextAlign.Start
+                    indices.lastIndex -> TextAlign.End
+                    else -> TextAlign.Center
+                },
+                maxLines = 2,
             )
         }
     }
@@ -329,7 +336,7 @@ private fun Long.chartDate(timestamps: List<Long>): String {
     val span = (timestamps.lastOrNull() ?: this) - (timestamps.firstOrNull() ?: this)
     val pattern = when {
         span <= 24 * 60 * 60 * 1000L -> "HH:mm"
-        span <= 7 * 24 * 60 * 60 * 1000L -> "MM/dd HH:mm"
+        span <= 7 * 24 * 60 * 60 * 1000L -> "MM/dd\nHH:mm"
         else -> "MM/dd"
     }
     return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern(pattern))
