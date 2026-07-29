@@ -50,7 +50,6 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
