@@ -107,7 +107,10 @@ class UsageAnalyticsViewModel @Inject constructor(
     }
 
     fun setRanking(ranking: UsageRanking) {
+        if (mutableState.value.ranking == ranking) return
         mutableState.update { it.copy(ranking = ranking) }
+        val session = sessionRepository.session.value ?: return
+        scheduleRefresh(session, mutableState.value.window, ranking)
     }
 
     fun refresh() {
