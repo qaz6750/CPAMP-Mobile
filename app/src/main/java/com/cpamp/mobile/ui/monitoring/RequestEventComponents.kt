@@ -17,8 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +34,7 @@ import com.cpamp.mobile.ui.common.SensitiveText
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactTokens
+import com.cpamp.mobile.ui.components.AppCard
 
 @Composable
 internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
@@ -94,61 +95,79 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
 internal fun RequestEventDetails(event: RequestEventDto) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 36.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            Text(
-                stringResource(R.string.request_details),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(event.timestampMs.asTime(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        item {
-            DetailRow(
-                stringResource(R.string.detail_status),
-                if (event.failed) stringResource(R.string.failed) else stringResource(R.string.succeeded),
-            )
-        }
-        item { DetailRow(stringResource(R.string.detail_model), event.model.ifBlank { "—" }) }
-        item {
-            DetailRow(
-                stringResource(R.string.detail_endpoint),
-                event.endpoint.ifBlank { event.path.ifBlank { "—" } },
-            )
-        }
-        item {
-            DetailRow(
-                stringResource(R.string.detail_provider),
-                event.authProviderSnapshot.ifBlank { event.source.ifBlank { "—" } },
-            )
-        }
-        item {
-            DetailRow(
-                stringResource(R.string.detail_account),
-                event.authLabelSnapshot.ifBlank { event.accountSnapshot.ifBlank { "—" } },
-            )
-        }
-        item { DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens()) }
-        item { DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.asLatency() ?: "—") }
-        if (event.failed) {
-            item {
-                DetailRow(
-                    stringResource(R.string.detail_error),
-                    SensitiveText.redact(event.failSummary).ifBlank { stringResource(R.string.request_failed) },
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.request_details),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
                 )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(event.timestampMs.asTime(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Surface(
+                        color = if (event.failed) MaterialTheme.colorScheme.errorContainer
+                        else MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = RoundedCornerShape(10.dp),
+                    ) {
+                        Text(
+                            if (event.failed) stringResource(R.string.failed) else stringResource(R.string.succeeded),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+        }
+        item {
+            AppCard {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    DetailRow(stringResource(R.string.detail_model), event.model.ifBlank { "—" })
+                    DetailRow(
+                        stringResource(R.string.detail_endpoint),
+                        event.endpoint.ifBlank { event.path.ifBlank { "—" } },
+                    )
+                    DetailRow(
+                        stringResource(R.string.detail_provider),
+                        event.authProviderSnapshot.ifBlank { event.source.ifBlank { "—" } },
+                    )
+                    DetailRow(
+                        stringResource(R.string.detail_account),
+                        event.authLabelSnapshot.ifBlank { event.accountSnapshot.ifBlank { "—" } },
+                    )
+                }
+            }
+        }
+        item {
+            AppCard {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens())
+                    DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.asLatency() ?: "—")
+                    if (event.failed) {
+                        DetailRow(
+                            stringResource(R.string.detail_error),
+                            SensitiveText.redact(event.failSummary).ifBlank { stringResource(R.string.request_failed) },
+                            valueColor = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(label: String, value: String, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-        Text(value, style = MaterialTheme.typography.bodyLarge)
-        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyLarge, color = valueColor)
     }
 }
 
