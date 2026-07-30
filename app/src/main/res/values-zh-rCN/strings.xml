@@ -248,6 +248,9 @@
     <string name="no_matching_requests">没有匹配的请求</string>
     <string name="adjust_filters">调整筛选条件后，请点击刷新。</string>
     <string name="refresh_after_filter">点击刷新应用</string>
+    <string name="failed_filter_local_hint">“仅失败”会立即筛选当前已加载的请求。</string>
+    <string name="failed_filter_empty_hint">切换到“全部”即可恢复当前已加载的请求。</string>
+    <string name="time_filter_refresh_hint">所选时间范围将在下次手动刷新时应用。</string>
     <string name="event_tokens_value">%1$s Token</string>
     <string name="event_latency_value">%1$s</string>
     <string name="monitoring_rate_limited">分析服务当前繁忙，继续显示现有结果。</string>

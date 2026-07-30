@@ -9,19 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
+import com.cpamp.mobile.ui.components.AppCard
 
 @Composable
 internal fun TrafficFilterCard(
@@ -29,7 +27,7 @@ internal fun TrafficFilterCard(
     onWindowSelected: (TrafficWindow) -> Unit,
     onFailedOnlyChanged: (Boolean) -> Unit,
 ) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))) {
+    AppCard {
         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 TrafficWindow.entries.forEach { window ->
@@ -72,13 +70,14 @@ internal fun TrafficFilterCard(
                         selectedBorderColor = MaterialTheme.colorScheme.error,
                     ),
                 )
-                Text(
-                    stringResource(R.string.refresh_after_filter),
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
+            Text(
+                stringResource(
+                    if (filter.failedOnly) R.string.failed_filter_local_hint else R.string.time_filter_refresh_hint,
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

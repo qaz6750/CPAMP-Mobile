@@ -1,7 +1,6 @@
 package com.cpamp.mobile.ui.monitoring
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Key
@@ -51,6 +49,7 @@ import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
 
@@ -74,7 +73,7 @@ fun MonitoringScreen(
                 top = contentPadding.calculateTopPadding() + 24.dp,
                 bottom = contentPadding.calculateBottomPadding() + 28.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 val fallback = stringResource(R.string.nav_traffic)
@@ -106,9 +105,7 @@ fun MonitoringScreen(
             }
             if (state.loading && state.response == null) {
                 item {
-                    Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                    ContentStateCard(message = stringResource(R.string.content_loading), loading = true)
                 }
             }
             state.response?.summary?.let { summary ->
@@ -144,7 +141,7 @@ fun MonitoringScreen(
                     onClick = onOpenCredentialQuotas,
                 )
             }
-            val events = state.response?.events?.items.orEmpty()
+            val events = state.visibleEvents
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -156,9 +153,9 @@ fun MonitoringScreen(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    state.response?.events?.let { page ->
+                    state.response?.events?.let {
                         Text(
-                            stringResource(R.string.event_count, page.totalCount),
+                            stringResource(R.string.event_count, state.visibleEventCount),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -167,21 +164,12 @@ fun MonitoringScreen(
             }
             if (events.isEmpty() && !state.loading) {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
-                        Column(
-                            Modifier.fillMaxWidth().padding(28.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Icon(Icons.AutoMirrored.Outlined.ReceiptLong, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                            Text(stringResource(R.string.no_matching_requests), fontWeight = FontWeight.SemiBold)
-                            Text(
-                                stringResource(R.string.adjust_filters),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    ContentStateCard(
+                        message = stringResource(R.string.no_matching_requests) + "\n" +
+                            stringResource(
+                                if (state.filter.failedOnly) R.string.failed_filter_empty_hint else R.string.adjust_filters,
+                            ),
+                    )
                 }
             } else {
                 items(events, key = RequestEventDto::stableId) { event ->
@@ -192,7 +180,11 @@ fun MonitoringScreen(
     }
 
     selectedEvent?.let { event ->
-        ModalBottomSheet(onDismissRequest = { selectedEvent = null }) {
+        ModalBottomSheet(
+            onDismissRequest = { selectedEvent = null },
+            containerColor = MaterialTheme.colorScheme.background,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        ) {
             RequestEventDetails(event)
         }
     }
@@ -205,7 +197,9 @@ private fun CredentialQuotaEntry(state: MonitoringUiState, onClick: () -> Unit) 
     }
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
@@ -263,7 +257,12 @@ private fun CompactMetric(
     icon: ImageVector,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
+    Card(
+        modifier = modifier,
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
         Column(Modifier.height(96.dp).padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
             Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)

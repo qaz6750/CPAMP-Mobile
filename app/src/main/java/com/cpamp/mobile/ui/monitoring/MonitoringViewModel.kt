@@ -12,7 +12,6 @@ import com.cpamp.mobile.data.monitoring.CredentialQuotaRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.model.EventsPageRequestDto
-import com.cpamp.mobile.data.remote.model.MonitoringFiltersDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
@@ -39,7 +38,7 @@ data class TrafficFilter(
     val window: TrafficWindow = TrafficWindow.Day,
 ) {
     val cacheable: Boolean
-        get() = !failedOnly && window == TrafficWindow.Day
+        get() = window == TrafficWindow.Day
 }
 
 data class MonitoringUiState(
@@ -54,7 +53,15 @@ data class MonitoringUiState(
     val credentialQuotas: List<CredentialQuota> = emptyList(),
     val credentialQuotasLoading: Boolean = false,
     val credentialQuotasError: Boolean = false,
-)
+) {
+    val visibleEvents
+        get() = response?.events?.items.orEmpty().let { events ->
+            if (filter.failedOnly) events.filter { it.failed } else events
+        }
+
+    val visibleEventCount: Int
+        get() = visibleEvents.size
+}
 
 enum class MonitoringError { Unauthorized, RateLimited, Timeout, Network, Server }
 
@@ -111,6 +118,11 @@ class MonitoringViewModel @Inject constructor(
         if (mutableState.value.loading || mutableState.value.refreshing) return
         val session = sessionRepository.session.value ?: return
         viewModelScope.launch { refreshInternal(filter.value, session) }
+    }
+
+    fun refreshCredentialQuotas() {
+        if (mutableState.value.credentialQuotasLoading) return
+        val session = sessionRepository.session.value ?: return
         loadCredentialQuotas(session)
     }
 
@@ -161,7 +173,6 @@ class MonitoringViewModel @Inject constructor(
             toMs = now,
             nowMs = now,
             timeZone = ZoneId.systemDefault().id,
-            filters = MonitoringFiltersDto(failedOnly = currentFilter.failedOnly),
             include = MonitoringIncludeDto(
                 summary = true,
                 eventsPage = EventsPageRequestDto(limit = 50),
@@ -170,7 +181,7 @@ class MonitoringViewModel @Inject constructor(
         runSuspendCatching {
             monitoringRepository.refresh(session, request, cacheResult = currentFilter.cacheable)
         }.onSuccess { response ->
-            if (filter.value != currentFilter || sessionRepository.session.value?.profile?.id != session.profile.id) {
+            if (filter.value.window != currentFilter.window || sessionRepository.session.value?.profile?.id != session.profile.id) {
                 return@onSuccess
             }
             mutableState.update { state ->
@@ -185,7 +196,7 @@ class MonitoringViewModel @Inject constructor(
                 )
             }
         }.onFailure { error ->
-            if (filter.value != currentFilter || sessionRepository.session.value?.profile?.id != session.profile.id) {
+            if (filter.value.window != currentFilter.window || sessionRepository.session.value?.profile?.id != session.profile.id) {
                 return@onFailure
             }
             mutableState.update { state ->

@@ -248,6 +248,9 @@
     <string name="no_matching_requests">No matching requests</string>
     <string name="adjust_filters">Adjust the filters, then tap refresh.</string>
     <string name="refresh_after_filter">Tap refresh to apply</string>
+    <string name="failed_filter_local_hint">Failed-only filters the currently loaded requests immediately.</string>
+    <string name="failed_filter_empty_hint">Switch to All to restore the currently loaded requests.</string>
+    <string name="time_filter_refresh_hint">The selected time range is applied on the next manual refresh.</string>
     <string name="event_tokens_value">%1$s tokens</string>
     <string name="event_latency_value">%1$s</string>
     <string name="monitoring_rate_limited">The analytics service is busy. The current results remain visible.</string>
