@@ -15,7 +15,7 @@ fun AppBackground(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val background = MaterialTheme.colorScheme.background
-    val surfaceTint = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f)
+    val surfaceTint = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.18f)
     Box(
         modifier = modifier
             .fillMaxSize()

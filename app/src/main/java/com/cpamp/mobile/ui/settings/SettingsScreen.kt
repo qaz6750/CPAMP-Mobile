@@ -248,7 +248,10 @@ fun SettingsScreen(
                 )
             }
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                ) {
                     Text(
                         stringResource(R.string.security_privacy_summary),
                         modifier = Modifier.fillMaxWidth().padding(16.dp),

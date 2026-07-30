@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -56,6 +58,7 @@ fun PageHeader(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
+    leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     Row(
@@ -63,6 +66,10 @@ fun PageHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (leading != null) {
+            leading()
+            androidx.compose.foundation.layout.Spacer(Modifier.width(4.dp))
+        }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = eyebrow,
@@ -74,14 +81,79 @@ fun PageHeader(
                 text = title,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        trailing?.invoke()
+        if (trailing != null) {
+            androidx.compose.foundation.layout.Spacer(Modifier.width(8.dp))
+            trailing()
+        }
+    }
+}
+
+@Composable
+fun AppCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    content: @Composable () -> Unit,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun ContentStateCard(
+    message: String,
+    modifier: Modifier = Modifier,
+    loading: Boolean = false,
+    isError: Boolean = false,
+    action: (@Composable () -> Unit)? = null,
+) {
+    val containerColor = when {
+        isError -> MaterialTheme.colorScheme.errorContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val contentColor = when {
+        isError -> MaterialTheme.colorScheme.onErrorContainer
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    AppCard(
+        modifier = modifier.fillMaxWidth(),
+        containerColor = containerColor,
+        contentColor = contentColor,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            if (loading) {
+                CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+            }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = contentColor,
+                textAlign = TextAlign.Center,
+            )
+            action?.invoke()
+        }
     }
 }
 
@@ -96,18 +168,19 @@ fun MetricCard(
     compact: Boolean = false,
 ) {
     Card(
-        modifier = modifier.then(if (compact) Modifier.height(120.dp) else Modifier),
+        modifier = modifier.then(if (compact) Modifier.height(128.dp) else Modifier),
         shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
                 .then(if (compact) Modifier.fillMaxHeight() else Modifier)
                 .padding(if (compact) 12.dp else 20.dp),
-            verticalArrangement = if (compact) Arrangement.SpaceBetween else Arrangement.spacedBy(12.dp),
+            verticalArrangement = if (compact) Arrangement.spacedBy(6.dp) else Arrangement.spacedBy(12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -137,21 +210,25 @@ fun MetricCard(
                     )
                 }
             }
-            Text(
-                text = value,
-                style = when {
-                    !compact -> MaterialTheme.typography.titleLarge
-                    value.length <= 8 -> MaterialTheme.typography.titleLarge
-                    else -> MaterialTheme.typography.titleMedium
-                },
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
             if (compact) {
-                if (supporting != null) {
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier.fillMaxWidth().height(29.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
                     Text(
-                        text = supporting,
+                        text = value,
+                        style = if (value.length <= 8) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier.fillMaxWidth().height(18.dp),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Text(
+                        text = supporting.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -159,6 +236,13 @@ fun MetricCard(
                     )
                 }
             } else {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(text = label, style = MaterialTheme.typography.labelLarge)
                     if (supporting != null) {

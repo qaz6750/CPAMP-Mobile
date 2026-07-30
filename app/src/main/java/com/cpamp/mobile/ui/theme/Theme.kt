@@ -54,14 +54,30 @@ private val DarkColors = darkColorScheme(
     primary = BrandBlueBright,
     onPrimary = Navy,
     primaryContainer = ColorTokens.PrimaryContainerDark,
+    onPrimaryContainer = ColorTokens.OnPrimaryContainerDark,
     secondary = ColorTokens.SecondaryDark,
+    onSecondary = ColorTokens.OnSecondaryDark,
+    secondaryContainer = ColorTokens.SecondaryContainerDark,
+    onSecondaryContainer = ColorTokens.OnSecondaryContainerDark,
     tertiary = ColorTokens.SuccessDark,
+    onTertiary = ColorTokens.OnTertiaryDark,
+    tertiaryContainer = ColorTokens.TertiaryContainerDark,
+    onTertiaryContainer = ColorTokens.OnTertiaryContainerDark,
     background = Navy,
     onBackground = ColorTokens.OnDark,
     surface = NavySurface,
+    onSurface = ColorTokens.OnDark,
     surfaceVariant = ColorTokens.SurfaceVariantDark,
+    onSurfaceVariant = ColorTokens.OnSurfaceVariantDark,
+    outline = ColorTokens.OutlineDarkStrong,
     outlineVariant = ColorTokens.OutlineDark,
     error = ColorTokens.ErrorDark,
+    onError = ColorTokens.OnErrorDark,
+    errorContainer = ColorTokens.ErrorContainerDark,
+    onErrorContainer = ColorTokens.OnErrorContainerDark,
+    surfaceTint = Color.Transparent,
+    inverseSurface = ColorTokens.OnDark,
+    inverseOnSurface = Navy,
 )
 
 private object ColorTokens {
@@ -69,18 +85,30 @@ private object ColorTokens {
     val SecondaryDark = Color(0xFFB5C8F4)
     val SecondaryContainerLight = Color(0xFFE9EFFA)
     val PrimaryContainerDark = Color(0xFF173A78)
+    val OnPrimaryContainerDark = Color(0xFFDCE7FF)
     val SurfaceVariantLight = Color(0xFFF1F3F5)
     val SurfaceVariantDark = Color(0xFF292B2E)
+    val OnSurfaceVariantDark = Color(0xFFC2C6CE)
     val OnSurfaceVariantLight = Color(0x99000000)
     val OutlineLight = Color(0x33000000)
     val OutlineDark = Color(0x33FFFFFF)
+    val OutlineDarkStrong = Color(0x5CFFFFFF)
     val OnDark = Color(0xE6FFFFFF)
     val TertiaryContainerLight = Color(0xFFEAF6E8)
     val OnTertiaryContainerLight = Color(0xFF245A20)
     val InversePrimaryLight = Color(0xFF7DD3FC)
     val SuccessDark = Color(0xFF83D47B)
+    val OnTertiaryDark = Color(0xFF082A08)
+    val TertiaryContainerDark = Color(0xFF173F19)
+    val OnTertiaryContainerDark = Color(0xFFB6F1AD)
+    val OnSecondaryDark = Color(0xFF14213B)
+    val SecondaryContainerDark = Color(0xFF293750)
+    val OnSecondaryContainerDark = Color(0xFFD9E3FF)
     val Error = Color(0xFFE84026)
     val ErrorDark = Color(0xFFFFB4A8)
+    val OnErrorDark = Color(0xFF690005)
+    val ErrorContainerDark = Color(0xFF5A1B19)
+    val OnErrorContainerDark = Color(0xFFFFDAD5)
 }
 
 @Composable

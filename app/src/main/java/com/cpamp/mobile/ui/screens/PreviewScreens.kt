@@ -158,8 +158,9 @@ private fun PreviewPanel(title: String) {
     Card(
         modifier = Modifier.fillMaxWidth().widthIn(max = 960.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(22.dp),
