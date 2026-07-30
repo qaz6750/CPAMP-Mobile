@@ -48,10 +48,6 @@ class AppearanceViewModel @Inject constructor(
         updateSettings { repository.setLanguage(language) }
     }
 
-    fun setDynamicColor(enabled: Boolean) {
-        updateSettings { repository.setDynamicColor(enabled) }
-    }
-
     fun setAllowScreenshots(enabled: Boolean) {
         updateSettings { repository.setAllowScreenshots(enabled) }
     }

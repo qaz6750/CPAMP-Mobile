@@ -54,7 +54,6 @@ class MainActivity : AppCompatActivity() {
                     AppTheme.Light -> false
                     AppTheme.Dark -> true
                 },
-                dynamicColor = settings.dynamicColor,
             ) {
                 SecureAppRoot(appearanceViewModel)
             }
@@ -107,7 +106,6 @@ class MainActivity : AppCompatActivity() {
                 appearanceState = appearance,
                 onSetTheme = appearanceViewModel::setTheme,
                 onSetLanguage = appearanceViewModel::setLanguage,
-                onSetDynamicColor = appearanceViewModel::setDynamicColor,
                 onSetAllowScreenshots = appearanceViewModel::setAllowScreenshots,
                 onSetHideAddresses = appearanceViewModel::setHideAddresses,
             )

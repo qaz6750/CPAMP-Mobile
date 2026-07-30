@@ -62,7 +62,6 @@ fun SettingsScreen(
     onSetAppLockTimeout: (Int) -> Unit,
     onSetTheme: (AppTheme) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
-    onSetDynamicColor: (Boolean) -> Unit,
     onSetAllowScreenshots: (Boolean) -> Unit,
     onSetHideAddresses: (Boolean) -> Unit,
     updateViewModel: AppUpdateViewModel = hiltViewModel(),
@@ -194,12 +193,6 @@ fun SettingsScreen(
                             )
                         }
                     }
-                    SettingSwitchRow(
-                        title = stringResource(R.string.dynamic_color),
-                        help = stringResource(R.string.dynamic_color_help),
-                        checked = appearanceState.settings.dynamicColor,
-                        onCheckedChange = onSetDynamicColor,
-                    )
                 }
             }
             item {

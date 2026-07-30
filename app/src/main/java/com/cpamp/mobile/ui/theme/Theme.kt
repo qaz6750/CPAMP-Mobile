@@ -1,17 +1,13 @@
 package com.cpamp.mobile.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 private val AppShapes = Shapes(
@@ -114,18 +110,10 @@ private object ColorTokens {
 @Composable
 fun CPAMPMobileTheme(
     darkThemeOverride: Boolean? = null,
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val darkTheme = darkThemeOverride ?: isSystemInDarkTheme()
-    val colors = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val context = LocalContext.current
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else if (darkTheme) {
-        DarkColors
-    } else {
-        LightColors
-    }
+    val colors = if (darkTheme) DarkColors else LightColors
 
     MaterialTheme(colorScheme = colors, shapes = AppShapes, content = content)
 }

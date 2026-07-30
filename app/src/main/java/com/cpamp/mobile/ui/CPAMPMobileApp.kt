@@ -35,7 +35,6 @@ fun CPAMPMobileApp(
     appearanceState: AppearanceUiState,
     onSetTheme: (AppTheme) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
-    onSetDynamicColor: (Boolean) -> Unit,
     onSetAllowScreenshots: (Boolean) -> Unit,
     onSetHideAddresses: (Boolean) -> Unit,
     viewModel: SessionViewModel = hiltViewModel(),
@@ -69,7 +68,6 @@ fun CPAMPMobileApp(
             appearanceState = appearanceState,
             onSetTheme = onSetTheme,
             onSetLanguage = onSetLanguage,
-            onSetDynamicColor = onSetDynamicColor,
             onSetAllowScreenshots = onSetAllowScreenshots,
             onSetHideAddresses = onSetHideAddresses,
         )
@@ -88,7 +86,6 @@ private fun ConnectedApp(
     appearanceState: AppearanceUiState,
     onSetTheme: (AppTheme) -> Unit,
     onSetLanguage: (AppLanguage) -> Unit,
-    onSetDynamicColor: (Boolean) -> Unit,
     onSetAllowScreenshots: (Boolean) -> Unit,
     onSetHideAddresses: (Boolean) -> Unit,
 ) {
@@ -155,7 +152,6 @@ private fun ConnectedApp(
                     onSetAppLockTimeout = onSetAppLockTimeout,
                     onSetTheme = onSetTheme,
                     onSetLanguage = onSetLanguage,
-                    onSetDynamicColor = onSetDynamicColor,
                     onSetAllowScreenshots = onSetAllowScreenshots,
                     onSetHideAddresses = onSetHideAddresses,
                 )
