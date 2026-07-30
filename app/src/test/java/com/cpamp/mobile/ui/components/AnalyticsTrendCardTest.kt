@@ -28,7 +28,7 @@ class AnalyticsTrendCardTest {
     }
 
     @Test
-    fun `dashboard removes leading empty and future buckets`() {
+    fun `dashboard preserves leading empty buckets and removes future buckets`() {
         val hour = 60 * 60 * 1000L
         val points = listOf(
             AnalyticsTrendPoint(0, 0, 0),
@@ -37,7 +37,7 @@ class AnalyticsTrendCardTest {
             AnalyticsTrendPoint(hour * 3, 4, 40),
         )
 
-        assertEquals(points.subList(1, 3), dashboardVisibleTrafficPoints(points, hour * 2 + 1))
+        assertEquals(points.subList(0, 3), dashboardVisibleTrafficPoints(points, hour * 2 + 1))
         assertEquals(true, isCurrentTrafficBucket(points[2], hour * 2 + 1))
     }
 }
