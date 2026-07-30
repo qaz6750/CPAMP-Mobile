@@ -208,7 +208,7 @@
     <string name="error_unknown">Could not connect. Check the server and try again.</string>
     <string name="refresh">Refresh</string>
     <string name="rpm_value">%.1f requests/min · last 30 min</string>
-    <string name="tpm_value">%.0f tokens/min · last 30 min</string>
+    <string name="tpm_value">%1$s · last 30 min</string>
     <string name="failed_value">%1$d failed today</string>
     <string name="requests_today_breakdown">%1$s succeeded · %2$s failed</string>
     <string name="latency_value">%1$s average latency</string>

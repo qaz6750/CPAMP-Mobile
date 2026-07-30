@@ -41,6 +41,7 @@ import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.compactTokenRate
 import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
@@ -196,7 +197,7 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
             MetricCard(
                 label = stringResource(R.string.metric_tokens),
                 value = data.today.totalTokens.compactTokens(),
-                supporting = stringResource(R.string.tpm_value, data.rolling30m.tpm),
+                supporting = stringResource(R.string.tpm_value, data.rolling30m.tpm.compactTokenRate()),
                 icon = Icons.Outlined.Speed,
                 modifier = modifier,
                 compact = true,
