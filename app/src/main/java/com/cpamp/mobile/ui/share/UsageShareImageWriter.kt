@@ -339,7 +339,7 @@ class UsageShareImageWriter @Inject constructor(
     ) {
         if (points.isEmpty()) return
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 7f
+        paint.strokeWidth = 4.5f
         paint.strokeCap = Paint.Cap.ROUND
         paint.strokeJoin = Paint.Join.ROUND
         paint.color = color
@@ -349,7 +349,7 @@ class UsageShareImageWriter @Inject constructor(
             val step = ((points.size - 1) / 4).coerceAtLeast(1)
             points.forEachIndexed { index, point ->
                 if (index == 0 || index == points.lastIndex || index % step == 0) {
-                    canvas.drawCircle(point.first, point.second, 6f, paint)
+                    canvas.drawCircle(point.first, point.second, 4f, paint)
                 }
             }
         }
