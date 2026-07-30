@@ -162,21 +162,28 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
                     CredentialProviderIcon(quota.provider)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         val providerLabel = quota.provider.providerLabel()
+                        val accountLabel = quota.account.ifBlank { quota.name }.trim()
+                        val title = accountLabel.takeUnless { it.isProviderAlias(quota.provider) } ?: providerLabel
                         val plan = quota.displayPlan(providerLabel)
                         Text(
-                            quota.account.ifBlank { quota.name },
+                            title,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             color = if (disabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         )
-                        Text(
-                            listOfNotNull(providerLabel, plan).joinToString(" · "),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        listOfNotNull(providerLabel.takeUnless { it == title }, plan)
+                            .joinToString(" · ")
+                            .takeIf(String::isNotEmpty)
+                            ?.let { subtitle ->
+                                Text(
+                                    subtitle,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                     }
                 }
                 quota.statusLabel()?.let { status ->
@@ -287,6 +294,17 @@ private fun String.providerLabel(): String = when (this) {
     "deepseek" -> "DeepSeek"
     "unknown" -> "AI"
     else -> replaceFirstChar { character -> character.titlecase() }
+}
+
+private fun String.isProviderAlias(provider: String): Boolean {
+    val normalized = lowercase().replace(Regex("[^a-z0-9]+"), "")
+    return normalized in when (provider) {
+        "codex" -> setOf("codex", "openaicodex", "openai", "chatgpt")
+        "xai" -> setOf("xai", "grok")
+        "claude", "anthropic" -> setOf("claude", "anthropic")
+        "gemini", "gemini-cli", "aistudio", "vertex" -> setOf("gemini", "google", "aistudio", "vertex")
+        else -> setOf(provider.lowercase().replace(Regex("[^a-z0-9]+"), ""))
+    }
 }
 
 private fun CredentialQuota.displayPlan(providerLabel: String): String? = planType.trim().takeIf { plan ->
