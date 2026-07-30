@@ -326,11 +326,7 @@ private fun DashboardPointDetails(point: AnalyticsTrendPoint, endMs: Long) {
 internal fun dashboardVisibleTrafficPoints(
     points: List<AnalyticsTrendPoint>,
     nowMs: Long,
-): List<AnalyticsTrendPoint> {
-    val elapsed = points.filter { it.timestampMs <= nowMs }
-    val firstData = elapsed.indexOfFirst { it.requests > 0 || it.tokens > 0 }
-    return if (firstData >= 0) elapsed.drop(firstData) else elapsed
-}
+): List<AnalyticsTrendPoint> = points.filter { it.timestampMs <= nowMs }
 
 internal fun isCurrentTrafficBucket(
     point: AnalyticsTrendPoint,
