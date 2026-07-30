@@ -113,8 +113,6 @@
     <string name="english">English</string>
     <string name="light_theme">浅色</string>
     <string name="dark_theme">深色</string>
-    <string name="dynamic_color">动态颜色</string>
-    <string name="dynamic_color_help">在支持的 Android 版本上使用由设备壁纸生成的颜色。</string>
     <string name="settings_change_failed">无法保存设置变更。</string>
     <string name="allow_screenshots">允许截图</string>
     <string name="allow_screenshots_help">允许截图和最近任务预览；设备需要保护服务器数据时可关闭。</string>
@@ -173,6 +171,7 @@
     <string name="biometric_prompt_subtitle">使用生物识别或设备屏幕锁</string>
     <string name="connect_to_view">连接后查看当前服务器数据</string>
     <string name="restoring_session">正在恢复安全会话…</string>
+    <string name="content_loading">正在加载最新数据…</string>
     <string name="login_title">随时掌握你的网关。</string>
     <string name="login_subtitle">安全连接已配置的 CPA Manager Plus 完整模式服务器。</string>
     <string name="new_connection">新建连接</string>
@@ -211,6 +210,7 @@
     <string name="rpm_value">%.1f 请求/分钟 · 最近 30 分钟</string>
     <string name="tpm_value">%.0f Token/分钟 · 最近 30 分钟</string>
     <string name="failed_value">今日失败 %1$d 次</string>
+    <string name="requests_today_breakdown">成功 %1$s · 失败 %2$s</string>
     <string name="latency_value">平均延迟 %1$s</string>
     <string name="no_latency">暂无延迟样本</string>
     <string name="top_models">今日热门模型</string>

@@ -1,7 +1,6 @@
 package com.cpamp.mobile.ui.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DataUsage
@@ -20,7 +18,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,6 +34,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.TopModelDto
+import com.cpamp.mobile.data.remote.model.TrafficPointDto
+import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
@@ -46,7 +45,9 @@ import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AnalyticsTrendPoint
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.ConnectionPill
+import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
@@ -62,13 +63,6 @@ fun DashboardScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     AppBackground {
-        if (state.loading && state.summary == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            return@AppBackground
-        }
-
         val summary = state.summary
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -78,7 +72,7 @@ fun DashboardScreen(
                 top = contentPadding.calculateTopPadding() + 24.dp,
                 bottom = contentPadding.calculateBottomPadding() + 28.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 val fallback = stringResource(R.string.nav_overview)
@@ -111,24 +105,24 @@ fun DashboardScreen(
             if (state.fromCache || state.error != null) {
                 item { DashboardNotice(state) }
             }
+            if (state.loading && summary == null) {
+                item {
+                    ContentStateCard(
+                        message = stringResource(R.string.content_loading),
+                        loading = true,
+                    )
+                }
+            }
             summary?.let { data ->
                 item { DashboardMetrics(data) }
                 item {
-                    val costByBucket = state.costTimeline.associate { it.bucketMs to it.cost }
+                    val nowMs = data.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis()
                     DashboardTrafficChart(
                         title = stringResource(R.string.preview_trend),
-                        points = data.trafficTimeline.map { point ->
-                            AnalyticsTrendPoint(
-                                timestampMs = point.bucketMs,
-                                requests = point.calls,
-                                tokens = point.tokens,
-                                success = point.success,
-                                failure = point.failure,
-                                cost = costByBucket[point.bucketMs],
-                            )
-                        },
-                        nowMs = data.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis(),
+                        points = buildTodayHourlyTrend(data.trafficTimeline, state.costTimeline, nowMs),
+                        nowMs = nowMs,
                         emptyText = stringResource(R.string.no_traffic),
+                        compactToData = false,
                     )
                 }
                 if (data.topModelsToday.isNotEmpty()) {
@@ -140,6 +134,36 @@ fun DashboardScreen(
     }
 }
 
+internal fun buildTodayHourlyTrend(
+    traffic: List<TrafficPointDto>,
+    costs: List<MonitoringTimelineDto>,
+    nowMs: Long,
+    zoneId: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+): List<AnalyticsTrendPoint> {
+    val nowHour = java.time.Instant.ofEpochMilli(nowMs).atZone(zoneId).withMinute(0).withSecond(0).withNano(0)
+    val start = nowHour.toLocalDate().atStartOfDay(zoneId)
+    val trafficByHour = traffic
+        .filter { it.bucketMs <= nowMs }
+        .groupBy { java.time.Instant.ofEpochMilli(it.bucketMs).atZone(zoneId).withMinute(0).withSecond(0).withNano(0).toInstant().toEpochMilli() }
+    val costByHour = costs
+        .filter { it.bucketMs <= nowMs }
+        .groupBy { java.time.Instant.ofEpochMilli(it.bucketMs).atZone(zoneId).withMinute(0).withSecond(0).withNano(0).toInstant().toEpochMilli() }
+    return generateSequence(start) { current ->
+        current.plusHours(1).takeIf { !it.isAfter(nowHour) }
+    }.map { hour ->
+        val bucket = hour.toInstant().toEpochMilli()
+        val trafficItems = trafficByHour[bucket].orEmpty()
+        AnalyticsTrendPoint(
+            timestampMs = bucket,
+            requests = trafficItems.sumOf { it.calls },
+            tokens = trafficItems.sumOf { it.tokens },
+            success = trafficItems.sumOf { it.success },
+            failure = trafficItems.sumOf { it.failure },
+            cost = costByHour[bucket].orEmpty().sumOf { it.cost },
+        )
+    }.toList()
+}
+
 @Composable
 private fun DashboardMetrics(data: DashboardSummaryDto) {
     val cards: List<@Composable (Modifier) -> Unit> = listOf(
@@ -147,7 +171,11 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
             MetricCard(
                 label = stringResource(R.string.metric_requests),
                 value = data.today.totalCalls.compactNumber(),
-                supporting = null,
+                supporting = stringResource(
+                    R.string.requests_today_breakdown,
+                    data.today.successCalls.compactNumber(),
+                    data.today.failureCalls.compactNumber(),
+                ),
                 icon = Icons.Outlined.DataUsage,
                 modifier = modifier,
                 compact = true,
@@ -217,11 +245,7 @@ private fun DashboardNotice(state: DashboardUiState) {
 
 @Composable
 private fun TopModelRow(model: TopModelDto) {
-    Card(
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-    ) {
+    AppCard {
         Row(
             modifier = Modifier.fillMaxWidth().padding(17.dp),
             verticalAlignment = Alignment.CenterVertically,

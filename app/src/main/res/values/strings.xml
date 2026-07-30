@@ -113,8 +113,6 @@
     <string name="english">English</string>
     <string name="light_theme">Light</string>
     <string name="dark_theme">Dark</string>
-    <string name="dynamic_color">Dynamic color</string>
-    <string name="dynamic_color_help">Use colors derived from the device wallpaper on supported Android versions.</string>
     <string name="settings_change_failed">The settings change could not be saved.</string>
     <string name="allow_screenshots">Allow screenshots</string>
     <string name="allow_screenshots_help">Allow screenshots and recent-task previews. Disable this on devices where server data must remain private.</string>
@@ -173,6 +171,7 @@
     <string name="biometric_prompt_subtitle">Use biometrics or your device screen lock</string>
     <string name="connect_to_view">Connect to load current server data</string>
     <string name="restoring_session">Restoring your secure session…</string>
+    <string name="content_loading">Loading the latest data…</string>
     <string name="login_title">Your gateway, in your pocket.</string>
     <string name="login_subtitle">Connect securely to a configured CPA Manager Plus full-mode server.</string>
     <string name="new_connection">New connection</string>
@@ -211,6 +210,7 @@
     <string name="rpm_value">%.1f requests/min · last 30 min</string>
     <string name="tpm_value">%.0f tokens/min · last 30 min</string>
     <string name="failed_value">%1$d failed today</string>
+    <string name="requests_today_breakdown">%1$s succeeded · %2$s failed</string>
     <string name="latency_value">%1$s average latency</string>
     <string name="no_latency">No latency sample</string>
     <string name="top_models">Top models today</string>
