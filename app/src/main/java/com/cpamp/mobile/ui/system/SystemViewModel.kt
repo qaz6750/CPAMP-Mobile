@@ -20,11 +20,60 @@ enum class SystemTab { Status, Logs, Servers }
 
 enum class SystemNotice { RequestFailed, LogsCleared }
 
+enum class RuntimeLogLevel { Error, Warning, Info, Debug, Trace, Unknown }
+
+data class RuntimeLogEntry(
+    val raw: String,
+    val timestamp: String?,
+    val level: RuntimeLogLevel,
+    val message: String,
+) {
+    fun matches(query: String): Boolean = sequenceOf(raw, timestamp.orEmpty(), level.name, message)
+        .any { it.contains(query, ignoreCase = true) }
+
+    companion object {
+        private val timestampPattern = Regex(
+            """^\s*(?:\[)?((?:\d{4}-\d{2}-\d{2}[T ][0-9:.+\-Z]+)|(?:\d{2}:\d{2}:\d{2}(?:\.\d+)?))(?:\])?\s*""",
+        )
+        private val levelPattern = Regex(
+            """^\s*(?:\[)?(ERROR|ERR|WARN(?:ING)?|INFO|DEBUG|DBG|TRACE)(?:\])?\s*[:|\-]?\s*""",
+            RegexOption.IGNORE_CASE,
+        )
+
+        fun parse(raw: String): RuntimeLogEntry {
+            val timestampMatch = timestampPattern.find(raw)
+            val timestamp = timestampMatch?.groupValues?.getOrNull(1)
+            val afterTimestamp = timestampMatch?.let { raw.substring(it.range.last + 1) } ?: raw
+            val levelMatch = levelPattern.find(afterTimestamp)
+            val level = when (levelMatch?.groupValues?.getOrNull(1)?.uppercase()) {
+                "ERROR", "ERR" -> RuntimeLogLevel.Error
+                "WARN", "WARNING" -> RuntimeLogLevel.Warning
+                "INFO" -> RuntimeLogLevel.Info
+                "DEBUG", "DBG" -> RuntimeLogLevel.Debug
+                "TRACE" -> RuntimeLogLevel.Trace
+                else -> RuntimeLogLevel.Unknown
+            }
+            val message = levelMatch?.let { afterTimestamp.substring(it.range.last + 1).trim() }
+                ?.takeIf(String::isNotEmpty)
+                ?: afterTimestamp.trim().takeIf(String::isNotEmpty)
+                ?: raw
+            return RuntimeLogEntry(
+                raw = raw,
+                timestamp = timestamp,
+                level = level,
+                message = if (timestamp == null && level == RuntimeLogLevel.Unknown) raw else message,
+            )
+        }
+    }
+}
+
 data class SystemUiState(
     val tab: SystemTab = SystemTab.Status,
     val info: ManagerInfoDto? = null,
     val status: ManagerStatusDto? = null,
-    val logs: List<String> = emptyList(),
+    val cpaVersion: String? = null,
+    val cpampVersion: String? = null,
+    val logs: List<RuntimeLogEntry> = emptyList(),
     val nextCursor: String? = null,
     val logFilter: String = "",
     val loading: Boolean = false,
@@ -32,9 +81,9 @@ data class SystemUiState(
     val mutating: Boolean = false,
     val notice: SystemNotice? = null,
 ) {
-    val visibleLogs: List<String>
+    val visibleLogs: List<RuntimeLogEntry>
         get() = logFilter.trim().takeIf(String::isNotEmpty)?.let { query ->
-            logs.filter { it.contains(query, ignoreCase = true) }
+            logs.filter { it.matches(query) }
         } ?: logs
 }
 
@@ -61,6 +110,8 @@ class SystemViewModel @Inject constructor(
                                 it.copy(
                                     info = snapshot.info,
                                     status = snapshot.status,
+                                    cpaVersion = snapshot.cpaVersion,
+                                    cpampVersion = snapshot.cpampVersion,
                                     loading = false,
                                 )
                             }
@@ -100,6 +151,8 @@ class SystemViewModel @Inject constructor(
                             it.copy(
                                 info = snapshot.info,
                                 status = snapshot.status,
+                                cpaVersion = snapshot.cpaVersion,
+                                cpampVersion = snapshot.cpampVersion,
                                 loading = false,
                             )
                         }
@@ -113,7 +166,7 @@ class SystemViewModel @Inject constructor(
                     .onSuccess { page ->
                         mutableState.update {
                             it.copy(
-                                logs = page.lines,
+                                logs = page.lines.map(RuntimeLogEntry::parse),
                                 nextCursor = page.nextCursor,
                                 loading = false,
                             )
@@ -139,7 +192,7 @@ class SystemViewModel @Inject constructor(
                 .onSuccess { page ->
                     mutableState.update { state ->
                         state.copy(
-                            logs = (state.logs + page.lines).distinct(),
+                            logs = (state.logs + page.lines.map(RuntimeLogEntry::parse)).distinctBy(RuntimeLogEntry::raw),
                             nextCursor = page.nextCursor,
                         )
                     }

@@ -67,6 +67,8 @@ internal fun ManagerStatusCard(state: SystemUiState) {
             stringResource(R.string.service_mode),
             info?.mode.orEmpty().ifBlank { stringResource(R.string.unknown_value) },
         )
+        StatusRow(stringResource(R.string.cpa_version), state.cpaVersion ?: stringResource(R.string.not_provided))
+        StatusRow(stringResource(R.string.cpamp_version), state.cpampVersion ?: stringResource(R.string.not_provided))
         StatusRow(stringResource(R.string.event_count_label), status?.events?.toString() ?: "—")
         StatusRow(stringResource(R.string.dead_letters), status?.deadLetters?.toString() ?: "—")
         StatusRow(

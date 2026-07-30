@@ -2,6 +2,7 @@ package com.cpamp.mobile.data.remote
 
 import com.cpamp.mobile.BuildConfig
 import com.cpamp.mobile.domain.model.AuthenticatedSession
+import com.cpamp.mobile.data.system.ServerVersionObserver
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,6 +17,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 @Singleton
 class SessionApiClientFactory @Inject constructor(
     private val json: Json,
+    private val versionObserver: ServerVersionObserver = ServerVersionObserver(),
 ) {
     @Volatile
     private var cached: CachedClient? = null
@@ -53,6 +55,11 @@ class SessionApiClientFactory @Inject constructor(
             .followSslRedirects(false)
             .retryOnConnectionFailure(false)
             .addInterceptor(AuthInterceptor(session.adminKey))
+            .addNetworkInterceptor { chain ->
+                chain.proceed(chain.request()).also { response ->
+                    versionObserver.observe(session.profile.id, response)
+                }
+            }
             .addInterceptor(IdempotentRetryInterceptor())
             .build()
 

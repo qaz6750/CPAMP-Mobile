@@ -1,6 +1,7 @@
 package com.cpamp.mobile.ui.system
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +51,7 @@ import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.CategoryListRow
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
@@ -225,20 +227,60 @@ fun SystemScreen(
 }
 
 @Composable
-private fun LogLine(line: String) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))) {
-        Text(
-            line,
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            style = MaterialTheme.typography.bodySmall,
-            fontFamily = FontFamily.Monospace,
-        )
+private fun LogLine(line: RuntimeLogEntry) {
+    var expanded by rememberSaveable(line.raw) { mutableStateOf(false) }
+    val levelColor = when (line.level) {
+        RuntimeLogLevel.Error -> MaterialTheme.colorScheme.error
+        RuntimeLogLevel.Warning -> WarningLogColor
+        RuntimeLogLevel.Info -> MaterialTheme.colorScheme.primary
+        RuntimeLogLevel.Debug, RuntimeLogLevel.Trace, RuntimeLogLevel.Unknown -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    AppCard(modifier = Modifier.clickable { expanded = !expanded }) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    line.timestamp ?: stringResource(R.string.log_time_unknown),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(line.level.displayLabel(), style = MaterialTheme.typography.labelSmall, color = levelColor)
+            }
+            Text(
+                if (expanded) line.raw else line.message,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (line.level in setOf(RuntimeLogLevel.Error, RuntimeLogLevel.Warning)) levelColor
+                    else MaterialTheme.colorScheme.onSurface,
+                maxLines = if (expanded) Int.MAX_VALUE else 4,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
 @Composable
+private fun RuntimeLogLevel.displayLabel(): String = stringResource(
+    when (this) {
+        RuntimeLogLevel.Error -> R.string.log_level_error
+        RuntimeLogLevel.Warning -> R.string.log_level_warning
+        RuntimeLogLevel.Info -> R.string.log_level_info
+        RuntimeLogLevel.Debug -> R.string.log_level_debug
+        RuntimeLogLevel.Trace -> R.string.log_level_trace
+        RuntimeLogLevel.Unknown -> R.string.log_level_unknown
+    },
+)
+
+private val WarningLogColor = androidx.compose.ui.graphics.Color(0xFFD98200)
+
+@Composable
 private fun EmptySystemCard(text: String) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))) {
+    AppCard(containerColor = MaterialTheme.colorScheme.surface) {
         Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
             Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

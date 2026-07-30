@@ -143,6 +143,16 @@
     <string name="stopped">已停止</string>
     <string name="last_event">最近事件</string>
     <string name="unknown_value">未知</string>
+    <string name="not_provided">未提供</string>
+    <string name="cpa_version">CPA 版本</string>
+    <string name="cpamp_version">CPAMP 版本</string>
+    <string name="log_time_unknown">时间未知</string>
+    <string name="log_level_error">错误</string>
+    <string name="log_level_warning">警告</string>
+    <string name="log_level_info">信息</string>
+    <string name="log_level_debug">调试</string>
+    <string name="log_level_trace">跟踪</string>
+    <string name="log_level_unknown">日志</string>
     <string name="active_server">当前</string>
     <string name="switch_server">切换</string>
     <string name="disconnect">退出连接</string>

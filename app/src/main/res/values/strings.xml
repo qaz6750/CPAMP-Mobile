@@ -143,6 +143,16 @@
     <string name="stopped">Stopped</string>
     <string name="last_event">Last event</string>
     <string name="unknown_value">Unknown</string>
+    <string name="not_provided">Not provided</string>
+    <string name="cpa_version">CPA version</string>
+    <string name="cpamp_version">CPAMP version</string>
+    <string name="log_time_unknown">Time unavailable</string>
+    <string name="log_level_error">ERROR</string>
+    <string name="log_level_warning">WARNING</string>
+    <string name="log_level_info">INFO</string>
+    <string name="log_level_debug">DEBUG</string>
+    <string name="log_level_trace">TRACE</string>
+    <string name="log_level_unknown">LOG</string>
     <string name="active_server">Active</string>
     <string name="switch_server">Switch</string>
     <string name="disconnect">Disconnect</string>
