@@ -31,18 +31,18 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 | --- | --- |
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
 | Overview | Health, daily requests, success rate, tokens, estimated cost, interactive token/request trends, and real provider marks |
-| Monitoring | Manual refresh, time/status filters, request details, privacy-safe cached recent data, and read-only Codex credential quota |
+| Monitoring | Manual refresh, time/status filters, request details, privacy-safe cached recent data, and provider-aware read-only credential quotas |
 | Usage | Interactive usage buckets, on-demand rankings, and privacy-safe Today/7-day/30-day share images |
 | Operations | Manager/collector status, filtered paged logs, log clearing, and saved-server management |
 | Settings | App lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
 | Security | Keystore AES-GCM, optional biometric/device-credential app lock, configurable screenshot protection, no backup |
-| Appearance | Blue-and-white light theme, navy dark theme, optional dynamic color, Simplified Chinese and English |
+| Appearance | Blue-and-white light theme, navy dark theme, Simplified Chinese and English |
 
 Destructive changes show the affected object and require confirmation. Switching servers cancels requests from the previous server and rebuilds screen state so cached data cannot cross profiles.
 
 All Manager Server network screens use explicit manual refresh. Monitoring requests only the visible summary and event page; Usage computes only the selected ranking; Operations loads only the selected status or log section. Changing filters or categories never triggers a background request. A share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
 
-The app can read active Codex credential quota through the Manager Server using `/v0/management/auth-files` and `/v0/management/api-call`. Quota responses remain in memory and are not cached. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
+The app lists every authentication file and identifies its provider. It can query Codex rate-limit windows and xAI billing-period quota through the Manager Server using `/v0/management/auth-files` and `/v0/management/api-call`; other providers are shown as not yet supported instead of being reported as failures. Quota responses remain in memory and are not cached. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
 
 Update checks occur only when the user taps **Check for updates**. Releases are read from this repository's public GitHub Releases API with no embedded GitHub token and no Manager Admin Key. The system Download Manager downloads the APK, then the app verifies the published SHA-256 and requires the APK signing certificate to match the installed app before opening the Android installer.
 

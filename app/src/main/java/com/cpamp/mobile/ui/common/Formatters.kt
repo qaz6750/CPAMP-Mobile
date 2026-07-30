@@ -4,6 +4,7 @@ import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 
 fun Long.compactNumber(): String {
@@ -54,3 +55,10 @@ fun Long.asLatency(): String = toDouble().asLatency()
 fun Long.asTime(): String = Instant.ofEpochMilli(this)
     .atZone(ZoneId.systemDefault())
     .format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+
+fun Long.asDateTime(): String = Instant.ofEpochMilli(this)
+    .atZone(ZoneId.systemDefault())
+    .format(
+        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
+            .withLocale(Locale.getDefault()),
+    )

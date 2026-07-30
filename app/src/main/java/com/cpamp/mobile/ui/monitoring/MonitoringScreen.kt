@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
+import com.cpamp.mobile.data.monitoring.CredentialAccountStatus
 import com.cpamp.mobile.data.remote.model.RequestEventDto
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
@@ -199,6 +200,9 @@ fun MonitoringScreen(
 
 @Composable
 private fun CredentialQuotaEntry(state: MonitoringUiState, onClick: () -> Unit) {
+    val queryableCount = state.credentialQuotas.count { quota ->
+        quota.accountStatus == CredentialAccountStatus.Active && quota.provider in setOf("codex", "xai")
+    }
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
@@ -216,7 +220,11 @@ private fun CredentialQuotaEntry(state: MonitoringUiState, onClick: () -> Unit) 
                         state.credentialQuotasLoading -> stringResource(R.string.credential_quota_loading)
                         state.credentialQuotasError -> stringResource(R.string.credential_quota_unavailable)
                         state.credentialQuotas.isEmpty() -> stringResource(R.string.credential_quota_empty)
-                        else -> stringResource(R.string.credential_quota_count, state.credentialQuotas.size)
+                        else -> stringResource(
+                            R.string.credential_quota_count,
+                            state.credentialQuotas.size,
+                            queryableCount,
+                        )
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

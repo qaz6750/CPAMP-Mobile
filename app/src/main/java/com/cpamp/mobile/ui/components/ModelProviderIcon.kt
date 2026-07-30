@@ -21,7 +21,16 @@ import com.cpamp.mobile.R
 
 @Composable
 fun ModelProviderIcon(model: String, modifier: Modifier = Modifier) {
-    val provider = modelProviderVisual(model)
+    ProviderIcon(modelProviderVisual(model), modifier)
+}
+
+@Composable
+fun CredentialProviderIcon(provider: String, modifier: Modifier = Modifier) {
+    ProviderIcon(credentialProviderVisual(provider), modifier)
+}
+
+@Composable
+private fun ProviderIcon(provider: ModelProviderVisual, modifier: Modifier) {
     Surface(
         modifier = modifier.size(34.dp),
         shape = CircleShape,
@@ -73,5 +82,24 @@ internal fun modelProviderVisual(model: String): ModelProviderVisual {
         listOf("qwen", "qwq", "tongyi").any(normalized::contains) ->
             ModelProviderVisual("Qwen", R.drawable.ic_provider_qwen, Color(0xFF6950EF))
         else -> ModelProviderVisual("AI model", null, Color(0xFF356AE6), "AI")
+    }
+}
+
+internal fun credentialProviderVisual(provider: String): ModelProviderVisual {
+    val normalized = provider.trim().lowercase().replace('_', '-')
+    return when (normalized) {
+        "codex", "openai", "chatgpt" ->
+            ModelProviderVisual("OpenAI", R.drawable.ic_provider_openai, Color(0xFF111111))
+        "claude", "anthropic" ->
+            ModelProviderVisual("Anthropic", R.drawable.ic_provider_anthropic, Color(0xFFD97757))
+        "gemini", "gemini-cli", "aistudio", "vertex" ->
+            ModelProviderVisual("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4))
+        "xai", "x-ai", "grok" ->
+            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI")
+        "deepseek" ->
+            ModelProviderVisual("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6))
+        "qwen", "qwq", "tongyi" ->
+            ModelProviderVisual("Qwen", R.drawable.ic_provider_qwen, Color(0xFF6950EF))
+        else -> ModelProviderVisual("AI provider", null, Color(0xFF356AE6), "AI")
     }
 }

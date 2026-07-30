@@ -2,7 +2,6 @@ package com.cpamp.mobile.data.remote
 
 import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
 import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
-import com.cpamp.mobile.data.remote.model.AuthFilesResponseDto
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.LogsDto
 import com.cpamp.mobile.data.remote.model.ManagerInfoDto
@@ -35,7 +34,7 @@ interface CPAMPApi {
     suspend fun monitoring(@Body request: MonitoringRequestDto): MonitoringResponseDto
 
     @GET("v0/management/auth-files")
-    suspend fun authFiles(): AuthFilesResponseDto
+    suspend fun authFiles(): JsonElement
 
     @POST("v0/management/api-call")
     suspend fun apiCall(@Body request: ApiCallRequestDto): ApiCallResponseDto
