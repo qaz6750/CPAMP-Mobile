@@ -155,7 +155,7 @@ class CredentialQuotaRepository @Inject constructor(
             file.resolvedAccountId.takeIf(String::isNotEmpty)?.let { put("Chatgpt-Account-Id", it) }
         },
     ) { response ->
-        CredentialQuotaDataParser.parseCodex(json, response.resolvedBody, "")
+        CredentialQuotaDataParser.parseCodex(json, response.body, response.resolvedBodyText)
     }
 
     private suspend fun loadXaiQuota(profileId: String, file: AuthFileDto, api: CPAMPApi): CredentialQuota = loadProviderQuota(
@@ -166,7 +166,7 @@ class CredentialQuotaRepository @Inject constructor(
         url = XAI_BILLING_URL,
         headers = mapOf("Authorization" to "Bearer \$TOKEN\$"),
     ) { response ->
-        CredentialQuotaDataParser.parseXai(json, response.resolvedBody, "")
+        CredentialQuotaDataParser.parseXai(json, response.body, response.resolvedBodyText)
     }
 
     private suspend fun loadProviderQuota(
@@ -313,8 +313,11 @@ class CredentialQuotaRepository @Inject constructor(
             .firstOrNull { it != 0 }
             ?: 0
 
-    private val ApiCallResponseDto.resolvedBody: JsonElement?
-        get() = body ?: bodyText ?: camelBodyText ?: hyphenBodyText
+    private val ApiCallResponseDto.resolvedBodyText: String
+        get() = sequenceOf(bodyText, camelBodyText, hyphenBodyText, body)
+            .mapNotNull { it.scalarText() }
+            .firstOrNull(String::isNotBlank)
+            .orEmpty()
 
     private fun decodeIdToken(value: JsonElement?): JsonObject? {
         if (value is JsonObject) return value
@@ -392,7 +395,8 @@ internal object CredentialQuotaDataParser {
         val usage = decode(json, body, bodyText, CodexUsageDto.serializer()) ?: return null
         val rateLimit = usage.rateLimit ?: usage.camelRateLimit
         val codeReviewLimit = usage.codeReviewRateLimit ?: usage.camelCodeReviewRateLimit
-        val additionalLimits = usage.additionalRateLimits.ifEmpty { usage.camelAdditionalRateLimits }
+        val additionalLimits = usage.additionalRateLimits.orEmpty()
+            .ifEmpty { usage.camelAdditionalRateLimits.orEmpty() }
         val windows = buildList {
             addRateLimitWindows(rateLimit, nowMs)
             addRateLimitWindows(codeReviewLimit, nowMs)

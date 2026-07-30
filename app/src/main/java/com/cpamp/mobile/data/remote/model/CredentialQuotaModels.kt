@@ -64,8 +64,8 @@ data class CodexUsageDto(
     @SerialName("rateLimit") val camelRateLimit: CodexRateLimitDto? = null,
     @SerialName("code_review_rate_limit") val codeReviewRateLimit: CodexRateLimitDto? = null,
     @SerialName("codeReviewRateLimit") val camelCodeReviewRateLimit: CodexRateLimitDto? = null,
-    @SerialName("additional_rate_limits") val additionalRateLimits: List<CodexAdditionalRateLimitDto> = emptyList(),
-    @SerialName("additionalRateLimits") val camelAdditionalRateLimits: List<CodexAdditionalRateLimitDto> = emptyList(),
+    @SerialName("additional_rate_limits") val additionalRateLimits: List<CodexAdditionalRateLimitDto>? = null,
+    @SerialName("additionalRateLimits") val camelAdditionalRateLimits: List<CodexAdditionalRateLimitDto>? = null,
 )
 
 @Serializable

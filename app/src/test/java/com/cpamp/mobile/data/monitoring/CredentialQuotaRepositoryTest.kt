@@ -12,6 +12,31 @@ class CredentialQuotaRepositoryTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
+    fun `parses codex response with null optional limits`() {
+        val payload = json.parseToJsonElement(
+            """
+            {
+              "plan_type": "pro",
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 12,
+                  "limit_window_seconds": 18000
+                }
+              },
+              "code_review_rate_limit": null,
+              "additional_rate_limits": null
+            }
+            """.trimIndent(),
+        )
+
+        val parsed = requireNotNull(CredentialQuotaDataParser.parseCodex(json, payload, "", nowMs = 0))
+
+        assertEquals("pro", parsed.planType)
+        assertEquals(1, parsed.windows.size)
+        assertEquals(88.0, parsed.windows.single().remainingPercent ?: -1.0, 0.001)
+    }
+
+    @Test
     fun `codex snake case response becomes remaining quota windows`() {
         val body = json.parseToJsonElement(
             """
