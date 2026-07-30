@@ -24,7 +24,10 @@ enum class AppDestination(
 
     companion object {
         fun fromRoute(route: String?): AppDestination =
-            entries.firstOrNull { it.route == route } ?: Overview
+            when (route) {
+                "credential-quota" -> Traffic
+                else -> entries.firstOrNull { it.route == route } ?: Overview
+            }
     }
 }
 
