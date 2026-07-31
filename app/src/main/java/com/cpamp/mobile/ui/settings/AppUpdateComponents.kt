@@ -2,21 +2,26 @@ package com.cpamp.mobile.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -99,6 +104,7 @@ internal fun UpdateSettingsCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun UpdateDetailsDialog(
     state: AppUpdateState,
@@ -108,63 +114,94 @@ internal fun UpdateDetailsDialog(
     val context = LocalContext.current
     val language = LocalConfiguration.current.locales[0].language
     val release = state.release ?: return
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(stringResource(R.string.update_details_title, release.tagName.removePrefix("v")))
-                release.publishedAt?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        containerColor = MaterialTheme.colorScheme.background,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Icon(
+                        Icons.Outlined.Download,
+                        contentDescription = null,
+                        modifier = Modifier.padding(11.dp),
                     )
                 }
-            }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                release.displayBody(language)?.let { body ->
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
-                        body,
-                        modifier = Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()),
-                        style = MaterialTheme.typography.bodyMedium,
+                        stringResource(R.string.update_details_title, release.tagName.removePrefix("v")),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
                     )
-                }
-                if (state.status in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(updateStatusText(state), style = MaterialTheme.typography.bodySmall)
-                        state.progressPercent?.let { progress ->
-                            LinearProgressIndicator(
-                                progress = { progress / 100f },
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        } ?: LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    release.publishedAt?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
-        },
-        confirmButton = {
-            when (state.status) {
-                UpdateStatus.Available -> Button(onClick = onDownload) {
-                    Icon(Icons.Outlined.Download, contentDescription = null)
-                    Text(stringResource(R.string.download_update), modifier = Modifier.padding(start = 8.dp))
-                }
-                UpdateStatus.ReadyToInstall -> Button(
-                    onClick = { state.installUri?.let(context::installUpdate) },
-                ) {
-                    Icon(Icons.Outlined.InstallMobile, contentDescription = null)
-                    Text(stringResource(R.string.install_update), modifier = Modifier.padding(start = 8.dp))
-                }
-                else -> Unit
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+            release.displayBody(language)?.let { body ->
+                Text(
+                    body,
+                    modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+            if (state.status in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        updateStatusText(state),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    state.progressPercent?.let { progress ->
+                        LinearProgressIndicator(
+                            progress = { progress / 100f },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } ?: LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
             }
-        },
-    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.cancel))
+                }
+                when (state.status) {
+                    UpdateStatus.Available -> Button(onClick = onDownload) {
+                        Icon(Icons.Outlined.Download, contentDescription = null)
+                        Text(stringResource(R.string.download_update), modifier = Modifier.padding(start = 8.dp))
+                    }
+                    UpdateStatus.ReadyToInstall -> Button(
+                        onClick = { state.installUri?.let(context::installUpdate) },
+                    ) {
+                        Icon(Icons.Outlined.InstallMobile, contentDescription = null)
+                        Text(stringResource(R.string.install_update), modifier = Modifier.padding(start = 8.dp))
+                    }
+                    else -> Unit
+                }
+            }
+        }
+    }
 }
 
 @Composable
