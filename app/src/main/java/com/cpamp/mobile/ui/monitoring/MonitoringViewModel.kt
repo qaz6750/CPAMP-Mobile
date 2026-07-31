@@ -54,7 +54,7 @@ data class MonitoringUiState(
     val credentialQuotaRunId: Long? = null,
     val credentialQuotaFinishedAtMs: Long? = null,
     val credentialQuotasLoading: Boolean = false,
-    val credentialQuotasError: Boolean = false,
+    val credentialQuotasError: CredentialQuotaError? = null,
 ) {
     val visibleEvents
         get() = response?.events?.items.orEmpty().let { events ->
@@ -66,6 +66,8 @@ data class MonitoringUiState(
 }
 
 enum class MonitoringError { Unauthorized, RateLimited, Timeout, Network, Server }
+
+enum class CredentialQuotaError { NoCompletedInspection, Unauthorized, ServerUnsupported, InvalidResponse, Network, Server }
 
 @HiltViewModel
 class MonitoringViewModel @Inject constructor(
@@ -132,7 +134,7 @@ class MonitoringViewModel @Inject constructor(
         mutableState.update {
             it.copy(
                 credentialQuotasLoading = true,
-                credentialQuotasError = false,
+                credentialQuotasError = null,
             )
         }
         viewModelScope.launch {
@@ -148,12 +150,12 @@ class MonitoringViewModel @Inject constructor(
                         )
                     }
                 }
-                .onFailure {
+                .onFailure { error ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
                     mutableState.update {
                         it.copy(
                             credentialQuotasLoading = false,
-                            credentialQuotasError = true,
+                            credentialQuotasError = error.toCredentialQuotaError(),
                         )
                     }
                 }
@@ -212,6 +214,15 @@ class MonitoringViewModel @Inject constructor(
             }
         }
     }
+}
+
+private fun Throwable.toCredentialQuotaError(): CredentialQuotaError = when (this) {
+    is com.cpamp.mobile.data.monitoring.NoCompletedInspectionException -> CredentialQuotaError.NoCompletedInspection
+    is RemoteFailure.Unauthorized -> CredentialQuotaError.Unauthorized
+    is RemoteFailure.NotFound -> CredentialQuotaError.ServerUnsupported
+    is RemoteFailure.InvalidResponse -> CredentialQuotaError.InvalidResponse
+    is RemoteFailure.Network, is RemoteFailure.Timeout, is RemoteFailure.Tls -> CredentialQuotaError.Network
+    else -> CredentialQuotaError.Server
 }
 
 private fun Throwable.toMonitoringError(): MonitoringError = when (this) {

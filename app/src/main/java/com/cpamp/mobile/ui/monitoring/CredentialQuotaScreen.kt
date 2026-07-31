@@ -111,9 +111,9 @@ fun CredentialQuotaScreen(
                         loading = true,
                     )
                 }
-                state.credentialQuotasError -> item {
+                state.credentialQuotasError != null -> item {
                     ContentStateCard(
-                        message = stringResource(R.string.credential_quota_unavailable),
+                        message = stringResource(state.credentialQuotasError.messageResource()),
                         isError = true,
                     )
                 }
@@ -133,6 +133,16 @@ fun CredentialQuotaScreen(
             }
         }
     }
+}
+
+@StringRes
+private fun CredentialQuotaError.messageResource(): Int = when (this) {
+    CredentialQuotaError.NoCompletedInspection -> R.string.credential_quota_no_inspection
+    CredentialQuotaError.Unauthorized -> R.string.credential_quota_unauthorized
+    CredentialQuotaError.ServerUnsupported -> R.string.credential_quota_server_unsupported
+    CredentialQuotaError.InvalidResponse -> R.string.credential_quota_invalid_server_response
+    CredentialQuotaError.Network -> R.string.credential_quota_network_error
+    CredentialQuotaError.Server -> R.string.credential_quota_unavailable
 }
 
 @Composable

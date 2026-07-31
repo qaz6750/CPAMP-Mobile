@@ -61,8 +61,9 @@ class CredentialQuotaRepository @Inject constructor(
         const val COMPLETED_STATUS = "completed"
     }
 
-    private class NoCompletedInspectionException : IllegalStateException()
 }
+
+internal class NoCompletedInspectionException : IllegalStateException()
 
 internal fun CodexInspectionResultDto.toCredentialQuota(): CredentialQuota {
     val windows = quotaWindows.map { window ->
