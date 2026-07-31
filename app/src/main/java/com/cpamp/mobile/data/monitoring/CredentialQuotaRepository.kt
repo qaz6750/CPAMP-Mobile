@@ -74,6 +74,7 @@ class CredentialQuotaRepository @Inject constructor(
             quotas = detail.results.map(CodexInspectionResultDto::toCredentialQuota),
             cachedAtMs = System.currentTimeMillis(),
         )
+        // Persist quota aggregates only; account identifiers remain memory-only.
         cacheDao.upsert(
             CacheEntity(
                 profileId = session.profile.id,
@@ -82,23 +83,22 @@ class CredentialQuotaRepository @Inject constructor(
                 updatedAt = snapshot.cachedAtMs,
             ),
         )
-
-        private fun CredentialQuotaSnapshot.cacheSafe(): CredentialQuotaSnapshot = copy(
-            quotas = quotas.mapIndexed { index, quota ->
-                quota.copy(
-                    name = "Credential ${index + 1}",
-                    account = "",
-                )
-            },
-        )
         return snapshot
     }
+
+    private fun CredentialQuotaSnapshot.cacheSafe(): CredentialQuotaSnapshot = copy(
+        quotas = quotas.mapIndexed { index, quota ->
+            quota.copy(
+                name = "Credential ${index + 1}",
+                account = "",
+            )
+        },
+    )
 
     private companion object {
         const val COMPLETED_STATUS = "completed"
         const val CACHE_KIND = "credential-quotas.v1"
     }
-
 }
 
 internal class NoCompletedInspectionException : IllegalStateException()
