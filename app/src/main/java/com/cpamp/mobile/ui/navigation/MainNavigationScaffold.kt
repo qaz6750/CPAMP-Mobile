@@ -147,7 +147,7 @@ private fun FloatingNavigationItem(
                 text = stringResource(destination.label),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Box(

@@ -61,14 +61,14 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                     Text(
                         event.model.ifBlank { stringResource(R.string.unknown_model) },
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(event.timestampMs.asTime(), style = MaterialTheme.typography.labelSmall)
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         stringResource(R.string.event_tokens_value, event.totalTokens.compactTokens()),
                         style = MaterialTheme.typography.labelSmall,

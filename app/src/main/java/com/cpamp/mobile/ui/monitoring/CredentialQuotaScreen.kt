@@ -191,13 +191,12 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
         containerColor = if (disabled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -210,7 +209,7 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
                         Text(
                             title,
                             fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             color = if (disabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         )
@@ -222,7 +221,7 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
                                     subtitle,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
                             }
@@ -277,7 +276,7 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
 private fun CredentialQuotaDetailWindow(window: CredentialQuotaWindow) {
     val remaining = window.remainingPercent?.coerceIn(0.0, 100.0)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(window.detailDurationLabel(), style = MaterialTheme.typography.labelLarge)
             Text(
                 remaining?.let { stringResource(R.string.credential_quota_remaining, it) }
