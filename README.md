@@ -2,7 +2,7 @@
 
 CPAMP Mobile is a native Android administration client for a configured CPA-Manager-Plus Manager Server. It is built with Kotlin, Jetpack Compose, Material 3, Hilt, Retrofit/OkHttp, Kotlin Serialization, Room, DataStore, and Android Keystore.
 
-Current version: **1.2.6**
+Current version: **1.2.11**
 
 > [!IMPORTANT]
 > CPAMP Mobile is an independent, unofficial client. It is not affiliated with, endorsed by, or maintained by Seakee or the [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) project. CPA-Manager-Plus names and upstream project references identify interoperability only.
@@ -27,11 +27,11 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 
 ## Features
 
-| Area | First release |
+| Area | Current capabilities |
 | --- | --- |
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
 | Overview | Health, daily requests, success rate, tokens, estimated cost, interactive token/request trends, and real provider marks |
-| Monitoring | Manual refresh, time/status filters, request details, privacy-safe cached recent data, and provider-aware read-only credential quotas |
+| Monitoring | Manual refresh, time/status filters, request details including time to first token, privacy-safe cached recent data, and read-only server inspection quotas |
 | Usage | Interactive usage buckets, on-demand rankings, and privacy-safe Today/7-day/30-day share images |
 | Operations | Manager/collector status, filtered paged logs, log clearing, and saved-server management |
 | Settings | App lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
@@ -42,7 +42,35 @@ Destructive changes show the affected object and require confirmation. Switching
 
 All Manager Server network screens use explicit manual refresh. Monitoring requests only the visible summary and event page; Usage computes only the selected ranking; Operations loads only the selected status or log section. Changing filters or categories never triggers a background request. A share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
 
-The app lists every authentication file and identifies its provider. It can query Codex rate-limit windows and xAI billing-period quota through the Manager Server using `/v0/management/auth-files` and `/v0/management/api-call`; other providers are shown as not yet supported instead of being reported as failures. Quota responses remain in memory and are not cached. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
+The quota screen reads the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. Provider APIs are never queried by the phone. The screen identifies the Manager Server as the source, shows the inspection completion time, and can reuse a privacy-safe per-profile cache when the server is temporarily unavailable. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
+
+## Architecture
+
+```mermaid
+flowchart LR
+	subgraph Android[CPAMP Mobile]
+		UI[Compose screens]
+		VM[Hilt ViewModels]
+		Repositories[Repositories]
+		HTTP[Retrofit and OkHttp]
+		Room[(Room response cache)]
+		Preferences[(DataStore settings)]
+		Keystore[Android Keystore]
+
+		UI --> VM --> Repositories
+		Repositories --> HTTP
+		Repositories <--> Room
+		VM <--> Preferences
+		Repositories --> Keystore
+	end
+
+	HTTP -->|Admin Key over HTTPS| Manager[CPA-Manager-Plus Manager Server]
+	Manager --> Gateway[CPA / CLIProxyAPI gateway data]
+	Manager --> Inspection[Codex inspection runs]
+	Inspection -->|standardized completed result| HTTP
+```
+
+Room stores only profile-isolated, privacy-safe response data. DataStore holds non-secret application settings and server metadata. Admin Keys remain encrypted by Android Keystore and are attached only to requests for the selected server profile.
 
 Update checks occur only when the user taps **Check for updates**. Releases are read from this repository's public GitHub Releases API with no embedded GitHub token and no Manager Admin Key. The system Download Manager downloads the APK, then the app verifies the published SHA-256 and requires the APK signing certificate to match the installed app before opening the Android installer.
 
@@ -91,7 +119,7 @@ CPAMP_RELEASE_KEY_ALIAS
 CPAMP_RELEASE_KEY_PASSWORD
 ```
 
-When all four values are available, Gradle uses the release keystore for both build types. Debug builds remain debuggable and retain the `.debug` application ID suffix; only their signing identity changes. Keystores, signing properties, and `local.properties` are ignored by Git.
+When all four values are available, Gradle uses the release keystore for both build types. Debug builds remain debuggable and use the same application ID as release builds, so a release-signed CI Debug APK can upgrade an installed release build. Android still requires matching signing identity and a newer `versionCode`. Keystores, signing properties, and `local.properties` are ignored by Git.
 
 GitHub Actions accepts the following repository secrets:
 
