@@ -109,6 +109,15 @@ fun CredentialQuotaScreen(
                     )
                 }
             }
+            if (state.credentialQuotasFromCache) {
+                item {
+                    Text(
+                        stringResource(R.string.credential_quota_cached_notice),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
             when {
                 state.credentialQuotasLoading && quotas.isEmpty() -> item {
                     ContentStateCard(
@@ -116,7 +125,7 @@ fun CredentialQuotaScreen(
                         loading = true,
                     )
                 }
-                state.credentialQuotasError != null -> item {
+                state.credentialQuotasError != null && quotas.isEmpty() -> item {
                     ContentStateCard(
                         message = when (state.credentialQuotasError) {
                             CredentialQuotaError.ServerUnsupported -> state.credentialQuotaServerVersion?.let { version ->

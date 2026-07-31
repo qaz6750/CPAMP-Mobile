@@ -56,6 +56,7 @@ data class MonitoringUiState(
     val credentialQuotaFinishedAtMs: Long? = null,
     val credentialQuotaServerVersion: String? = null,
     val credentialQuotasLoaded: Boolean = false,
+    val credentialQuotasFromCache: Boolean = false,
     val credentialQuotasLoading: Boolean = false,
     val credentialQuotasError: CredentialQuotaError? = null,
 ) {
@@ -158,13 +159,29 @@ class MonitoringViewModel @Inject constructor(
                             credentialQuotaFinishedAtMs = snapshot.finishedAtMs,
                             credentialQuotasLoading = false,
                             credentialQuotasLoaded = true,
+                            credentialQuotasFromCache = snapshot.fromCache,
+                            credentialQuotasError = null,
                         )
                     }
                 }
                 .onFailure { error ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
-                    mutableState.update {
-                        it.copy(
+                    val cached = credentialQuotaRepository.cached(session.profile.id)
+                    mutableState.update { state ->
+                        cached?.let { snapshot ->
+                            state.copy(
+                                credentialQuotas = snapshot.quotas,
+                                credentialQuotaRunId = snapshot.runId,
+                                credentialQuotaFinishedAtMs = snapshot.finishedAtMs,
+                                credentialQuotasLoading = false,
+                                credentialQuotasError = error.toCredentialQuotaError(),
+                                credentialQuotasLoaded = true,
+                                credentialQuotasFromCache = true,
+                                credentialQuotaServerVersion = serverVersionObserver
+                                    .snapshot(session.profile.id)
+                                    .cpampVersion,
+                            )
+                        } ?: state.copy(
                             credentialQuotasLoading = false,
                             credentialQuotasError = error.toCredentialQuotaError(),
                             credentialQuotasLoaded = true,
