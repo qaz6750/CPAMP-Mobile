@@ -264,11 +264,13 @@
     <string name="credential_quota_run_inspection">Run inspection</string>
     <string name="credential_quota_inspection_starting">Starting inspection…</string>
     <string name="credential_quota_inspection_started">Inspection started on Manager Server. Refresh when it finishes.</string>
+    <string name="credential_quota_inspection_running">An inspection is already running on Manager Server. Refresh when it finishes.</string>
     <string name="credential_quota_inspection_unauthorized">The Admin Key cannot start server inspections.</string>
     <string name="credential_quota_inspection_unsupported">This Manager Server does not support starting inspections.</string>
     <string name="credential_quota_inspection_network_error">Unable to reach Manager Server to start the inspection.</string>
     <string name="credential_quota_inspection_rate_limited">Manager Server rejected frequent inspection requests. Try again later.</string>
     <string name="credential_quota_inspection_failed">Manager Server could not start the inspection.</string>
+    <string name="credential_quota_inspection_failed_status">Manager Server could not start the inspection (HTTP %1$d).</string>
     <string name="credential_quota_source">Server inspection #%1$d · %2$s</string>
     <string name="credential_quota_cached_notice">Showing cached inspection results because the server refresh failed.</string>
     <string name="credential_quota_count">%1$d credentials · %2$d queryable</string>

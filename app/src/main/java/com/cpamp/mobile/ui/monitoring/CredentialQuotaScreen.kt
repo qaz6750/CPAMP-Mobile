@@ -136,12 +136,17 @@ fun CredentialQuotaScreen(
                     )
                 }
             }
-            if (state.inspectionStarted || state.inspectionError != null) {
+            if (state.inspectionStarted || state.inspectionAlreadyRunning || state.inspectionError != null) {
                 item {
                     Text(
                         text = state.inspectionError?.let { error ->
-                            stringResource(error.inspectionMessageResource())
-                        } ?: stringResource(R.string.credential_quota_inspection_started),
+                            state.inspectionStatusCode?.let { statusCode ->
+                                stringResource(R.string.credential_quota_inspection_failed_status, statusCode)
+                            } ?: stringResource(error.inspectionMessageResource())
+                        } ?: stringResource(
+                            if (state.inspectionAlreadyRunning) R.string.credential_quota_inspection_running
+                            else R.string.credential_quota_inspection_started,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (state.inspectionError != null) MaterialTheme.colorScheme.error
                         else MaterialTheme.colorScheme.primary,
