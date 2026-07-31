@@ -31,11 +31,16 @@ fun CredentialProviderIcon(provider: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun ProviderIcon(provider: ModelProviderVisual, modifier: Modifier) {
+    val iconColor = if (provider.useThemeForeground) {
+        MaterialTheme.colorScheme.onSurface
+    } else {
+        provider.color
+    }
     Surface(
         modifier = modifier.size(34.dp),
         shape = CircleShape,
-        color = provider.color.copy(alpha = 0.14f),
-        contentColor = provider.color,
+        color = iconColor.copy(alpha = 0.14f),
+        contentColor = iconColor,
     ) {
         Box(contentAlignment = Alignment.Center) {
             when {
@@ -64,19 +69,25 @@ internal data class ModelProviderVisual(
     @DrawableRes val icon: Int?,
     val color: Color,
     val badgeText: String? = null,
+    val useThemeForeground: Boolean = false,
 )
 
 internal fun modelProviderVisual(model: String): ModelProviderVisual {
     val normalized = model.lowercase()
     return when {
         listOf("gpt", "o1", "o3", "o4", "codex", "chatgpt").any(normalized::contains) ->
-            ModelProviderVisual("OpenAI", R.drawable.ic_provider_openai, Color(0xFF111111))
+            ModelProviderVisual(
+                "OpenAI",
+                R.drawable.ic_provider_openai,
+                Color(0xFF111111),
+                useThemeForeground = true,
+            )
         listOf("claude", "anthropic").any(normalized::contains) ->
             ModelProviderVisual("Claude", R.drawable.ic_provider_anthropic, Color(0xFFD97757))
         listOf("gemini", "vertex", "palm").any(normalized::contains) ->
             ModelProviderVisual("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4))
         listOf("grok", "xai").any(normalized::contains) ->
-            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI")
+            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI", useThemeForeground = true)
         "deepseek" in normalized ->
             ModelProviderVisual("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6))
         listOf("qwen", "qwq", "tongyi").any(normalized::contains) ->
@@ -89,13 +100,18 @@ internal fun credentialProviderVisual(provider: String): ModelProviderVisual {
     val normalized = provider.trim().lowercase().replace('_', '-')
     return when (normalized) {
         "codex", "openai", "chatgpt" ->
-            ModelProviderVisual("OpenAI", R.drawable.ic_provider_openai, Color(0xFF111111))
+            ModelProviderVisual(
+                "OpenAI",
+                R.drawable.ic_provider_openai,
+                Color(0xFF111111),
+                useThemeForeground = true,
+            )
         "claude", "anthropic" ->
             ModelProviderVisual("Anthropic", R.drawable.ic_provider_anthropic, Color(0xFFD97757))
         "gemini", "gemini-cli", "aistudio", "vertex" ->
             ModelProviderVisual("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4))
         "xai", "x-ai", "grok" ->
-            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI")
+            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI", useThemeForeground = true)
         "deepseek" ->
             ModelProviderVisual("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6))
         "qwen", "qwq", "tongyi" ->
