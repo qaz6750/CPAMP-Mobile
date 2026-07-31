@@ -102,6 +102,7 @@ fun isNewerVersion(candidate: String, current: String): Boolean {
 
 private fun String.isTrustedReleaseAsset(tagName: String, assetName: String): Boolean {
     val uri = runCatching { URI(this) }.getOrNull() ?: return false
+    // The exact HTTPS repository path is part of the update trust boundary.
     return uri.scheme.equals("https", ignoreCase = true) &&
         uri.host?.equals(RELEASE_HOST, ignoreCase = true) == true &&
         uri.port == -1 &&

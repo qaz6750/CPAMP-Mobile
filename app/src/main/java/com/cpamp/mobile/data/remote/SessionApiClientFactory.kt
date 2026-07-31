@@ -51,6 +51,7 @@ class SessionApiClientFactory @Inject constructor(
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             .callTimeout(35, TimeUnit.SECONDS)
+            // Never forward the Admin Key through a server-controlled redirect.
             .followRedirects(false)
             .followSslRedirects(false)
             .retryOnConnectionFailure(false)

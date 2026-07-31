@@ -44,7 +44,10 @@ class AppUpdateRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val json: Json,
 ) {
-    private val client = OkHttpClient.Builder().followRedirects(true).followSslRedirects(true).build()
+    private val client = OkHttpClient.Builder()
+        .followRedirects(true)
+        .followSslRedirects(false)
+        .build()
     private val downloadManager = context.getSystemService(DownloadManager::class.java)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutableState = MutableStateFlow(AppUpdateState())
