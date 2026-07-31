@@ -29,7 +29,7 @@ data class CodexInspectionResultDto(
     val provider: String = "",
     val disabled: Boolean = false,
     val planType: String? = null,
-    val quotaWindows: List<CodexInspectionQuotaWindowDto> = emptyList(),
+    val quotaWindows: List<CodexInspectionQuotaWindowDto>? = null,
     val error: String = "",
     val errorKind: String = "",
 )
