@@ -31,6 +31,7 @@ fun CredentialProviderIcon(provider: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun ProviderIcon(provider: ModelProviderVisual, modifier: Modifier) {
+    // Monochrome marks follow the theme while branded colors remain stable.
     val iconColor = if (provider.useThemeForeground) {
         MaterialTheme.colorScheme.onSurface
     } else {

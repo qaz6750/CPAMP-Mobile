@@ -44,6 +44,7 @@ class AppUpdateRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val json: Json,
 ) {
+    // Allow GitHub HTTPS redirects without permitting a protocol downgrade.
     private val client = OkHttpClient.Builder()
         .followRedirects(true)
         .followSslRedirects(false)

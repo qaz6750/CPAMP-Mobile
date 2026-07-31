@@ -1,15 +1,29 @@
 # CPAMP Mobile
 
-CPAMP Mobile is a native Android administration client for a configured CPA-Manager-Plus Manager Server. It is built with Kotlin, Jetpack Compose, Material 3, Hilt, Retrofit/OkHttp, Kotlin Serialization, Room, DataStore, and Android Keystore.
+`Android 8.0+` · `Kotlin` · `Jetpack Compose` · `Material 3` · `MIT`
 
-Current version: **1.2.11**
+CPAMP Mobile is a native Android administration and observability client for a configured CPA-Manager-Plus Manager Server.
+
+**Current version:** `1.2.11`
+
+- 📊 Traffic, usage, quota, and service health
+- 🔐 Keystore-backed credentials with no telemetry
+- 🌐 Simplified Chinese and English
 
 > [!IMPORTANT]
 > CPAMP Mobile is an independent, unofficial client. It is not affiliated with, endorsed by, or maintained by Seakee or the [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) project. CPA-Manager-Plus names and upstream project references identify interoperability only.
 
+## 🚀 Quick start
+
+1. Install a signed APK from [GitHub Releases](https://github.com/qaz6750/CPAMP-Mobile/releases), or use a release-signed CI Debug APK for preview builds.
+2. Enter the base address of an existing full-mode Manager Server, normally `https://your-server:18317`.
+3. Authenticate with the **CPAMP Admin Key**, then select the server profile you want to monitor.
+
+Use HTTPS whenever possible. HTTP is available only as an explicitly confirmed compatibility option and exposes credentials to the network.
+
 ## Server requirements
 
-The first release requires an already configured CPA-Manager-Plus **full-mode Manager Server**, normally exposed on port `18317`.
+CPAMP Mobile requires an already configured CPA-Manager-Plus **full-mode Manager Server**, normally exposed on port `18317`.
 
 - Enter the Manager Server base address, such as `https://manager.example.com:18317`.
 - Use the **CPAMP Admin Key** as the login credential. This is not a client API key issued to applications using the gateway.
@@ -25,7 +39,7 @@ Arbitrary HTTP addresses are supported only as an explicit compatibility option.
 
 Each HTTP server requires an explicit warning confirmation before first use. The login screen, saved server list, and connected system view continue to identify the connection as unencrypted. Local Keystore encryption cannot protect credentials while they travel over HTTP.
 
-## Features
+## ✨ Features
 
 | Area | Current capabilities |
 | --- | --- |
@@ -44,7 +58,7 @@ All Manager Server network screens use explicit manual refresh. Monitoring reque
 
 The quota screen reads the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. Provider APIs are never queried by the phone. The screen identifies the Manager Server as the source, shows the inspection completion time, and can reuse a privacy-safe per-profile cache when the server is temporarily unavailable. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
 
-## Architecture
+## 🧭 Architecture
 
 ```mermaid
 flowchart LR
@@ -74,7 +88,7 @@ Room stores only profile-isolated, privacy-safe response data. DataStore holds n
 
 Update checks occur only when the user taps **Check for updates**. Releases are read from this repository's public GitHub Releases API with no embedded GitHub token and no Manager Admin Key. The system Download Manager downloads the APK, then the app verifies the published SHA-256 and requires the APK signing certificate to match the installed app before opening the Android installer.
 
-## Build
+## 🛠️ Build
 
 Prerequisites:
 
@@ -153,7 +167,7 @@ The workflow uploads debug and release APK artifacts. Its release artifact name 
 
 Tags matching `v*` create a GitHub Release only when all signing secrets are present. The tag must match `versionName`; the release contains a deterministically named signed APK and its SHA-256 file. Missing or partial signing configuration blocks the release instead of publishing an unsigned installer.
 
-## Security and privacy
+## 🔐 Security and privacy
 
 - Admin Keys are encrypted separately from server metadata with Android Keystore AES-GCM.
 - Enabling app lock migrates ciphertext to a user-authenticated Keystore key; disabling it migrates back and removes the obsolete key.
@@ -166,7 +180,7 @@ Tags matching `v*` create a GitHub Release only when all signing secrets are pre
 
 See [SECURITY.md](SECURITY.md) for the reporting process and security boundaries.
 
-## First-release boundaries
+## Current boundaries
 
 The app does not support lightweight mode, OAuth login flows, provider/auth-file/client-key management, plugin stores, raw YAML editing, model price management, inspection automation, backup migration, usage import/export, or Manager Server initial setup.
 
