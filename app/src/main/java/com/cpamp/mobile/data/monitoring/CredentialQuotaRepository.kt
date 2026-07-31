@@ -31,11 +31,17 @@ data class CredentialQuotaWindow(
     val resetLabel: String = "",
 )
 
+data class CredentialQuotaSnapshot(
+    val runId: Long,
+    val finishedAtMs: Long,
+    val quotas: List<CredentialQuota>,
+)
+
 @Singleton
 class CredentialQuotaRepository @Inject constructor(
     private val clientFactory: SessionApiClientFactory,
 ) {
-    suspend fun load(session: AuthenticatedSession): List<CredentialQuota> {
+    suspend fun load(session: AuthenticatedSession): CredentialQuotaSnapshot {
         val api = clientFactory.api(session)
         val latestRun = remoteCall { api.codexInspectionRuns() }
             .items
@@ -43,9 +49,12 @@ class CredentialQuotaRepository @Inject constructor(
             .filter { it.id > 0 && it.status.equals(COMPLETED_STATUS, ignoreCase = true) }
             .maxByOrNull { it.finishedAtMs ?: it.updatedAtMs }
             ?: throw NoCompletedInspectionException()
-        return remoteCall { api.codexInspectionRun(latestRun.id) }
-            .results
-            .map(CodexInspectionResultDto::toCredentialQuota)
+        val detail = remoteCall { api.codexInspectionRun(latestRun.id) }
+        return CredentialQuotaSnapshot(
+            runId = detail.run.id,
+            finishedAtMs = detail.run.finishedAtMs ?: detail.run.updatedAtMs,
+            quotas = detail.results.map(CodexInspectionResultDto::toCredentialQuota),
+        )
     }
 
     private companion object {

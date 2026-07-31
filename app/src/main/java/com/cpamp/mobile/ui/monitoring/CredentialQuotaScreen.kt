@@ -91,6 +91,19 @@ fun CredentialQuotaScreen(
                     },
                 )
             }
+            state.credentialQuotaFinishedAtMs?.let { finishedAtMs ->
+                item {
+                    Text(
+                        stringResource(
+                            R.string.credential_quota_source,
+                            state.credentialQuotaRunId ?: 0,
+                            finishedAtMs.asDateTime(),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             when {
                 state.credentialQuotasLoading && quotas.isEmpty() -> item {
                     ContentStateCard(

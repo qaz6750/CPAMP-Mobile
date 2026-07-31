@@ -258,6 +258,7 @@
     <string name="monitoring_offline">实时监控不可用，将尽可能继续显示缓存结果。</string>
     <string name="credential_quota">凭证额度</string>
     <string name="credential_quota_summary">读取 Manager Server 最近一次已完成的巡检结果</string>
+    <string name="credential_quota_source">服务器巡检 #%1$d · %2$s</string>
     <string name="credential_quota_count">%1$d 个凭证 · %2$d 个可查询</string>
     <string name="credential_quota_loading">正在刷新凭证额度…</string>
     <string name="credential_quota_unavailable">暂无已完成的服务器巡检，请先在 Manager Server 中运行巡检。</string>

@@ -258,6 +258,7 @@
     <string name="monitoring_offline">Live monitoring is unavailable. Cached results remain visible where available.</string>
     <string name="credential_quota">Credential quota</string>
     <string name="credential_quota_summary">Latest completed inspection results from Manager Server</string>
+    <string name="credential_quota_source">Server inspection #%1$d · %2$s</string>
     <string name="credential_quota_count">%1$d credentials · %2$d queryable</string>
     <string name="credential_quota_loading">Refreshing credential quotas…</string>
     <string name="credential_quota_unavailable">No completed server inspection is available. Run an inspection in Manager Server first.</string>

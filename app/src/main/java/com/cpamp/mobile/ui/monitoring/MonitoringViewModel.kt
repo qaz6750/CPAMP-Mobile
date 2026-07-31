@@ -51,6 +51,8 @@ data class MonitoringUiState(
     val updatedAt: Long? = null,
     val error: MonitoringError? = null,
     val credentialQuotas: List<CredentialQuota> = emptyList(),
+    val credentialQuotaRunId: Long? = null,
+    val credentialQuotaFinishedAtMs: Long? = null,
     val credentialQuotasLoading: Boolean = false,
     val credentialQuotasError: Boolean = false,
 ) {
@@ -135,11 +137,13 @@ class MonitoringViewModel @Inject constructor(
         }
         viewModelScope.launch {
             runSuspendCatching { credentialQuotaRepository.load(session) }
-                .onSuccess { quotas ->
+                .onSuccess { snapshot ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
                     mutableState.update {
                         it.copy(
-                            credentialQuotas = quotas,
+                            credentialQuotas = snapshot.quotas,
+                            credentialQuotaRunId = snapshot.runId,
+                            credentialQuotaFinishedAtMs = snapshot.finishedAtMs,
                             credentialQuotasLoading = false,
                         )
                     }
