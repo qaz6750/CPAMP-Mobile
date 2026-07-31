@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,10 @@ fun CredentialQuotaScreen(
     val quotas = state.credentialQuotas
     val active = quotas.filter { it.accountStatus == CredentialAccountStatus.Active }
     val disabled = quotas.filter { it.accountStatus == CredentialAccountStatus.Disabled }
+
+    LaunchedEffect(viewModel) {
+        viewModel.loadCredentialQuotasIfNeeded()
+    }
 
     AppBackground {
         LazyColumn(

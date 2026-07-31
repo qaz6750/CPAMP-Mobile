@@ -55,6 +55,7 @@ data class MonitoringUiState(
     val credentialQuotaRunId: Long? = null,
     val credentialQuotaFinishedAtMs: Long? = null,
     val credentialQuotaServerVersion: String? = null,
+    val credentialQuotasLoaded: Boolean = false,
     val credentialQuotasLoading: Boolean = false,
     val credentialQuotasError: CredentialQuotaError? = null,
 ) {
@@ -105,7 +106,6 @@ class MonitoringViewModel @Inject constructor(
                         )
                     }
                 }
-                loadCredentialQuotas(session)
                 refreshInternal(defaultFilter, session)
             }
         }
@@ -133,6 +133,13 @@ class MonitoringViewModel @Inject constructor(
         loadCredentialQuotas(session)
     }
 
+    fun loadCredentialQuotasIfNeeded() {
+        val current = mutableState.value
+        if (current.credentialQuotasLoaded || current.credentialQuotasLoading) return
+        val session = sessionRepository.session.value ?: return
+        loadCredentialQuotas(session)
+    }
+
     private fun loadCredentialQuotas(session: AuthenticatedSession) {
         mutableState.update {
             it.copy(
@@ -150,6 +157,7 @@ class MonitoringViewModel @Inject constructor(
                             credentialQuotaRunId = snapshot.runId,
                             credentialQuotaFinishedAtMs = snapshot.finishedAtMs,
                             credentialQuotasLoading = false,
+                            credentialQuotasLoaded = true,
                         )
                     }
                 }
@@ -159,6 +167,7 @@ class MonitoringViewModel @Inject constructor(
                         it.copy(
                             credentialQuotasLoading = false,
                             credentialQuotasError = error.toCredentialQuotaError(),
+                            credentialQuotasLoaded = true,
                             credentialQuotaServerVersion = serverVersionObserver
                                 .snapshot(session.profile.id)
                                 .cpampVersion,
