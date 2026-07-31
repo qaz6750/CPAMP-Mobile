@@ -16,7 +16,6 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Toll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,7 +40,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.remote.model.RequestEventDto
-import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
@@ -112,8 +110,6 @@ fun MonitoringScreen(
                         listOf(
                             Triple(R.string.metric_requests, summary.totalCalls.compactNumber(), Icons.Outlined.Toll),
                             Triple(R.string.metric_success, summary.successRate.asPercent(), Icons.Outlined.CheckCircle),
-                            Triple(R.string.p95_latency, summary.p95LatencyMs?.asLatency() ?: "—", Icons.Outlined.Speed),
-                            Triple(R.string.p95_ttft, summary.p95TtftMs?.asLatency() ?: "—", Icons.Outlined.Speed),
                         ).chunked(2).forEach { metrics ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 metrics.forEach { (label, value, icon) ->

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -57,8 +58,8 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                 ),
             )
             Column(
-                modifier = Modifier.weight(1f).padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier.weight(1f).padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
@@ -71,7 +72,10 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                     Spacer(Modifier.width(8.dp))
                     Text(event.timestampMs.asTime(), style = MaterialTheme.typography.labelSmall)
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     Text(
                         stringResource(R.string.event_tokens_value, event.totalTokens.compactTokens()),
                         style = MaterialTheme.typography.labelSmall,
