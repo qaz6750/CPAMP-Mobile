@@ -1,7 +1,7 @@
 package com.cpamp.mobile.data.remote
 
-import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
-import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
+import com.cpamp.mobile.data.remote.model.CodexInspectionRunDetailDto
+import com.cpamp.mobile.data.remote.model.CodexInspectionRunsResponseDto
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.LogsDto
 import com.cpamp.mobile.data.remote.model.ManagerInfoDto
@@ -13,6 +13,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface CPAMPApi {
@@ -33,11 +34,11 @@ interface CPAMPApi {
     @POST("v0/management/monitoring/analytics")
     suspend fun monitoring(@Body request: MonitoringRequestDto): MonitoringResponseDto
 
-    @GET("v0/management/auth-files")
-    suspend fun authFiles(): JsonElement
+    @GET("v0/management/codex-inspection/runs")
+    suspend fun codexInspectionRuns(@Query("limit") limit: Int = 20): CodexInspectionRunsResponseDto
 
-    @POST("v0/management/api-call")
-    suspend fun apiCall(@Body request: ApiCallRequestDto): ApiCallResponseDto
+    @GET("v0/management/codex-inspection/runs/{id}")
+    suspend fun codexInspectionRun(@Path("id") id: Long): CodexInspectionRunDetailDto
 
     @GET("v0/management/logs")
     suspend fun logs(

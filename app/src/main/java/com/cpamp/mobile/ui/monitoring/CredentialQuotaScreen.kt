@@ -213,11 +213,6 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                quota.queryState == CredentialQuotaQueryState.Unsupported -> Text(
-                    stringResource(R.string.credential_quota_unsupported_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 quota.queryState == CredentialQuotaQueryState.Failed && quota.windows.isEmpty() -> Text(
                     stringResource(quota.failureMessage()),
                     style = MaterialTheme.typography.bodySmall,
@@ -229,13 +224,6 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 else -> {
-                    if (quota.stale) {
-                        Text(
-                            stringResource(R.string.credential_quota_stale_item),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
                     quota.windows.forEach { CredentialQuotaDetailWindow(it) }
                 }
             }
@@ -274,13 +262,19 @@ private fun CredentialQuotaDetailWindow(window: CredentialQuotaWindow) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        window.resetLabel.takeIf { it.isNotBlank() && it != "-" }?.let { label ->
+            Text(
+                stringResource(R.string.credential_quota_reset, label),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
 @Composable
 private fun CredentialQuota.statusLabel(): String? = when {
     accountStatus == CredentialAccountStatus.Disabled -> stringResource(R.string.credential_quota_disabled_badge)
-    queryState == CredentialQuotaQueryState.Unsupported -> stringResource(R.string.credential_quota_unsupported_badge)
     queryState == CredentialQuotaQueryState.Failed -> stringResource(R.string.credential_quota_failed_badge)
     else -> null
 }
@@ -315,11 +309,8 @@ private fun CredentialQuota.displayPlan(providerLabel: String): String? = planTy
 
 @StringRes
 private fun CredentialQuota.failureMessage(): Int = when (failure) {
-    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.MissingAuthIndex -> R.string.credential_quota_missing_auth
-    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.RateLimited -> R.string.credential_quota_rate_limited
-    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.ProviderUnavailable -> R.string.credential_quota_provider_unavailable
-    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.InvalidResponse -> R.string.credential_quota_invalid_response
-    else -> R.string.credential_quota_item_error
+    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.ServerResult -> R.string.credential_quota_server_result_error
+    null -> R.string.credential_quota_item_error
 }
 
 private val QuotaOrange = androidx.compose.ui.graphics.Color(0xFFF59E0B)
