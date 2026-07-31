@@ -4,7 +4,7 @@
 
 CPAMP Mobile is a native Android administration and observability client for a configured CPA-Manager-Plus Manager Server.
 
-**Current version:** `1.3.0`
+**Current version:** `1.3.1`
 
 - 📊 Traffic, usage, quota, and service health
 - 🔐 Keystore-backed credentials with no telemetry
