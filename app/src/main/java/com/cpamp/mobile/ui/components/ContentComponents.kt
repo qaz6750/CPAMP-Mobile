@@ -110,10 +110,6 @@ fun AppCard(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
-        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         content()
@@ -175,10 +171,6 @@ fun MetricCard(
         shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
