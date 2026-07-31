@@ -2,6 +2,7 @@ package com.cpamp.mobile.data.remote
 
 import java.net.SocketTimeoutException
 import kotlinx.coroutines.runBlocking
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -31,5 +32,5 @@ class RemoteCallTest {
     }
 
     private fun httpException(status: Int): HttpException =
-        HttpException(Response.error<Unit>(status, okhttp3.ResponseBody.create(null, ByteArray(0))))
+        HttpException(Response.error<Unit>(status, ByteArray(0).toResponseBody()))
 }
