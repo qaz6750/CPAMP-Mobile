@@ -243,6 +243,7 @@
     <string name="all_requests">全部</string>
     <string name="failed_only">仅失败</string>
     <string name="p95_latency">P95 延迟</string>
+    <string name="p95_ttft">P95 首字耗时</string>
     <string name="request_events">请求事件</string>
     <string name="event_count">共 %1$d 条</string>
     <string name="no_matching_requests">没有匹配的请求</string>
@@ -253,6 +254,7 @@
     <string name="time_filter_refresh_hint">所选时间范围将在下次手动刷新时应用。</string>
     <string name="event_tokens_value">%1$s Token</string>
     <string name="event_latency_value">%1$s</string>
+    <string name="event_ttft_value">首字 %1$s</string>
     <string name="monitoring_rate_limited">分析服务当前繁忙，继续显示现有结果。</string>
     <string name="monitoring_timeout">监控请求超时，请点击刷新重试。</string>
     <string name="monitoring_offline">实时监控不可用，将尽可能继续显示缓存结果。</string>
@@ -300,6 +302,7 @@
     <string name="detail_account">账号</string>
     <string name="detail_tokens">Token</string>
     <string name="detail_latency">延迟</string>
+    <string name="detail_ttft">首字耗时</string>
     <string name="detail_error">错误摘要</string>
     <string name="failed">失败</string>
     <string name="succeeded">成功</string>

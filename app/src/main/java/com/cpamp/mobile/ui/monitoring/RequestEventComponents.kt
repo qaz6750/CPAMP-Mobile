@@ -79,6 +79,12 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                             style = MaterialTheme.typography.labelSmall,
                         )
                     }
+                    event.ttftMs?.let {
+                        Text(
+                            stringResource(R.string.event_ttft_value, it.asLatency()),
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
                     event.failStatusCode?.let {
                         Text(
                             "HTTP $it",
@@ -150,6 +156,7 @@ internal fun RequestEventDetails(event: RequestEventDto) {
             AppCard {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens())
+                    DetailRow(stringResource(R.string.detail_ttft), event.ttftMs?.asLatency() ?: "—")
                     DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.asLatency() ?: "—")
                     if (event.failed) {
                         DetailRow(

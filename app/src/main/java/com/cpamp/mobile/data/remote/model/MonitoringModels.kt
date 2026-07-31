@@ -102,6 +102,7 @@ data class MonitoringSummaryDto(
     @SerialName("total_cost") val totalCost: Double = 0.0,
     @SerialName("average_latency_ms") val averageLatencyMs: Double? = null,
     @SerialName("p95_latency_ms") val p95LatencyMs: Double? = null,
+    @SerialName("p95_ttft_ms") val p95TtftMs: Double? = null,
 )
 
 @Serializable
@@ -170,6 +171,7 @@ data class RequestEventDto(
     @SerialName("reasoning_tokens") val reasoningTokens: Long = 0,
     @SerialName("total_tokens") val totalTokens: Long = 0,
     @SerialName("latency_ms") val latencyMs: Long? = null,
+    @SerialName("ttft_ms") val ttftMs: Long? = null,
     val failed: Boolean = false,
     @SerialName("fail_status_code") val failStatusCode: Long? = null,
     @SerialName("fail_summary") val failSummary: String = "",

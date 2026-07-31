@@ -243,6 +243,7 @@
     <string name="all_requests">All</string>
     <string name="failed_only">Failed only</string>
     <string name="p95_latency">P95 latency</string>
+    <string name="p95_ttft">P95 first token</string>
     <string name="request_events">Request events</string>
     <string name="event_count">%1$d total</string>
     <string name="no_matching_requests">No matching requests</string>
@@ -253,6 +254,7 @@
     <string name="time_filter_refresh_hint">The selected time range is applied on the next manual refresh.</string>
     <string name="event_tokens_value">%1$s tokens</string>
     <string name="event_latency_value">%1$s</string>
+    <string name="event_ttft_value">First %1$s</string>
     <string name="monitoring_rate_limited">The analytics service is busy. The current results remain visible.</string>
     <string name="monitoring_timeout">Monitoring timed out. Tap refresh to try again.</string>
     <string name="monitoring_offline">Live monitoring is unavailable. Cached results remain visible where available.</string>
@@ -300,6 +302,7 @@
     <string name="detail_account">Account</string>
     <string name="detail_tokens">Tokens</string>
     <string name="detail_latency">Latency</string>
+    <string name="detail_ttft">Time to first token</string>
     <string name="detail_error">Error summary</string>
     <string name="failed">Failed</string>
     <string name="succeeded">Succeeded</string>

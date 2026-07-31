@@ -110,28 +110,24 @@ fun MonitoringScreen(
             }
             state.response?.summary?.let { summary ->
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        CompactMetric(
-                            label = stringResource(R.string.metric_requests),
-                            value = summary.totalCalls.compactNumber(),
-                            icon = Icons.Outlined.Toll,
-                            modifier = Modifier.weight(1f),
-                        )
-                        CompactMetric(
-                            label = stringResource(R.string.metric_success),
-                            value = summary.successRate.asPercent(),
-                            icon = Icons.Outlined.CheckCircle,
-                            modifier = Modifier.weight(1f),
-                        )
-                        CompactMetric(
-                            label = stringResource(R.string.p95_latency),
-                            value = summary.p95LatencyMs?.asLatency() ?: "—",
-                            icon = Icons.Outlined.Speed,
-                            modifier = Modifier.weight(1f),
-                        )
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        listOf(
+                            Triple(R.string.metric_requests, summary.totalCalls.compactNumber(), Icons.Outlined.Toll),
+                            Triple(R.string.metric_success, summary.successRate.asPercent(), Icons.Outlined.CheckCircle),
+                            Triple(R.string.p95_latency, summary.p95LatencyMs?.asLatency() ?: "—", Icons.Outlined.Speed),
+                            Triple(R.string.p95_ttft, summary.p95TtftMs?.asLatency() ?: "—", Icons.Outlined.Speed),
+                        ).chunked(2).forEach { metrics ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                metrics.forEach { (label, value, icon) ->
+                                    CompactMetric(
+                                        label = stringResource(label),
+                                        value = value,
+                                        icon = icon,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
