@@ -7,15 +7,12 @@ import com.cpamp.mobile.common.MILLIS_PER_HOUR
 import com.cpamp.mobile.common.MILLIS_PER_WEEK
 import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
-import com.cpamp.mobile.data.monitoring.CredentialQuota
-import com.cpamp.mobile.data.monitoring.CredentialQuotaRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.model.EventsPageRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
-import com.cpamp.mobile.data.system.ServerVersionObserver
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -51,14 +48,6 @@ data class MonitoringUiState(
     val fromCache: Boolean = false,
     val updatedAt: Long? = null,
     val error: MonitoringError? = null,
-    val credentialQuotas: List<CredentialQuota> = emptyList(),
-    val credentialQuotaRunId: Long? = null,
-    val credentialQuotaFinishedAtMs: Long? = null,
-    val credentialQuotaServerVersion: String? = null,
-    val credentialQuotasLoaded: Boolean = false,
-    val credentialQuotasFromCache: Boolean = false,
-    val credentialQuotasLoading: Boolean = false,
-    val credentialQuotasError: CredentialQuotaError? = null,
 ) {
     val visibleEvents
         get() = response?.events?.items.orEmpty().let { events ->
@@ -71,14 +60,10 @@ data class MonitoringUiState(
 
 enum class MonitoringError { Unauthorized, RateLimited, Timeout, Network, Server }
 
-enum class CredentialQuotaError { NoCompletedInspection, Unauthorized, ServerUnsupported, InvalidResponse, Network, Server }
-
 @HiltViewModel
 class MonitoringViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val monitoringRepository: MonitoringRepository,
-    private val credentialQuotaRepository: CredentialQuotaRepository,
-    private val serverVersionObserver: ServerVersionObserver,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(MonitoringUiState())
     val state: StateFlow<MonitoringUiState> = mutableState.asStateFlow()
@@ -126,72 +111,6 @@ class MonitoringViewModel @Inject constructor(
         if (mutableState.value.loading || mutableState.value.refreshing) return
         val session = sessionRepository.session.value ?: return
         viewModelScope.launch { refreshInternal(filter.value, session) }
-    }
-
-    fun refreshCredentialQuotas() {
-        if (mutableState.value.credentialQuotasLoading) return
-        val session = sessionRepository.session.value ?: return
-        loadCredentialQuotas(session)
-    }
-
-    fun loadCredentialQuotasIfNeeded() {
-        val current = mutableState.value
-        if (current.credentialQuotasLoaded || current.credentialQuotasLoading) return
-        val session = sessionRepository.session.value ?: return
-        loadCredentialQuotas(session)
-    }
-
-    private fun loadCredentialQuotas(session: AuthenticatedSession) {
-        mutableState.update {
-            it.copy(
-                credentialQuotasLoading = true,
-                credentialQuotasError = null,
-            )
-        }
-        viewModelScope.launch {
-            runSuspendCatching { credentialQuotaRepository.load(session) }
-                .onSuccess { snapshot ->
-                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
-                    mutableState.update {
-                        it.copy(
-                            credentialQuotas = snapshot.quotas,
-                            credentialQuotaRunId = snapshot.runId,
-                            credentialQuotaFinishedAtMs = snapshot.finishedAtMs,
-                            credentialQuotasLoading = false,
-                            credentialQuotasLoaded = true,
-                            credentialQuotasFromCache = snapshot.fromCache,
-                            credentialQuotasError = null,
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
-                    val cached = credentialQuotaRepository.cached(session.profile.id)
-                    mutableState.update { state ->
-                        cached?.let { snapshot ->
-                            state.copy(
-                                credentialQuotas = snapshot.quotas,
-                                credentialQuotaRunId = snapshot.runId,
-                                credentialQuotaFinishedAtMs = snapshot.finishedAtMs,
-                                credentialQuotasLoading = false,
-                                credentialQuotasError = error.toCredentialQuotaError(),
-                                credentialQuotasLoaded = true,
-                                credentialQuotasFromCache = true,
-                                credentialQuotaServerVersion = serverVersionObserver
-                                    .snapshot(session.profile.id)
-                                    .cpampVersion,
-                            )
-                        } ?: state.copy(
-                            credentialQuotasLoading = false,
-                            credentialQuotasError = error.toCredentialQuotaError(),
-                            credentialQuotasLoaded = true,
-                            credentialQuotaServerVersion = serverVersionObserver
-                                .snapshot(session.profile.id)
-                                .cpampVersion,
-                        )
-                    }
-                }
-        }
     }
 
     private suspend fun refreshInternal(
@@ -246,15 +165,6 @@ class MonitoringViewModel @Inject constructor(
             }
         }
     }
-}
-
-private fun Throwable.toCredentialQuotaError(): CredentialQuotaError = when (this) {
-    is com.cpamp.mobile.data.monitoring.NoCompletedInspectionException -> CredentialQuotaError.NoCompletedInspection
-    is RemoteFailure.Unauthorized -> CredentialQuotaError.Unauthorized
-    is RemoteFailure.NotFound -> CredentialQuotaError.ServerUnsupported
-    is RemoteFailure.InvalidResponse -> CredentialQuotaError.InvalidResponse
-    is RemoteFailure.Network, is RemoteFailure.Timeout, is RemoteFailure.Tls -> CredentialQuotaError.Network
-    else -> CredentialQuotaError.Server
 }
 
 private fun Throwable.toMonitoringError(): MonitoringError = when (this) {

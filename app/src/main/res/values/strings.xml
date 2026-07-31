@@ -259,6 +259,7 @@
     <string name="monitoring_timeout">Monitoring timed out. Tap refresh to try again.</string>
     <string name="monitoring_offline">Live monitoring is unavailable. Cached results remain visible where available.</string>
     <string name="credential_quota">Credential quota</string>
+    <string name="credential_quota_entry_help">View Manager Server inspection results</string>
     <string name="credential_quota_summary">Latest completed inspection results from Manager Server</string>
     <string name="credential_quota_source">Server inspection #%1$d · %2$s</string>
     <string name="credential_quota_cached_notice">Showing cached inspection results because the server refresh failed.</string>

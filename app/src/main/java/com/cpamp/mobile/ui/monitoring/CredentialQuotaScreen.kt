@@ -51,15 +51,15 @@ import com.cpamp.mobile.ui.components.PageHeader
 fun CredentialQuotaScreen(
     contentPadding: PaddingValues,
     onBack: () -> Unit,
-    viewModel: MonitoringViewModel = hiltViewModel(),
+    viewModel: CredentialQuotaViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val quotas = state.credentialQuotas
+    val quotas = state.quotas
     val active = quotas.filter { it.accountStatus == CredentialAccountStatus.Active }
     val disabled = quotas.filter { it.accountStatus == CredentialAccountStatus.Disabled }
 
     LaunchedEffect(viewModel) {
-        viewModel.loadCredentialQuotasIfNeeded()
+        viewModel.loadIfNeeded()
     }
 
     AppBackground {
@@ -90,18 +90,18 @@ fun CredentialQuotaScreen(
                         LoadingIconButton(
                             icon = Icons.Outlined.Refresh,
                             contentDescription = stringResource(R.string.refresh),
-                            loading = state.credentialQuotasLoading,
-                            onClick = viewModel::refreshCredentialQuotas,
+                            loading = state.loading,
+                            onClick = viewModel::refresh,
                         )
                     },
                 )
             }
-            state.credentialQuotaFinishedAtMs?.let { finishedAtMs ->
+            state.finishedAtMs?.let { finishedAtMs ->
                 item {
                     Text(
                         stringResource(
                             R.string.credential_quota_source,
-                            state.credentialQuotaRunId ?: 0,
+                            state.runId ?: 0,
                             finishedAtMs.asDateTime(),
                         ),
                         style = MaterialTheme.typography.bodySmall,
@@ -109,7 +109,7 @@ fun CredentialQuotaScreen(
                     )
                 }
             }
-            if (state.credentialQuotasFromCache) {
+            if (state.fromCache) {
                 item {
                     Text(
                         stringResource(R.string.credential_quota_cached_notice),
@@ -119,19 +119,19 @@ fun CredentialQuotaScreen(
                 }
             }
             when {
-                state.credentialQuotasLoading && quotas.isEmpty() -> item {
+                state.loading && quotas.isEmpty() -> item {
                     ContentStateCard(
                         message = stringResource(R.string.credential_quota_loading),
                         loading = true,
                     )
                 }
-                state.credentialQuotasError != null && quotas.isEmpty() -> item {
+                state.error != null && quotas.isEmpty() -> item {
                     ContentStateCard(
-                        message = when (state.credentialQuotasError) {
-                            CredentialQuotaError.ServerUnsupported -> state.credentialQuotaServerVersion?.let { version ->
+                        message = when (state.error) {
+                            CredentialQuotaError.ServerUnsupported -> state.serverVersion?.let { version ->
                                 stringResource(R.string.credential_quota_server_version_unsupported, version)
                             } ?: stringResource(R.string.credential_quota_server_unsupported)
-                            else -> stringResource(state.credentialQuotasError.messageResource())
+                            else -> stringResource(requireNotNull(state.error).messageResource())
                         },
                         isError = true,
                     )

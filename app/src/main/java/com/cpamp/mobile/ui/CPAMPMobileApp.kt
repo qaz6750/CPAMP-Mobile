@@ -3,7 +3,6 @@ package com.cpamp.mobile.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
@@ -121,12 +120,10 @@ private fun ConnectedApp(
                     onOpenCredentialQuotas = { navController.navigate(CREDENTIAL_QUOTA_ROUTE) },
                 )
             }
-            composable(CREDENTIAL_QUOTA_ROUTE) { entry ->
-                val parentEntry = remember(entry) { navController.getBackStackEntry(AppDestination.Traffic.route) }
+            composable(CREDENTIAL_QUOTA_ROUTE) {
                 CredentialQuotaScreen(
                     contentPadding = contentPadding,
                     onBack = navController::popBackStack,
-                    viewModel = hiltViewModel(parentEntry),
                 )
             }
             composable(AppDestination.Usage.route) {

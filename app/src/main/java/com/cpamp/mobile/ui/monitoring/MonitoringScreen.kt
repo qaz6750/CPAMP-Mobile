@@ -20,7 +20,6 @@ import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Toll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
-import com.cpamp.mobile.data.monitoring.CredentialAccountStatus
 import com.cpamp.mobile.data.remote.model.RequestEventDto
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
@@ -132,10 +130,7 @@ fun MonitoringScreen(
                 }
             }
             item {
-                CredentialQuotaEntry(
-                    state = state,
-                    onClick = onOpenCredentialQuotas,
-                )
+                CredentialQuotaEntry(onClick = onOpenCredentialQuotas)
             }
             val events = state.visibleEvents
             item {
@@ -187,10 +182,7 @@ fun MonitoringScreen(
 }
 
 @Composable
-private fun CredentialQuotaEntry(state: MonitoringUiState, onClick: () -> Unit) {
-    val queryableCount = state.credentialQuotas.count { quota ->
-        quota.accountStatus == CredentialAccountStatus.Active && quota.provider in setOf("codex", "xai")
-    }
+private fun CredentialQuotaEntry(onClick: () -> Unit) {
     Card(
         onClick = onClick,
         shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
@@ -206,27 +198,14 @@ private fun CredentialQuotaEntry(state: MonitoringUiState, onClick: () -> Unit) 
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(stringResource(R.string.credential_quota), fontWeight = FontWeight.SemiBold)
                 Text(
-                    when {
-                        state.credentialQuotasLoading -> stringResource(R.string.credential_quota_loading)
-                        state.credentialQuotasError -> stringResource(R.string.credential_quota_unavailable)
-                        state.credentialQuotas.isEmpty() -> stringResource(R.string.credential_quota_empty)
-                        else -> stringResource(
-                            R.string.credential_quota_count,
-                            state.credentialQuotas.size,
-                            queryableCount,
-                        )
-                    },
+                    stringResource(R.string.credential_quota_entry_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (state.credentialQuotasLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-            } else {
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null)
-            }
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null)
         }
     }
 }

@@ -259,6 +259,7 @@
     <string name="monitoring_timeout">监控请求超时，请点击刷新重试。</string>
     <string name="monitoring_offline">实时监控不可用，将尽可能继续显示缓存结果。</string>
     <string name="credential_quota">凭证额度</string>
+    <string name="credential_quota_entry_help">查看 Manager Server 巡检结果</string>
     <string name="credential_quota_summary">读取 Manager Server 最近一次已完成的巡检结果</string>
     <string name="credential_quota_source">服务器巡检 #%1$d · %2$s</string>
     <string name="credential_quota_cached_notice">服务器刷新失败，当前显示缓存的巡检结果。</string>
