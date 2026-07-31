@@ -265,6 +265,7 @@
     <string name="credential_quota_no_inspection">暂无已完成的巡检，请先在 Manager Server 中运行一次巡检。</string>
     <string name="credential_quota_unauthorized">当前 Admin Key 无权读取服务器巡检结果。</string>
     <string name="credential_quota_server_unsupported">当前 Manager Server 不提供巡检结果接口。</string>
+    <string name="credential_quota_server_version_unsupported">Manager Server %1$s 不支持巡检结果，请升级 CPAMP。</string>
     <string name="credential_quota_invalid_server_response">Manager Server 返回了无效的巡检响应。</string>
     <string name="credential_quota_network_error">无法连接 Manager Server 读取巡检结果。</string>
     <string name="credential_quota_empty">没有找到凭证。</string>

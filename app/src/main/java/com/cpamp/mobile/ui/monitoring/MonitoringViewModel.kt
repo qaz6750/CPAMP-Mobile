@@ -15,6 +15,7 @@ import com.cpamp.mobile.data.remote.model.EventsPageRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
+import com.cpamp.mobile.data.system.ServerVersionObserver
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,6 +54,7 @@ data class MonitoringUiState(
     val credentialQuotas: List<CredentialQuota> = emptyList(),
     val credentialQuotaRunId: Long? = null,
     val credentialQuotaFinishedAtMs: Long? = null,
+    val credentialQuotaServerVersion: String? = null,
     val credentialQuotasLoading: Boolean = false,
     val credentialQuotasError: CredentialQuotaError? = null,
 ) {
@@ -74,6 +76,7 @@ class MonitoringViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val monitoringRepository: MonitoringRepository,
     private val credentialQuotaRepository: CredentialQuotaRepository,
+    private val serverVersionObserver: ServerVersionObserver,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(MonitoringUiState())
     val state: StateFlow<MonitoringUiState> = mutableState.asStateFlow()
@@ -156,6 +159,9 @@ class MonitoringViewModel @Inject constructor(
                         it.copy(
                             credentialQuotasLoading = false,
                             credentialQuotasError = error.toCredentialQuotaError(),
+                            credentialQuotaServerVersion = serverVersionObserver
+                                .snapshot(session.profile.id)
+                                .cpampVersion,
                         )
                     }
                 }

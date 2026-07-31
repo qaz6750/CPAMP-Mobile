@@ -113,7 +113,12 @@ fun CredentialQuotaScreen(
                 }
                 state.credentialQuotasError != null -> item {
                     ContentStateCard(
-                        message = stringResource(state.credentialQuotasError.messageResource()),
+                        message = when (state.credentialQuotasError) {
+                            CredentialQuotaError.ServerUnsupported -> state.credentialQuotaServerVersion?.let { version ->
+                                stringResource(R.string.credential_quota_server_version_unsupported, version)
+                            } ?: stringResource(R.string.credential_quota_server_unsupported)
+                            else -> stringResource(state.credentialQuotasError.messageResource())
+                        },
                         isError = true,
                     )
                 }

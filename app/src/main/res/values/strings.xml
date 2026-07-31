@@ -265,6 +265,7 @@
     <string name="credential_quota_no_inspection">No completed inspection is available. Run one in Manager Server first.</string>
     <string name="credential_quota_unauthorized">The Admin Key cannot read server inspection results.</string>
     <string name="credential_quota_server_unsupported">This Manager Server does not provide inspection result APIs.</string>
+    <string name="credential_quota_server_version_unsupported">Manager Server %1$s does not support inspection results. Upgrade CPAMP.</string>
     <string name="credential_quota_invalid_server_response">Manager Server returned an invalid inspection response.</string>
     <string name="credential_quota_network_error">Unable to reach Manager Server for inspection results.</string>
     <string name="credential_quota_empty">No credentials were found.</string>
