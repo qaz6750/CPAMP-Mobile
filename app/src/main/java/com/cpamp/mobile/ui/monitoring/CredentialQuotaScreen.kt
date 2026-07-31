@@ -9,12 +9,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -109,6 +113,41 @@ fun CredentialQuotaScreen(
                     )
                 }
             }
+            item {
+                Button(
+                    onClick = viewModel::startInspection,
+                    enabled = !state.inspectionStarting,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (state.inspectionStarting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(end = 8.dp).size(18.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Icon(Icons.Outlined.PlayArrow, contentDescription = null)
+                    }
+                    Text(
+                        stringResource(
+                            if (state.inspectionStarting) R.string.credential_quota_inspection_starting
+                            else R.string.credential_quota_run_inspection,
+                        ),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+            if (state.inspectionStarted || state.inspectionError != null) {
+                item {
+                    Text(
+                        text = state.inspectionError?.let { error ->
+                            stringResource(error.inspectionMessageResource())
+                        } ?: stringResource(R.string.credential_quota_inspection_started),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (state.inspectionError != null) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
             if (state.fromCache) {
                 item {
                     Text(
@@ -161,7 +200,17 @@ private fun CredentialQuotaError.messageResource(): Int = when (this) {
     CredentialQuotaError.ServerUnsupported -> R.string.credential_quota_server_unsupported
     CredentialQuotaError.InvalidResponse -> R.string.credential_quota_invalid_server_response
     CredentialQuotaError.Network -> R.string.credential_quota_network_error
+    CredentialQuotaError.RateLimited -> R.string.credential_quota_inspection_rate_limited
     CredentialQuotaError.Server -> R.string.credential_quota_unavailable
+}
+
+@StringRes
+private fun CredentialQuotaError.inspectionMessageResource(): Int = when (this) {
+    CredentialQuotaError.Unauthorized -> R.string.credential_quota_inspection_unauthorized
+    CredentialQuotaError.ServerUnsupported -> R.string.credential_quota_inspection_unsupported
+    CredentialQuotaError.Network -> R.string.credential_quota_inspection_network_error
+    CredentialQuotaError.RateLimited -> R.string.credential_quota_inspection_rate_limited
+    else -> R.string.credential_quota_inspection_failed
 }
 
 @Composable

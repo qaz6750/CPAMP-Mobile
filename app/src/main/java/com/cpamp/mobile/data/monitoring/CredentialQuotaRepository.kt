@@ -52,6 +52,10 @@ class CredentialQuotaRepository @Inject constructor(
     private val clientFactory: SessionApiClientFactory,
     private val json: Json,
 ) {
+    suspend fun startInspection(session: AuthenticatedSession) {
+        remoteCall { clientFactory.api(session).startCodexInspection() }
+    }
+
     suspend fun cached(profileId: String): CredentialQuotaSnapshot? {
         val entity = cacheDao.get(profileId, CACHE_KIND) ?: return null
         return runCatching { json.decodeFromString<CredentialQuotaSnapshot>(entity.payload) }

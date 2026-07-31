@@ -37,6 +37,9 @@ interface CPAMPApi {
     @GET("v0/management/codex-inspection/runs")
     suspend fun codexInspectionRuns(@Query("limit") limit: Int = 20): CodexInspectionRunsResponseDto
 
+    @POST("v0/management/codex-inspection/runs")
+    suspend fun startCodexInspection()
+
     @GET("v0/management/codex-inspection/runs/{id}")
     suspend fun codexInspectionRun(@Path("id") id: Long): CodexInspectionRunDetailDto
 

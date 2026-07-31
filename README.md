@@ -45,7 +45,7 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 | --- | --- |
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
 | Overview | Health, daily requests, success rate, tokens, estimated cost, interactive token/request trends, and real provider marks |
-| Monitoring | Manual refresh, time/status filters, request details including time to first token, privacy-safe cached recent data, and read-only server inspection quotas |
+| Monitoring | Manual refresh, time/status filters, request details including time to first token, privacy-safe cached recent data, and server inspection quotas |
 | Usage | Interactive usage buckets, on-demand rankings, and privacy-safe Today/7-day/30-day share images |
 | Operations | Manager/collector status, filtered paged logs, log clearing, and saved-server management |
 | Settings | App lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
@@ -56,7 +56,7 @@ Destructive changes show the affected object and require confirmation. Switching
 
 All Manager Server network screens use explicit manual refresh. Monitoring requests only the visible summary and event page; Usage computes only the selected ranking; Operations loads only the selected status or log section. Changing filters or categories never triggers a background request. A share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
 
-The quota screen reads the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. Provider APIs are never queried by the phone. The screen identifies the Manager Server as the source, shows the inspection completion time, and can reuse a privacy-safe per-profile cache when the server is temporarily unavailable. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
+The quota screen reads the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. It can also request a one-off server inspection through `POST /v0/management/codex-inspection/runs`; provider APIs are never queried by the phone. The screen identifies the Manager Server as the source, shows the inspection completion time, and can reuse a privacy-safe per-profile cache when the server is temporarily unavailable. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
 
 ## 🧭 Architecture
 

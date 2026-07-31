@@ -26,9 +26,20 @@ data class CredentialQuotaUiState(
     val fromCache: Boolean = false,
     val loading: Boolean = false,
     val error: CredentialQuotaError? = null,
+    val inspectionStarting: Boolean = false,
+    val inspectionStarted: Boolean = false,
+    val inspectionError: CredentialQuotaError? = null,
 )
 
-enum class CredentialQuotaError { NoCompletedInspection, Unauthorized, ServerUnsupported, InvalidResponse, Network, Server }
+enum class CredentialQuotaError {
+    NoCompletedInspection,
+    Unauthorized,
+    ServerUnsupported,
+    InvalidResponse,
+    Network,
+    RateLimited,
+    Server,
+}
 
 @HiltViewModel
 class CredentialQuotaViewModel @Inject constructor(
@@ -81,12 +92,39 @@ class CredentialQuotaViewModel @Inject constructor(
                 }
         }
     }
+
+    fun startInspection() {
+        if (mutableState.value.inspectionStarting) return
+        val session = sessionRepository.session.value ?: return
+        mutableState.update {
+            it.copy(inspectionStarting = true, inspectionStarted = false, inspectionError = null)
+        }
+        viewModelScope.launch {
+            runSuspendCatching { repository.startInspection(session) }
+                .onSuccess {
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
+                    mutableState.update { state ->
+                        state.copy(inspectionStarting = false, inspectionStarted = true)
+                    }
+                }
+                .onFailure { error ->
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
+                    mutableState.update { state ->
+                        state.copy(
+                            inspectionStarting = false,
+                            inspectionError = error.toCredentialQuotaError(),
+                        )
+                    }
+                }
+        }
+    }
 }
 
 private fun Throwable.toCredentialQuotaError(): CredentialQuotaError = when (this) {
     is NoCompletedInspectionException -> CredentialQuotaError.NoCompletedInspection
     is RemoteFailure.Unauthorized -> CredentialQuotaError.Unauthorized
     is RemoteFailure.NotFound -> CredentialQuotaError.ServerUnsupported
+    is RemoteFailure.RateLimited -> CredentialQuotaError.RateLimited
     is RemoteFailure.InvalidResponse -> CredentialQuotaError.InvalidResponse
     is RemoteFailure.Network, is RemoteFailure.Timeout, is RemoteFailure.Tls -> CredentialQuotaError.Network
     else -> CredentialQuotaError.Server
