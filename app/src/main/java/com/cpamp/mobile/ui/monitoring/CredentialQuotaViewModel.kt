@@ -6,7 +6,6 @@ import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.CredentialQuota
 import com.cpamp.mobile.data.monitoring.CredentialQuotaRepository
-import com.cpamp.mobile.data.monitoring.NoCompletedInspectionException
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.system.ServerVersionObserver
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +33,6 @@ data class CredentialQuotaUiState(
 )
 
 enum class CredentialQuotaError {
-    NoCompletedInspection,
     Unauthorized,
     ServerUnsupported,
     InvalidResponse,
@@ -65,32 +63,33 @@ class CredentialQuotaViewModel @Inject constructor(
             runSuspendCatching { repository.load(session) }
                 .onSuccess { snapshot ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
-                    mutableState.value = CredentialQuotaUiState(
-                        quotas = snapshot.quotas,
-                        runId = snapshot.runId,
-                        finishedAtMs = snapshot.finishedAtMs,
-                        loaded = true,
-                        fromCache = snapshot.fromCache,
-                    )
+                    mutableState.update { state ->
+                        state.copy(
+                            quotas = snapshot.quotas,
+                            runId = snapshot.runId,
+                            finishedAtMs = snapshot.finishedAtMs,
+                            loaded = true,
+                            fromCache = snapshot.fromCache,
+                            loading = false,
+                            error = null,
+                        )
+                    }
                 }
                 .onFailure { error ->
                     if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onFailure
                     val cached = repository.cached(session.profile.id)
-                    mutableState.value = cached?.let { snapshot ->
-                        CredentialQuotaUiState(
-                            quotas = snapshot.quotas,
-                            runId = snapshot.runId,
-                            finishedAtMs = snapshot.finishedAtMs,
+                    mutableState.update { state ->
+                        state.copy(
+                            quotas = cached?.quotas ?: state.quotas,
+                            runId = cached?.runId ?: state.runId,
+                            finishedAtMs = cached?.finishedAtMs ?: state.finishedAtMs,
                             serverVersion = serverVersionObserver.snapshot(session.profile.id).cpampVersion,
                             loaded = true,
-                            fromCache = true,
+                            fromCache = cached != null,
+                            loading = false,
                             error = error.toCredentialQuotaError(),
                         )
-                    } ?: CredentialQuotaUiState(
-                        serverVersion = serverVersionObserver.snapshot(session.profile.id).cpampVersion,
-                        loaded = true,
-                        error = error.toCredentialQuotaError(),
-                    )
+                    }
                 }
         }
     }
@@ -141,7 +140,6 @@ class CredentialQuotaViewModel @Inject constructor(
 }
 
 private fun Throwable.toCredentialQuotaError(): CredentialQuotaError = when (this) {
-    is NoCompletedInspectionException -> CredentialQuotaError.NoCompletedInspection
     is RemoteFailure.Unauthorized -> CredentialQuotaError.Unauthorized
     is RemoteFailure.NotFound -> CredentialQuotaError.ServerUnsupported
     is RemoteFailure.RateLimited -> CredentialQuotaError.RateLimited

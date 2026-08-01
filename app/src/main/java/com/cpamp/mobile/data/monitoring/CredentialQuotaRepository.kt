@@ -15,7 +15,7 @@ enum class CredentialAccountStatus { Active, Disabled }
 
 enum class CredentialQuotaQueryState { Success, NotRequested, Failed }
 
-enum class CredentialQuotaFailure { ServerResult }
+enum class CredentialQuotaFailure { ServerResult, ProviderRequest }
 
 @Serializable
 data class CredentialQuota(
@@ -35,11 +35,12 @@ data class CredentialQuotaWindow(
     val remainingPercent: Double?,
     val resetAtMs: Long? = null,
     val resetLabel: String = "",
+    val label: String = "",
 )
 
 @Serializable
 data class CredentialQuotaSnapshot(
-    val runId: Long,
+    val runId: Long? = null,
     val finishedAtMs: Long,
     val quotas: List<CredentialQuota>,
     val cachedAtMs: Long = 0,
@@ -65,18 +66,11 @@ class CredentialQuotaRepository @Inject constructor(
 
     suspend fun load(session: AuthenticatedSession): CredentialQuotaSnapshot {
         val api = clientFactory.api(session)
-        val latestRun = remoteCall { api.codexInspectionRuns() }
-            .items
-            .asSequence()
-            .filter { it.id > 0 && it.status.equals(COMPLETED_STATUS, ignoreCase = true) }
-            .maxByOrNull { it.finishedAtMs ?: it.updatedAtMs }
-            ?: throw NoCompletedInspectionException()
-        val detail = remoteCall { api.codexInspectionRun(latestRun.id) }
+        val fetchedAtMs = System.currentTimeMillis()
         val snapshot = CredentialQuotaSnapshot(
-            runId = detail.run.id,
-            finishedAtMs = detail.run.finishedAtMs ?: detail.run.updatedAtMs,
-            quotas = detail.results.map(CodexInspectionResultDto::toCredentialQuota),
-            cachedAtMs = System.currentTimeMillis(),
+            finishedAtMs = fetchedAtMs,
+            quotas = api.loadDirectCredentialQuotas(json, fetchedAtMs),
+            cachedAtMs = fetchedAtMs,
         )
         // Persist quota aggregates only; account identifiers remain memory-only.
         cacheDao.upsert(
@@ -100,12 +94,9 @@ class CredentialQuotaRepository @Inject constructor(
     )
 
     private companion object {
-        const val COMPLETED_STATUS = "completed"
         const val CACHE_KIND = "credential-quotas.v1"
     }
 }
-
-internal class NoCompletedInspectionException : IllegalStateException()
 
 internal fun CodexInspectionResultDto.toCredentialQuota(): CredentialQuota {
     val windows = quotaWindows.orEmpty().map { window ->

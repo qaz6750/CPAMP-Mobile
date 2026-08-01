@@ -1,5 +1,8 @@
 package com.cpamp.mobile.data.remote
 
+import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
+import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
+import com.cpamp.mobile.data.remote.model.AuthFilesResponseDto
 import com.cpamp.mobile.data.remote.model.CodexInspectionRunDetailDto
 import com.cpamp.mobile.data.remote.model.CodexInspectionRunsResponseDto
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
@@ -33,6 +36,12 @@ interface CPAMPApi {
 
     @POST("v0/management/monitoring/analytics")
     suspend fun monitoring(@Body request: MonitoringRequestDto): MonitoringResponseDto
+
+    @GET("v0/management/auth-files")
+    suspend fun authFiles(): AuthFilesResponseDto
+
+    @POST("v0/management/api-call")
+    suspend fun apiCall(@Body request: ApiCallRequestDto): ApiCallResponseDto
 
     @GET("v0/management/codex-inspection/runs")
     suspend fun codexInspectionRuns(@Query("limit") limit: Int = 20): CodexInspectionRunsResponseDto

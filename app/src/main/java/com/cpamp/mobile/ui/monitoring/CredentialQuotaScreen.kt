@@ -103,9 +103,14 @@ fun CredentialQuotaScreen(
             state.finishedAtMs?.let { finishedAtMs ->
                 item {
                     Text(
-                        stringResource(
-                            R.string.credential_quota_source,
-                            state.runId ?: 0,
+                        state.runId?.let { runId ->
+                            stringResource(
+                                R.string.credential_quota_source,
+                                runId,
+                                finishedAtMs.asDateTime(),
+                            )
+                        } ?: stringResource(
+                            R.string.credential_quota_direct_source,
                             finishedAtMs.asDateTime(),
                         ),
                         style = MaterialTheme.typography.bodySmall,
@@ -113,27 +118,37 @@ fun CredentialQuotaScreen(
                     )
                 }
             }
-            item {
-                Button(
-                    onClick = viewModel::startInspection,
-                    enabled = !state.inspectionStarting,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (state.inspectionStarting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(end = 8.dp).size(18.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Icon(Icons.Outlined.PlayArrow, contentDescription = null)
-                    }
+            if (state.inspectionError == CredentialQuotaError.ServerUnsupported) {
+                item {
                     Text(
-                        stringResource(
-                            if (state.inspectionStarting) R.string.credential_quota_inspection_starting
-                            else R.string.credential_quota_run_inspection,
-                        ),
-                        modifier = Modifier.padding(start = 8.dp),
+                        stringResource(R.string.credential_quota_inspection_use_usage),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+            } else {
+                item {
+                    Button(
+                        onClick = viewModel::startInspection,
+                        enabled = !state.inspectionStarting,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (state.inspectionStarting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(end = 8.dp).size(18.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(Icons.Outlined.PlayArrow, contentDescription = null)
+                        }
+                        Text(
+                            stringResource(
+                                if (state.inspectionStarting) R.string.credential_quota_inspection_starting
+                                else R.string.credential_quota_run_inspection,
+                            ),
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
                 }
             }
             if (state.inspectionStarted || state.inspectionAlreadyRunning || state.inspectionError != null) {
@@ -200,7 +215,6 @@ fun CredentialQuotaScreen(
 
 @StringRes
 private fun CredentialQuotaError.messageResource(): Int = when (this) {
-    CredentialQuotaError.NoCompletedInspection -> R.string.credential_quota_no_inspection
     CredentialQuotaError.Unauthorized -> R.string.credential_quota_unauthorized
     CredentialQuotaError.ServerUnsupported -> R.string.credential_quota_server_unsupported
     CredentialQuotaError.InvalidResponse -> R.string.credential_quota_invalid_server_response
@@ -405,6 +419,7 @@ private fun CredentialQuota.displayPlan(providerLabel: String): String? = planTy
 @StringRes
 private fun CredentialQuota.failureMessage(): Int = when (failure) {
     com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.ServerResult -> R.string.credential_quota_server_result_error
+    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.ProviderRequest -> R.string.credential_quota_provider_request_error
     null -> R.string.credential_quota_item_error
 }
 
@@ -421,6 +436,7 @@ internal fun credentialQuotaLevel(remainingPercent: Double?): CredentialQuotaLev
 
 @Composable
 private fun CredentialQuotaWindow.detailDurationLabel(): String = when {
+    label.isNotBlank() -> label
     durationSeconds > 0 && durationSeconds % SECONDS_PER_DAY == 0L ->
         stringResource(R.string.credential_quota_window_days, durationSeconds / SECONDS_PER_DAY)
     durationSeconds > 0 && durationSeconds % SECONDS_PER_HOUR == 0L ->
