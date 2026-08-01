@@ -43,8 +43,13 @@ class UsageShareImageWriter @Inject constructor(
         val directory = File(context.cacheDir, "shared-reports").apply { mkdirs() }
         directory.listFiles()?.forEach(File::delete)
         val file = File(directory, "cpamp-usage-${report.fromMs}-${report.toMs}.png")
-        FileOutputStream(file).use { output ->
-            render(report).compress(Bitmap.CompressFormat.PNG, 100, output)
+        val bitmap = render(report)
+        try {
+            FileOutputStream(file).use { output ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+            }
+        } finally {
+            bitmap.recycle()
         }
         FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.files", file)
     }
@@ -688,9 +693,9 @@ class UsageShareImageWriter @Inject constructor(
     private companion object {
         const val WIDTH = 1080
         const val HEIGHT = 2900
-        const val RENDER_SCALE = 1.5f
-        const val OUTPUT_WIDTH = 1620
-        const val OUTPUT_HEIGHT = 4350
+        const val RENDER_SCALE = 2f
+        const val OUTPUT_WIDTH = 2160
+        const val OUTPUT_HEIGHT = 5800
         val BACKGROUND_TOP = Color.rgb(246, 248, 252)
         val BACKGROUND_BOTTOM = Color.rgb(238, 243, 249)
         val CARD = Color.rgb(255, 255, 255)

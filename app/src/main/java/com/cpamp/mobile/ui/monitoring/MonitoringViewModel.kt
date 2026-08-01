@@ -35,12 +35,11 @@ enum class TrafficWindow(val durationMs: Long) {
 data class TrafficFilter(
     val failedOnly: Boolean = false,
     val window: TrafficWindow = TrafficWindow.Day,
-    val models: String = "",
-    val providers: String = "",
-    val minLatencyMs: Long = 0,
+    val models: List<String> = emptyList(),
+    val providers: List<String> = emptyList(),
 ) {
     val cacheable: Boolean
-        get() = window == TrafficWindow.Day
+        get() = window == TrafficWindow.Day && !failedOnly && models.isEmpty() && providers.isEmpty()
 }
 
 data class MonitoringUiState(
@@ -52,6 +51,8 @@ data class MonitoringUiState(
     val fromCache: Boolean = false,
     val updatedAt: Long? = null,
     val error: MonitoringError? = null,
+    val availableModels: List<String> = emptyList(),
+    val availableProviders: List<String> = emptyList(),
 ) {
     val visibleEvents
         get() = response?.events?.items.orEmpty().let { events ->
@@ -93,6 +94,8 @@ class MonitoringViewModel @Inject constructor(
                             response = cached.response,
                             fromCache = true,
                             updatedAt = cached.updatedAt,
+                            availableModels = cached.response.modelFilterOptions(),
+                            availableProviders = cached.response.providerFilterOptions(),
                         )
                     }
                 }
@@ -111,18 +114,13 @@ class MonitoringViewModel @Inject constructor(
         mutableState.update { it.copy(filter = filter.value) }
     }
 
-    fun setModels(value: String) {
-        filter.update { it.copy(models = value.take(FILTER_TEXT_LIMIT)) }
+    fun setModels(value: List<String>) {
+        filter.update { it.copy(models = value.distinct()) }
         mutableState.update { it.copy(filter = filter.value) }
     }
 
-    fun setProviders(value: String) {
-        filter.update { it.copy(providers = value.take(FILTER_TEXT_LIMIT)) }
-        mutableState.update { it.copy(filter = filter.value) }
-    }
-
-    fun setMinLatency(value: Long) {
-        filter.update { it.copy(minLatencyMs = value.coerceAtLeast(0)) }
+    fun setProviders(value: List<String>) {
+        filter.update { it.copy(providers = value.distinct()) }
         mutableState.update { it.copy(filter = filter.value) }
     }
 
@@ -150,10 +148,9 @@ class MonitoringViewModel @Inject constructor(
             nowMs = now,
             timeZone = ZoneId.systemDefault().id,
             filters = MonitoringFiltersDto(
-                models = currentFilter.models.asFilterValues(),
-                providers = currentFilter.providers.asFilterValues(),
+                models = currentFilter.models,
+                providers = currentFilter.providers,
                 failedOnly = currentFilter.failedOnly,
-                minLatencyMs = currentFilter.minLatencyMs,
             ),
             include = MonitoringIncludeDto(
                 summary = true,
@@ -163,7 +160,11 @@ class MonitoringViewModel @Inject constructor(
         runSuspendCatching {
             monitoringRepository.refresh(session, request, cacheResult = currentFilter.cacheable)
         }.onSuccess { response ->
-            if (filter.value.window != currentFilter.window || sessionRepository.session.value?.profile?.id != session.profile.id) {
+            if (sessionRepository.session.value?.profile?.id != session.profile.id) {
+                return@onSuccess
+            }
+            if (filter.value != currentFilter) {
+                mutableState.update { it.copy(loading = false, refreshing = false) }
                 return@onSuccess
             }
             mutableState.update { state ->
@@ -175,10 +176,16 @@ class MonitoringViewModel @Inject constructor(
                     fromCache = false,
                     updatedAt = System.currentTimeMillis(),
                     error = null,
+                    availableModels = (state.availableModels + response.modelFilterOptions()).filterOptions(),
+                    availableProviders = (state.availableProviders + response.providerFilterOptions()).filterOptions(),
                 )
             }
         }.onFailure { error ->
-            if (filter.value.window != currentFilter.window || sessionRepository.session.value?.profile?.id != session.profile.id) {
+            if (sessionRepository.session.value?.profile?.id != session.profile.id) {
+                return@onFailure
+            }
+            if (filter.value != currentFilter) {
+                mutableState.update { it.copy(loading = false, refreshing = false) }
                 return@onFailure
             }
             mutableState.update { state ->
@@ -192,12 +199,18 @@ class MonitoringViewModel @Inject constructor(
     }
 }
 
-internal fun String.asFilterValues(): List<String> = split(',')
-    .map(String::trim)
+private fun MonitoringResponseDto.modelFilterOptions(): List<String> = events?.items.orEmpty()
+    .map { it.model }
+    .filterOptions()
+
+private fun MonitoringResponseDto.providerFilterOptions(): List<String> = events?.items.orEmpty()
+    .map { it.authProviderSnapshot }
+    .filterOptions()
+
+private fun List<String>.filterOptions(): List<String> = map(String::trim)
     .filter(String::isNotEmpty)
     .distinct()
-
-private const val FILTER_TEXT_LIMIT = 240
+    .sortedBy { it.lowercase() }
 
 private fun Throwable.toMonitoringError(): MonitoringError = when (this) {
     is RemoteFailure.Unauthorized -> MonitoringError.Unauthorized

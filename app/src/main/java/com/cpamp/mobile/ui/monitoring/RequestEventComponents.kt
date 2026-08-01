@@ -138,9 +138,9 @@ internal fun RequestEventDetailsTitle(event: RequestEventDto) {
 }
 
 @Composable
-internal fun RequestEventDetails(event: RequestEventDto) {
+internal fun RequestEventDetails(event: RequestEventDto, modifier: Modifier = Modifier) {
     LazyColumn(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(0.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

@@ -260,10 +260,9 @@
     <string name="time_filter_refresh_hint">The selected time range is applied on the next manual refresh.</string>
     <string name="filter_models">Models</string>
     <string name="filter_providers">Providers</string>
-    <string name="filter_comma_separated">Comma-separated</string>
-    <string name="filter_min_latency">Minimum latency</string>
-    <string name="filter_any_latency">Any</string>
-    <string name="filter_latency_ms">%1$d ms</string>
+    <string name="all_models">All models</string>
+    <string name="all_providers">All providers</string>
+    <string name="selected_filter_count">%1$s · %2$d</string>
     <string name="filters_refresh_hint">Tap refresh to apply these filters.</string>
     <string name="request_filters">Filters</string>
     <string name="active_advanced_filter_count">%1$d advanced</string>

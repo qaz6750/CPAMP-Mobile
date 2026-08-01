@@ -18,9 +18,9 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Toll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,6 +37,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
@@ -46,6 +48,7 @@ import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
@@ -92,11 +95,12 @@ fun MonitoringScreen(
             item {
                 TrafficFilterCard(
                     filter = state.filter,
+                    availableModels = state.availableModels,
+                    availableProviders = state.availableProviders,
                     onWindowSelected = viewModel::setWindow,
                     onFailedOnlyChanged = viewModel::setFailedOnly,
                     onModelsChanged = viewModel::setModels,
                     onProvidersChanged = viewModel::setProviders,
-                    onMinLatencyChanged = viewModel::setMinLatency,
                 )
             }
             if (state.fromCache || state.error != null) {
@@ -157,8 +161,8 @@ fun MonitoringScreen(
                     ContentStateCard(
                         message = stringResource(R.string.no_matching_requests) + "\n" +
                             stringResource(
-                                if (state.filter.failedOnly && state.filter.models.isBlank() &&
-                                    state.filter.providers.isBlank() && state.filter.minLatencyMs == 0L
+                                if (state.filter.failedOnly && state.filter.models.isEmpty() &&
+                                    state.filter.providers.isEmpty()
                                 ) R.string.failed_filter_empty_hint else R.string.adjust_filters,
                             ),
                     )
@@ -172,17 +176,28 @@ fun MonitoringScreen(
     }
 
     selectedEvent?.let { event ->
-        AlertDialog(
+        Dialog(
             onDismissRequest = { selectedEvent = null },
-            modifier = Modifier.widthIn(max = 280.dp).heightIn(max = 340.dp),
-            title = { RequestEventDetailsTitle(event) },
-            text = { RequestEventDetails(event) },
-            confirmButton = {
-                TextButton(onClick = { selectedEvent = null }) {
-                    Text(stringResource(R.string.dismiss))
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            AppCard(
+                modifier = Modifier.fillMaxWidth(0.9f).widthIn(max = 380.dp).heightIn(min = 400.dp, max = 500.dp),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    RequestEventDetailsTitle(event)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    RequestEventDetails(event, modifier = Modifier.weight(1f))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { selectedEvent = null }) {
+                            Text(stringResource(R.string.dismiss))
+                        }
+                    }
                 }
-            },
-        )
+            }
+        }
     }
 }
 
