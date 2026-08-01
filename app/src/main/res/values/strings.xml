@@ -319,9 +319,11 @@
     <string name="detail_status">Status</string>
     <string name="detail_model">Model</string>
     <string name="detail_endpoint">Endpoint</string>
+    <string name="detail_service">Service</string>
     <string name="detail_provider">Provider</string>
     <string name="detail_account">Account</string>
     <string name="detail_tokens">Tokens</string>
+    <string name="detail_reasoning">Reasoning</string>
     <string name="detail_latency">Latency</string>
     <string name="detail_ttft">Time to first token</string>
     <string name="detail_error">Error summary</string>

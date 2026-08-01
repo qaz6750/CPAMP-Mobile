@@ -319,9 +319,11 @@
     <string name="detail_status">状态</string>
     <string name="detail_model">模型</string>
     <string name="detail_endpoint">端点</string>
+    <string name="detail_service">服务</string>
     <string name="detail_provider">Provider</string>
     <string name="detail_account">账号</string>
     <string name="detail_tokens">Token</string>
+    <string name="detail_reasoning">思考</string>
     <string name="detail_latency">延迟</string>
     <string name="detail_ttft">首字耗时</string>
     <string name="detail_error">错误摘要</string>

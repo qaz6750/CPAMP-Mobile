@@ -141,12 +141,12 @@ internal fun RequestEventDetails(event: RequestEventDto) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     DetailRow(stringResource(R.string.detail_model), event.model.ifBlank { "—" })
                     DetailRow(
-                        stringResource(R.string.detail_endpoint),
-                        event.endpoint.ifBlank { event.path.ifBlank { "—" } },
+                        stringResource(R.string.detail_service),
+                        event.source.ifBlank { "—" },
                     )
                     DetailRow(
                         stringResource(R.string.detail_provider),
-                        event.authProviderSnapshot.ifBlank { event.source.ifBlank { "—" } },
+                        event.authProviderSnapshot.ifBlank { "—" },
                     )
                     DetailRow(
                         stringResource(R.string.detail_account),
@@ -159,6 +159,7 @@ internal fun RequestEventDetails(event: RequestEventDto) {
             AppCard {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens())
+                    DetailRow(stringResource(R.string.detail_reasoning), event.reasoningTokens.compactTokens())
                     DetailRow(stringResource(R.string.detail_ttft), event.ttftMs?.asLatency() ?: "—")
                     DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.asLatency() ?: "—")
                     if (event.failed) {

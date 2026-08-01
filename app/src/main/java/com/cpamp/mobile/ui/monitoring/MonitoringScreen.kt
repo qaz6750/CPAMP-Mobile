@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -19,10 +20,9 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Toll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +36,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
@@ -49,7 +51,6 @@ import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MonitoringScreen(
     contentPadding: PaddingValues,
@@ -167,12 +168,23 @@ fun MonitoringScreen(
     }
 
     selectedEvent?.let { event ->
-        ModalBottomSheet(
+        Dialog(
             onDismissRequest = { selectedEvent = null },
-            containerColor = MaterialTheme.colorScheme.background,
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
-            RequestEventDetails(event)
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .widthIn(max = 560.dp)
+                    .heightIn(max = 680.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                shadowElevation = 12.dp,
+            ) {
+                RequestEventDetails(event)
+            }
         }
     }
 }
