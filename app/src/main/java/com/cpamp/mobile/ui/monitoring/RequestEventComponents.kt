@@ -80,12 +80,14 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
                         Text(
                             stringResource(R.string.event_latency_value, it.asLatency()),
                             style = MaterialTheme.typography.labelSmall,
+                            color = requestDurationColor(it, LATENCY_WARNING_MS, LATENCY_CRITICAL_MS),
                         )
                     }
                     event.ttftMs?.let {
                         Text(
                             stringResource(R.string.event_ttft_value, it.asLatency()),
                             style = MaterialTheme.typography.labelSmall,
+                            color = requestDurationColor(it, TTFT_WARNING_MS, TTFT_CRITICAL_MS),
                         )
                     }
                     event.failStatusCode?.let {
@@ -160,8 +162,18 @@ internal fun RequestEventDetails(event: RequestEventDto) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens())
                     DetailRow(stringResource(R.string.detail_reasoning), event.reasoningTokens.compactTokens())
-                    DetailRow(stringResource(R.string.detail_ttft), event.ttftMs?.asLatency() ?: "—")
-                    DetailRow(stringResource(R.string.detail_latency), event.latencyMs?.asLatency() ?: "—")
+                    DetailRow(
+                        stringResource(R.string.detail_ttft),
+                        event.ttftMs?.asLatency() ?: "—",
+                        event.ttftMs?.let { requestDurationColor(it, TTFT_WARNING_MS, TTFT_CRITICAL_MS) }
+                            ?: MaterialTheme.colorScheme.onSurface,
+                    )
+                    DetailRow(
+                        stringResource(R.string.detail_latency),
+                        event.latencyMs?.asLatency() ?: "—",
+                        event.latencyMs?.let { requestDurationColor(it, LATENCY_WARNING_MS, LATENCY_CRITICAL_MS) }
+                            ?: MaterialTheme.colorScheme.onSurface,
+                    )
                     if (event.failed) {
                         DetailRow(
                             stringResource(R.string.detail_error),
@@ -183,4 +195,16 @@ private fun DetailRow(label: String, value: String, valueColor: Color = Material
     }
 }
 
+@Composable
+private fun requestDurationColor(durationMs: Long, warningMs: Long, criticalMs: Long): Color = when {
+    durationMs < warningMs -> SUCCESS_COLOR
+    durationMs < criticalMs -> WARNING_COLOR
+    else -> MaterialTheme.colorScheme.error
+}
+
 private val SUCCESS_COLOR = Color(0xFF2E7D5B)
+private val WARNING_COLOR = Color(0xFFF59E0B)
+private const val TTFT_WARNING_MS = 800L
+private const val TTFT_CRITICAL_MS = 2_000L
+private const val LATENCY_WARNING_MS = 2_000L
+private const val LATENCY_CRITICAL_MS = 5_000L
