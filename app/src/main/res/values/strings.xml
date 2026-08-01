@@ -48,6 +48,7 @@
     <string name="usage_credentials">Credentials</string>
     <string name="usage_calls_value">%1$s calls</string>
     <string name="this_month">This month</string>
+    <string name="specific_month">Specific month</string>
     <string name="today">Today</string>
     <string name="share_usage">Share usage report</string>
     <string name="share_usage_failed">The usage report could not be generated.</string>

@@ -48,6 +48,7 @@
     <string name="usage_credentials">凭据</string>
     <string name="usage_calls_value">%1$s 次调用</string>
     <string name="this_month">本月</string>
+    <string name="specific_month">指定月份</string>
     <string name="today">今天</string>
     <string name="share_usage">分享用量报告</string>
     <string name="share_usage_failed">无法生成用量报告。</string>

@@ -53,6 +53,8 @@ import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.components.RequestHealthChart
 import com.cpamp.mobile.ui.components.TokenStructureChart
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun UsageAnalyticsScreen(
@@ -120,6 +122,22 @@ fun UsageAnalyticsScreen(
                             onClick = { viewModel.setWindow(window) },
                             label = { Text(stringResource(window.labelResource)) },
                         )
+                    }
+                }
+            }
+            if (state.window == UsageWindow.SpecificMonth) {
+                item {
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        state.availableMonths.forEach { month ->
+                            FilterChip(
+                                selected = state.selectedMonth == month,
+                                onClick = { viewModel.setMonth(month) },
+                                label = { Text(month.monthLabel()) },
+                            )
+                        }
                     }
                 }
             }
@@ -294,7 +312,11 @@ private val UsageWindow.labelResource: Int
         UsageWindow.Day -> R.string.today
         UsageWindow.Week -> R.string.last_7_days
         UsageWindow.Month -> R.string.this_month
+        UsageWindow.SpecificMonth -> R.string.specific_month
     }
+
+private fun YearMonth.monthLabel(): String =
+    format(DateTimeFormatter.ofPattern("yyyy-MM"))
 
 @get:StringRes
 private val UsageRanking.labelResource: Int

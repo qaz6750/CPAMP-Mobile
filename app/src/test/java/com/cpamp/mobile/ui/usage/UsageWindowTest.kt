@@ -2,6 +2,7 @@ package com.cpamp.mobile.ui.usage
 
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
 import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
@@ -31,6 +32,31 @@ class UsageWindowTest {
         val expected = ZonedDateTime.of(2026, 3, 1, 0, 0, 0, 0, zone).toInstant().toEpochMilli()
 
         assertEquals(UsageRange(expected, now), usageWindowRange(UsageWindow.Month, now, zone))
+    }
+
+    @Test
+    fun `specific historical month covers the complete local month`() {
+        val zone = ZoneId.of("Asia/Shanghai")
+        val now = ZonedDateTime.of(2026, 7, 27, 15, 30, 0, 0, zone).toInstant().toEpochMilli()
+        val expectedFrom = ZonedDateTime.of(2026, 2, 1, 0, 0, 0, 0, zone).toInstant().toEpochMilli()
+        val expectedTo = ZonedDateTime.of(2026, 3, 1, 0, 0, 0, 0, zone).toInstant().toEpochMilli() - 1
+
+        assertEquals(
+            UsageRange(expectedFrom, expectedTo),
+            usageWindowRange(UsageWindow.SpecificMonth, now, zone, YearMonth.of(2026, 2)),
+        )
+    }
+
+    @Test
+    fun `specific current month does not extend beyond now`() {
+        val zone = ZoneId.of("Asia/Shanghai")
+        val now = ZonedDateTime.of(2026, 7, 27, 15, 30, 0, 0, zone).toInstant().toEpochMilli()
+        val expectedFrom = ZonedDateTime.of(2026, 7, 1, 0, 0, 0, 0, zone).toInstant().toEpochMilli()
+
+        assertEquals(
+            UsageRange(expectedFrom, now),
+            usageWindowRange(UsageWindow.SpecificMonth, now, zone, YearMonth.of(2026, 7)),
+        )
     }
 
     @Test

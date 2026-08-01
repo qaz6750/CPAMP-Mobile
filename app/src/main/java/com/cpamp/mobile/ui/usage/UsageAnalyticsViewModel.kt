@@ -17,6 +17,7 @@ import com.cpamp.mobile.ui.share.UsageShareImageWriter
 import com.cpamp.mobile.ui.share.toUsageShareReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
@@ -32,6 +33,7 @@ enum class UsageWindow(val durationMs: Long) {
     Day(MILLIS_PER_DAY),
     Week(MILLIS_PER_WEEK),
     Month(30 * MILLIS_PER_DAY),
+    SpecificMonth(31 * MILLIS_PER_DAY),
 }
 
 data class UsageRange(val fromMs: Long, val toMs: Long)
@@ -50,6 +52,8 @@ data class UsageAnalyticsUiState(
     val ranking: UsageRanking = UsageRanking.Models,
     val loadedWindow: UsageWindow? = null,
     val loadedRange: UsageRange? = null,
+    val selectedMonth: YearMonth? = null,
+    val availableMonths: List<YearMonth> = emptyList(),
     val loading: Boolean = false,
     val sharing: Boolean = false,
     val shareUri: Uri? = null,
@@ -92,6 +96,7 @@ class UsageAnalyticsViewModel @Inject constructor(
                 mutableState.value = UsageAnalyticsUiState(
                     window = window,
                     ranking = ranking,
+                    availableMonths = recentMonths(),
                     loading = true,
                 )
                 refreshInternal(session, window, ranking)
@@ -101,9 +106,23 @@ class UsageAnalyticsViewModel @Inject constructor(
 
     fun setWindow(window: UsageWindow) {
         if (mutableState.value.window == window) return
-        mutableState.update { it.copy(window = window) }
+        val month = mutableState.value.selectedMonth ?: mutableState.value.availableMonths.firstOrNull()
+        mutableState.update {
+            it.copy(
+                window = window,
+                selectedMonth = if (window == UsageWindow.SpecificMonth) month else it.selectedMonth,
+            )
+        }
         val session = sessionRepository.session.value ?: return
         scheduleRefresh(session, window, mutableState.value.ranking)
+    }
+
+    fun setMonth(month: YearMonth) {
+        val current = mutableState.value
+        if (current.window == UsageWindow.SpecificMonth && current.selectedMonth == month) return
+        mutableState.update { it.copy(window = UsageWindow.SpecificMonth, selectedMonth = month) }
+        val session = sessionRepository.session.value ?: return
+        scheduleRefresh(session, UsageWindow.SpecificMonth, current.ranking)
     }
 
     fun setRanking(ranking: UsageRanking) {
@@ -143,7 +162,7 @@ class UsageAnalyticsViewModel @Inject constructor(
                     it.timeline.usesHourlyBuckets()
             }
             val range = current.loadedRange?.takeIf { reusable != null }
-                ?: usageWindowRange(window, System.currentTimeMillis())
+                ?: usageWindowRange(window, System.currentTimeMillis(), month = current.selectedMonth)
             runSuspendCatching {
                 val response = reusable ?: monitoringRepository.refresh(
                     session = session,
@@ -164,6 +183,8 @@ class UsageAnalyticsViewModel @Inject constructor(
                 val effectiveRange = if (window == UsageWindow.Month) {
                     effectiveUsageRange(response, range)
                         ?: UsageEffectiveRange(range.fromMs, range.toMs, usageRangeDayCount(range))
+                } else if (window == UsageWindow.SpecificMonth) {
+                    UsageEffectiveRange(range.fromMs, range.toMs, usageRangeDayCount(range))
                 } else {
                     UsageEffectiveRange(range.fromMs, range.toMs, window.days)
                 }
@@ -195,11 +216,11 @@ class UsageAnalyticsViewModel @Inject constructor(
     ) {
         mutableState.update { it.copy(loading = true, error = false) }
         val now = System.currentTimeMillis()
-        val range = usageWindowRange(window, now)
+        val range = usageWindowRange(window, now, month = mutableState.value.selectedMonth)
         val request = MonitoringRequestDto(
             fromMs = range.fromMs,
             toMs = range.toMs,
-            nowMs = now,
+            nowMs = range.toMs,
             timeZone = ZoneId.systemDefault().id,
             include = MonitoringIncludeDto(
                 summary = true,
@@ -240,16 +261,31 @@ internal fun usageWindowRange(
     window: UsageWindow,
     nowMs: Long,
     zoneId: ZoneId = ZoneId.systemDefault(),
+    month: YearMonth? = null,
 ): UsageRange {
+    if (window == UsageWindow.SpecificMonth) {
+        val target = month ?: YearMonth.now(zoneId)
+        val fromMs = target.atDay(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
+        val endExclusive = target.plusMonths(1).atDay(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
+        return UsageRange(fromMs, minOf(endExclusive - 1, nowMs))
+    }
     val fromMs = when (window) {
         UsageWindow.Day -> Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
             .atStartOfDay(zoneId).toInstant().toEpochMilli()
         UsageWindow.Week -> nowMs - window.durationMs
-        UsageWindow.Month -> Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
+        else -> Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
             .withDayOfMonth(1)
             .atStartOfDay(zoneId).toInstant().toEpochMilli()
     }
     return UsageRange(fromMs, nowMs)
+}
+
+internal fun recentMonths(
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    count: Int = 12,
+): List<YearMonth> {
+    val current = YearMonth.now(zoneId)
+    return (0 until count).map { current.minusMonths(it.toLong()) }
 }
 
 internal fun effectiveUsageRange(
@@ -296,4 +332,5 @@ private val UsageWindow.days: Int
         UsageWindow.Day -> 1
         UsageWindow.Week -> 7
         UsageWindow.Month -> 31
+        UsageWindow.SpecificMonth -> 31
     }
