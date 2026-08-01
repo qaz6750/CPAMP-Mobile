@@ -49,7 +49,7 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
         ) {
             Box(
                 modifier = Modifier.width(5.dp).fillMaxHeight().background(
-                    color = if (event.failed) MaterialTheme.colorScheme.error else SUCCESS_COLOR,
+                    color = if (event.failed) MaterialTheme.colorScheme.error else SUCCESS_ACCENT_COLOR,
                     shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp),
                 ),
             )
@@ -203,6 +203,7 @@ private fun requestDurationColor(durationMs: Long, warningMs: Long, criticalMs: 
 }
 
 private val SUCCESS_COLOR = Color(0xFF2E7D5B)
+private val SUCCESS_ACCENT_COLOR = Color(0xFF4CAF7A)
 private val WARNING_COLOR = Color(0xFFF59E0B)
 private const val TTFT_WARNING_MS = 800L
 private const val TTFT_CRITICAL_MS = 2_000L
