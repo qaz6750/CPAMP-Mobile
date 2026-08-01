@@ -302,6 +302,7 @@
     <string name="credential_quota_item_error">无法读取此凭证的额度。</string>
     <string name="credential_quota_server_result_error">最近一次服务器巡检未生成此凭证的额度窗口。</string>
     <string name="credential_quota_provider_request_error">此凭证的提供商额度查询失败。</string>
+    <string name="credential_quota_temporarily_unavailable">暂时无法获取额度，请稍后刷新重试。</string>
     <string name="credential_quota_missing_auth">此凭证缺少可用的认证索引。</string>
     <string name="credential_quota_rate_limited">提供商限制了此次额度请求。</string>
     <string name="credential_quota_provider_unavailable">提供商暂时不可用。</string>

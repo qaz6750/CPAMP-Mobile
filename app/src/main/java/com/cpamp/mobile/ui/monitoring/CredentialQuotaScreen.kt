@@ -9,16 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -118,56 +114,6 @@ fun CredentialQuotaScreen(
                     )
                 }
             }
-            if (state.inspectionError == CredentialQuotaError.ServerUnsupported) {
-                item {
-                    Text(
-                        stringResource(R.string.credential_quota_inspection_use_usage),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            } else {
-                item {
-                    Button(
-                        onClick = viewModel::startInspection,
-                        enabled = !state.inspectionStarting,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        if (state.inspectionStarting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.padding(end = 8.dp).size(18.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Icon(Icons.Outlined.PlayArrow, contentDescription = null)
-                        }
-                        Text(
-                            stringResource(
-                                if (state.inspectionStarting) R.string.credential_quota_inspection_starting
-                                else R.string.credential_quota_run_inspection,
-                            ),
-                            modifier = Modifier.padding(start = 8.dp),
-                        )
-                    }
-                }
-            }
-            if (state.inspectionStarted || state.inspectionAlreadyRunning || state.inspectionError != null) {
-                item {
-                    Text(
-                        text = state.inspectionError?.let { error ->
-                            state.inspectionStatusCode?.let { statusCode ->
-                                stringResource(R.string.credential_quota_inspection_failed_status, statusCode)
-                            } ?: stringResource(error.inspectionMessageResource())
-                        } ?: stringResource(
-                            if (state.inspectionAlreadyRunning) R.string.credential_quota_inspection_running
-                            else R.string.credential_quota_inspection_started,
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (state.inspectionError != null) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
             if (state.fromCache) {
                 item {
                     Text(
@@ -221,15 +167,6 @@ private fun CredentialQuotaError.messageResource(): Int = when (this) {
     CredentialQuotaError.Network -> R.string.credential_quota_network_error
     CredentialQuotaError.RateLimited -> R.string.credential_quota_inspection_rate_limited
     CredentialQuotaError.Server -> R.string.credential_quota_unavailable
-}
-
-@StringRes
-private fun CredentialQuotaError.inspectionMessageResource(): Int = when (this) {
-    CredentialQuotaError.Unauthorized -> R.string.credential_quota_inspection_unauthorized
-    CredentialQuotaError.ServerUnsupported -> R.string.credential_quota_inspection_unsupported
-    CredentialQuotaError.Network -> R.string.credential_quota_inspection_network_error
-    CredentialQuotaError.RateLimited -> R.string.credential_quota_inspection_rate_limited
-    else -> R.string.credential_quota_inspection_failed
 }
 
 @Composable
@@ -323,9 +260,9 @@ private fun CredentialQuotaDetailCard(quota: CredentialQuota) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 quota.queryState == CredentialQuotaQueryState.Failed && quota.windows.isEmpty() -> Text(
-                    stringResource(quota.failureMessage()),
+                    stringResource(R.string.credential_quota_temporarily_unavailable),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 quota.windows.isEmpty() -> Text(
                     stringResource(R.string.credential_quota_no_windows),
@@ -414,13 +351,6 @@ private fun CredentialQuota.displayPlan(providerLabel: String): String? = planTy
     plan.isNotEmpty() &&
         plan.lowercase() !in setOf("unknown", "none", "null", "codex", "openai", "chatgpt", "xai", "grok") &&
         !providerLabel.equals(plan, ignoreCase = true)
-}
-
-@StringRes
-private fun CredentialQuota.failureMessage(): Int = when (failure) {
-    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.ServerResult -> R.string.credential_quota_server_result_error
-    com.cpamp.mobile.data.monitoring.CredentialQuotaFailure.ProviderRequest -> R.string.credential_quota_provider_request_error
-    null -> R.string.credential_quota_item_error
 }
 
 private val QuotaOrange = androidx.compose.ui.graphics.Color(0xFFF59E0B)

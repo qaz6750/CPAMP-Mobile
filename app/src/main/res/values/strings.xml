@@ -302,6 +302,7 @@
     <string name="credential_quota_item_error">Unable to read this credential quota.</string>
     <string name="credential_quota_server_result_error">The latest server inspection did not produce quota windows for this credential.</string>
     <string name="credential_quota_provider_request_error">The provider quota request failed for this credential.</string>
+    <string name="credential_quota_temporarily_unavailable">Quota is temporarily unavailable. Refresh to try again.</string>
     <string name="credential_quota_missing_auth">This credential has no usable authentication index.</string>
     <string name="credential_quota_rate_limited">The provider rate-limited this quota request.</string>
     <string name="credential_quota_provider_unavailable">The provider is temporarily unavailable.</string>
