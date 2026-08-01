@@ -470,7 +470,9 @@ private suspend fun CPAMPApi.requestQuota(
     val response = remoteCall {
         apiCall(ApiCallRequestDto(authIndex, method, url, headers, data))
     }
-    if (response.resolvedStatusCode !in 200..299) throw DirectQuotaRequestException(response.resolvedStatusCode)
+    response.resolvedStatusCode?.let { statusCode ->
+        if (statusCode !in 200..299) throw DirectQuotaRequestException(statusCode)
+    }
     return response.normalizedBody(json) ?: error("Empty provider response")
 }
 
@@ -516,7 +518,9 @@ private val AuthFileDto.resolvedProvider: String
     }
 
 private val AuthFileDto.requiredAuthIndex: String
-    get() = authIndex.ifBlank { snakeAuthIndex }.trim().ifBlank { error("Missing auth index") }
+    get() = authIndex.asString().orEmpty()
+        .ifBlank { snakeAuthIndex.asString().orEmpty() }
+        .ifBlank { error("Missing auth index") }
 
 private val AuthFileDto.resolvedProjectId: String
     get() = projectId.ifBlank { snakeProjectId }.trim()

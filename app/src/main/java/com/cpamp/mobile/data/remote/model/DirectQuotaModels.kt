@@ -14,8 +14,8 @@ data class AuthFileDto(
     val name: String = "",
     val type: String = "",
     val provider: String = "",
-    val authIndex: String = "",
-    @SerialName("auth_index") val snakeAuthIndex: String = "",
+    val authIndex: JsonElement? = null,
+    @SerialName("auth_index") val snakeAuthIndex: JsonElement? = null,
     val disabled: Boolean = false,
     val runtimeOnly: Boolean = false,
     @SerialName("runtime_only") val snakeRuntimeOnly: Boolean = false,
@@ -34,7 +34,7 @@ data class AuthFileDto(
 
 @Serializable
 data class ApiCallRequestDto(
-    val authIndex: String,
+    @SerialName("auth_index") val authIndex: String,
     val method: String,
     val url: String,
     val header: Map<String, String>,
@@ -47,5 +47,5 @@ data class ApiCallResponseDto(
     @SerialName("statusCode") val camelStatusCode: Int? = null,
     val body: JsonElement? = null,
 ) {
-    val resolvedStatusCode: Int get() = statusCode ?: camelStatusCode ?: 0
+    val resolvedStatusCode: Int? get() = statusCode ?: camelStatusCode
 }

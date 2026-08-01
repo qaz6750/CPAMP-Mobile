@@ -1,8 +1,13 @@
 package com.cpamp.mobile.data.remote
 
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
+import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
+import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
+import com.cpamp.mobile.data.remote.model.AuthFilesResponseDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -84,4 +89,34 @@ class RemoteModelsTest {
         assertEquals(25, point.cachedTokens)
         assertEquals(10, point.reasoningTokens)
     }
+
+      @Test
+      fun `quota api call serializes manager auth index field`() {
+        val request = ApiCallRequestDto(
+          authIndex = "12",
+          method = "GET",
+          url = "https://example.com/quota",
+          header = emptyMap(),
+        )
+
+        val payload = json.encodeToJsonElement(ApiCallRequestDto.serializer(), request) as JsonObject
+        assertEquals(JsonPrimitive("12"), payload["auth_index"])
+        assertEquals(null, payload["authIndex"])
+      }
+
+      @Test
+      fun `auth files accept numeric auth index`() {
+        val response = json.decodeFromString<AuthFilesResponseDto>(
+          """{"files":[{"name":"account.json","auth_index":12}]}""",
+        )
+
+        assertEquals(JsonPrimitive(12), response.files.single().snakeAuthIndex)
+      }
+
+      @Test
+      fun `quota response may omit provider status code`() {
+        val response = json.decodeFromString<ApiCallResponseDto>("""{"body":{"ok":true}}""")
+
+        assertEquals(null, response.resolvedStatusCode)
+      }
 }
