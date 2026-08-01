@@ -6,6 +6,7 @@ import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
 import com.cpamp.mobile.data.remote.model.AuthFileDto
 import com.cpamp.mobile.data.remote.remoteCall
 import java.time.Instant
+import java.util.Base64
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -83,7 +84,7 @@ private suspend fun AuthFileDto.loadCodexQuota(
         "Content-Type" to "application/json",
         "User-Agent" to "codex_cli_rs/0.76.0 (Debian 13.0.0; x86_64) WindowsTerminal",
     )
-    resolvedAccountId?.let { headers["Chatgpt-Account-Id"] = it }
+    resolveCodexAccountId(json)?.let { headers["Chatgpt-Account-Id"] = it }
     val payload = api.requestQuota(
         json = json,
         authIndex = requiredAuthIndex,
@@ -257,18 +258,23 @@ private suspend fun AuthFileDto.loadKimiQuota(
         "https://api.kimi.com/coding/v1/usages",
         mapOf("Authorization" to "Bearer \$TOKEN\$"),
     )
-    val records = payload.collectQuotaRecords()
+    val records = payload.collectKimiQuotaRecords()
     val windows = records.mapNotNull { record ->
         val used = record.value("used", "usage", "current", "used_amount").asDouble()
         val limit = record.value("total", "limit", "quota", "max").asDouble()
-        if (used == null && limit == null) return@mapNotNull null
+        val remaining = record.value("remaining", "remaining_amount").asDouble()
+        if (used == null && remaining == null && limit == null) return@mapNotNull null
         val reset = record.value("reset_time", "resetTime", "reset_at", "resetAt").asString()
         val label = record.value("model", "name", "label", "window", "id").asString().orEmpty()
         CredentialQuotaWindow(
             durationSeconds = durationFromText(label),
-            remainingPercent = if (used != null && limit != null && limit > 0) {
-                (100.0 - used * 100.0 / limit).coerceIn(0.0, 100.0)
-            } else null,
+            remainingPercent = when {
+                remaining != null && limit != null && limit > 0 ->
+                    (remaining * 100.0 / limit).coerceIn(0.0, 100.0)
+                used != null && limit != null && limit > 0 ->
+                    (100.0 - used * 100.0 / limit).coerceIn(0.0, 100.0)
+                else -> null
+            },
             resetAtMs = reset.toEpochMs(),
             resetLabel = reset.orEmpty().takeIf { reset.toEpochMs() == null }.orEmpty(),
             label = label,
@@ -531,10 +537,53 @@ private val AuthFileDto.resolvedPlanType: String
     get() = planType.ifBlank { snakePlanType }.trim()
         .ifBlank { idToken.asObject()?.value("plan_type", "planType").asString().orEmpty() }
 
-private val AuthFileDto.resolvedAccountId: String?
-    get() = accountId.trim().ifBlank {
-        idToken.asObject()?.value("account_id", "accountId", "chatgpt_account_id").asString().orEmpty()
-    }.ifBlank { null }
+internal fun AuthFileDto.resolveCodexAccountId(json: Json): String? {
+    sequenceOf(chatgptAccountId, camelChatgptAccountId, accountId, camelAccountId)
+        .map(String::trim)
+        .firstOrNull(String::isNotEmpty)
+        ?.let { return it }
+
+    val containers = listOfNotNull(
+        metadata.asIdentityObject(json),
+        attributes.asIdentityObject(json),
+    )
+    containers.forEach { container ->
+        container.codexAccountId(json)?.let { return it }
+    }
+
+    val tokens = buildList {
+        add(idToken)
+        add(camelIdToken)
+        containers.forEach { container ->
+            add(container.value("id_token", "idToken"))
+        }
+    }
+    tokens.forEach { token ->
+        token.asIdentityObject(json)?.codexAccountId(json)?.let { return it }
+    }
+    return null
+}
+
+private fun JsonObject.codexAccountId(json: Json): String? =
+    value("chatgpt_account_id", "chatgptAccountId", "account_id", "accountId").asString()
+        ?: value("https://api.openai.com/auth")
+            .asIdentityObject(json)
+            ?.value("chatgpt_account_id", "chatgptAccountId", "account_id", "accountId")
+            .asString()
+
+private fun JsonElement?.asIdentityObject(json: Json): JsonObject? {
+    asObject()?.let { return it }
+    val content = asString() ?: return null
+    runCatching { json.parseToJsonElement(content).asObject() }
+        .getOrNull()
+        ?.let { return it }
+    val payload = content.split('.').getOrNull(1)?.takeIf(String::isNotBlank) ?: return null
+    return runCatching {
+        val paddedPayload = payload + "=".repeat((4 - payload.length % 4) % 4)
+        val decoded = Base64.getUrlDecoder().decode(paddedPayload).toString(Charsets.UTF_8)
+        json.parseToJsonElement(decoded).asObject()
+    }.getOrNull()
+}
 
 private val AuthFileDto.resolvedAccount: String
     get() = sequenceOf(
@@ -548,10 +597,29 @@ private val AuthFileDto.resolvedAccount: String
 
 private val AuthFileDto.resolvedXaiUserId: String?
     get() {
-        val metadataObject = metadata.asObject() ?: return null
-        return metadataObject.value("user_id", "userId").asString()
-            ?: metadataObject.value("user").asObject()?.value("id").asString()
+        val containers = listOfNotNull(metadata.asObject(), attributes.asObject())
+        containers.forEach { container ->
+            container.xaiUserId()?.let { return it }
+            container.value("oauth").asObject()?.xaiUserId()?.let { return it }
+        }
+        return null
     }
+
+private fun JsonObject.xaiUserId(): String? =
+    value("user_id", "userId").asString()
+        ?: value("user").asObject()?.value("id", "user_id", "userId").asString()
+
+private fun JsonElement.collectKimiQuotaRecords(): List<JsonObject> {
+    val root = asObject() ?: return collectQuotaRecords()
+    return buildList {
+        root.value("usage").asObject()?.let(::add)
+        root.value("limits").asArray().orEmpty().forEach { element ->
+            val limit = element.asObject() ?: return@forEach
+            val detail = limit.value("detail").asObject()
+            add(if (detail == null) limit else JsonObject(limit + detail))
+        }
+    }.ifEmpty { collectQuotaRecords() }
+}
 
 private fun JsonElement.collectQuotaRecords(): List<JsonObject> {
     val root = asObject() ?: return (this as? JsonArray).orEmpty().mapNotNull(JsonElement::asObject)

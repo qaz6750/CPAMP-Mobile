@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
@@ -35,7 +36,6 @@ import com.cpamp.mobile.ui.common.SensitiveText
 import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactTokens
-import com.cpamp.mobile.ui.components.AppCard
 
 @Composable
 internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
@@ -104,84 +104,80 @@ internal fun RequestEventCard(event: RequestEventDto, onClick: () -> Unit) {
 }
 
 @Composable
+internal fun RequestEventDetailsTitle(event: RequestEventDto) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            stringResource(R.string.request_details),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                event.timestampMs.asTime(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Surface(
+                color = if (event.failed) MaterialTheme.colorScheme.errorContainer
+                else MaterialTheme.colorScheme.tertiaryContainer,
+                shape = RoundedCornerShape(10.dp),
+            ) {
+                Text(
+                    if (event.failed) stringResource(R.string.failed) else stringResource(R.string.succeeded),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 internal fun RequestEventDetails(event: RequestEventDto) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 36.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(0.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        item { DetailRow(stringResource(R.string.detail_model), event.model.ifBlank { "—" }) }
+        item { DetailRow(stringResource(R.string.detail_service), event.source.ifBlank { "—" }) }
+        item { DetailRow(stringResource(R.string.detail_provider), event.authProviderSnapshot.ifBlank { "—" }) }
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.request_details),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
+            DetailRow(
+                stringResource(R.string.detail_account),
+                event.authLabelSnapshot.ifBlank { event.accountSnapshot.ifBlank { "—" } },
+            )
+        }
+        item { DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens()) }
+        item { DetailRow(stringResource(R.string.detail_reasoning), event.reasoningTokens.compactTokens()) }
+        item {
+            DetailRow(
+                stringResource(R.string.detail_ttft),
+                event.ttftMs?.asLatency() ?: "—",
+                event.ttftMs?.let { requestDurationColor(it, TTFT_WARNING_MS, TTFT_CRITICAL_MS) }
+                    ?: MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        item {
+            DetailRow(
+                stringResource(R.string.detail_latency),
+                event.latencyMs?.asLatency() ?: "—",
+                event.latencyMs?.let { requestDurationColor(it, LATENCY_WARNING_MS, LATENCY_CRITICAL_MS) }
+                    ?: MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        if (event.failed) {
+            item {
+                DetailRow(
+                    stringResource(R.string.detail_error),
+                    SensitiveText.redact(event.failSummary).ifBlank { stringResource(R.string.request_failed) },
+                    valueColor = MaterialTheme.colorScheme.error,
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(event.timestampMs.asTime(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Surface(
-                        color = if (event.failed) MaterialTheme.colorScheme.errorContainer
-                        else MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = RoundedCornerShape(10.dp),
-                    ) {
-                        Text(
-                            if (event.failed) stringResource(R.string.failed) else stringResource(R.string.succeeded),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-            }
-        }
-        item {
-            AppCard {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    DetailRow(stringResource(R.string.detail_model), event.model.ifBlank { "—" })
-                    DetailRow(
-                        stringResource(R.string.detail_service),
-                        event.source.ifBlank { "—" },
-                    )
-                    DetailRow(
-                        stringResource(R.string.detail_provider),
-                        event.authProviderSnapshot.ifBlank { "—" },
-                    )
-                    DetailRow(
-                        stringResource(R.string.detail_account),
-                        event.authLabelSnapshot.ifBlank { event.accountSnapshot.ifBlank { "—" } },
-                    )
-                }
-            }
-        }
-        item {
-            AppCard {
-                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    DetailRow(stringResource(R.string.detail_tokens), event.totalTokens.compactTokens())
-                    DetailRow(stringResource(R.string.detail_reasoning), event.reasoningTokens.compactTokens())
-                    DetailRow(
-                        stringResource(R.string.detail_ttft),
-                        event.ttftMs?.asLatency() ?: "—",
-                        event.ttftMs?.let { requestDurationColor(it, TTFT_WARNING_MS, TTFT_CRITICAL_MS) }
-                            ?: MaterialTheme.colorScheme.onSurface,
-                    )
-                    DetailRow(
-                        stringResource(R.string.detail_latency),
-                        event.latencyMs?.asLatency() ?: "—",
-                        event.latencyMs?.let { requestDurationColor(it, LATENCY_WARNING_MS, LATENCY_CRITICAL_MS) }
-                            ?: MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (event.failed) {
-                        DetailRow(
-                            stringResource(R.string.detail_error),
-                            SensitiveText.redact(event.failSummary).ifBlank { stringResource(R.string.request_failed) },
-                            valueColor = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                }
             }
         }
     }
@@ -189,9 +185,24 @@ internal fun RequestEventDetails(event: RequestEventDto) {
 
 @Composable
 private fun DetailRow(label: String, value: String, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyLarge, color = valueColor)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            label,
+            modifier = Modifier.weight(0.8f),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            value,
+            modifier = Modifier.weight(1.2f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = valueColor,
+            textAlign = TextAlign.End,
+        )
     }
 }
 

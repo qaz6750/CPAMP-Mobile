@@ -1,10 +1,12 @@
 package com.cpamp.mobile.data.remote
 
+import com.cpamp.mobile.data.monitoring.resolveCodexAccountId
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
 import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
 import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
 import com.cpamp.mobile.data.remote.model.AuthFilesResponseDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
+import java.util.Base64
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -90,33 +92,70 @@ class RemoteModelsTest {
         assertEquals(10, point.reasoningTokens)
     }
 
-      @Test
-      fun `quota api call serializes manager auth index field`() {
+    @Test
+    fun `quota api call normalizes numeric manager auth index to string`() {
         val request = ApiCallRequestDto(
-          authIndex = "12",
-          method = "GET",
-          url = "https://example.com/quota",
-          header = emptyMap(),
+            authIndex = "12",
+            method = "GET",
+            url = "https://example.com/quota",
+            header = emptyMap(),
         )
 
         val payload = json.encodeToJsonElement(ApiCallRequestDto.serializer(), request) as JsonObject
         assertEquals(JsonPrimitive("12"), payload["auth_index"])
         assertEquals(null, payload["authIndex"])
-      }
+    }
 
-      @Test
-      fun `auth files accept numeric auth index`() {
+    @Test
+    fun `quota api call preserves string manager auth index`() {
+        val request = ApiCallRequestDto(
+            authIndex = "account.json",
+            method = "GET",
+            url = "https://example.com/quota",
+            header = emptyMap(),
+        )
+
+        val payload = json.encodeToJsonElement(ApiCallRequestDto.serializer(), request) as JsonObject
+        assertEquals(JsonPrimitive("account.json"), payload["auth_index"])
+    }
+
+    @Test
+    fun `auth files accept numeric auth index`() {
         val response = json.decodeFromString<AuthFilesResponseDto>(
-          """{"files":[{"name":"account.json","auth_index":12}]}""",
+            """{"files":[{"name":"account.json","auth_index":12}]}""",
         )
 
         assertEquals(JsonPrimitive(12), response.files.single().snakeAuthIndex)
-      }
+    }
 
-      @Test
-      fun `quota response may omit provider status code`() {
+    @Test
+    fun `codex account id accepts metadata json containing jwt claims`() {
+        val claims = """{"https://api.openai.com/auth":{"chatgpt_account_id":"account-jwt"}}"""
+        val payload = Base64.getUrlEncoder().withoutPadding().encodeToString(claims.toByteArray())
+        val credential = json.decodeFromString<AuthFilesResponseDto>(
+            """{"files":[{"metadata":"{\"id_token\":\"header.$payload.signature\"}"}]}""",
+        ).files.single()
+
+        assertEquals("account-jwt", credential.resolveCodexAccountId(json))
+    }
+
+    @Test
+    fun `codex account id accepts attributes and camel case top level fields`() {
+        val fromAttributes = json.decodeFromString<AuthFilesResponseDto>(
+            """{"files":[{"attributes":{"account_id":"account-attributes"}}]}""",
+        ).files.single()
+        val fromTopLevel = json.decodeFromString<AuthFilesResponseDto>(
+            """{"files":[{"chatgptAccountId":"account-top-level"}]}""",
+        ).files.single()
+
+        assertEquals("account-attributes", fromAttributes.resolveCodexAccountId(json))
+        assertEquals("account-top-level", fromTopLevel.resolveCodexAccountId(json))
+    }
+
+    @Test
+    fun `quota response may omit provider status code`() {
         val response = json.decodeFromString<ApiCallResponseDto>("""{"body":{"ok":true}}""")
 
         assertEquals(null, response.resolvedStatusCode)
-      }
+    }
 }

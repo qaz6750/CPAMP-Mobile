@@ -26,10 +26,15 @@ data class AuthFileDto(
     val label: String = "",
     @SerialName("account_snapshot") val accountSnapshot: String = "",
     @SerialName("account_id") val accountId: String = "",
+    @SerialName("accountId") val camelAccountId: String = "",
+    @SerialName("chatgpt_account_id") val chatgptAccountId: String = "",
+    @SerialName("chatgptAccountId") val camelChatgptAccountId: String = "",
     val planType: String = "",
     @SerialName("plan_type") val snakePlanType: String = "",
     val metadata: JsonElement? = null,
+    val attributes: JsonElement? = null,
     @SerialName("id_token") val idToken: JsonElement? = null,
+    @SerialName("idToken") val camelIdToken: JsonElement? = null,
 )
 
 @Serializable

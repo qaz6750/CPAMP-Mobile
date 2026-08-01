@@ -18,12 +18,13 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Toll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,8 +37,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
@@ -168,24 +167,17 @@ fun MonitoringScreen(
     }
 
     selectedEvent?.let { event ->
-        Dialog(
+        AlertDialog(
             onDismissRequest = { selectedEvent = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-                    .widthIn(max = 560.dp)
-                    .heightIn(max = 680.dp),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 6.dp,
-                shadowElevation = 12.dp,
-            ) {
-                RequestEventDetails(event)
-            }
-        }
+            modifier = Modifier.widthIn(max = 280.dp).heightIn(max = 340.dp),
+            title = { RequestEventDetailsTitle(event) },
+            text = { RequestEventDetails(event) },
+            confirmButton = {
+                TextButton(onClick = { selectedEvent = null }) {
+                    Text(stringResource(R.string.dismiss))
+                }
+            },
+        )
     }
 }
 
