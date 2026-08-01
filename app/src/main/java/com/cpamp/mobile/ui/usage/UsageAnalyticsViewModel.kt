@@ -96,10 +96,10 @@ class UsageAnalyticsViewModel @Inject constructor(
                 mutableState.value = UsageAnalyticsUiState(
                     window = window,
                     ranking = ranking,
-                    availableMonths = recentMonths(),
                     loading = true,
                 )
                 refreshInternal(session, window, ranking)
+                loadAvailableMonths(session)
             }
         }
     }
@@ -255,6 +255,32 @@ class UsageAnalyticsViewModel @Inject constructor(
                 }
             }
     }
+
+    private suspend fun loadAvailableMonths(session: AuthenticatedSession) {
+        val zoneId = ZoneId.systemDefault()
+        val now = System.currentTimeMillis()
+        val candidates = recentMonths(zoneId)
+        val oldestMonth = candidates.lastOrNull() ?: return
+        val fromMs = oldestMonth.atDay(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
+        val request = MonitoringRequestDto(
+            fromMs = fromMs,
+            toMs = now,
+            nowMs = now,
+            timeZone = zoneId.id,
+            include = MonitoringIncludeDto(timeline = true, granularity = "day"),
+        )
+        runSuspendCatching { monitoringRepository.refresh(session, request, cacheResult = false) }
+            .onSuccess { response ->
+                if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
+                val months = availableUsageMonths(response.timeline, zoneId, candidates.toSet())
+                mutableState.update { state ->
+                    state.copy(
+                        availableMonths = months,
+                        selectedMonth = state.selectedMonth?.takeIf(months::contains) ?: months.firstOrNull(),
+                    )
+                }
+            }
+    }
 }
 
 internal fun usageWindowRange(
@@ -287,6 +313,19 @@ internal fun recentMonths(
     val current = YearMonth.now(zoneId)
     return (0 until count).map { current.minusMonths(it.toLong()) }
 }
+
+internal fun availableUsageMonths(
+    timeline: List<MonitoringTimelineDto>,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    candidates: Set<YearMonth> = recentMonths(zoneId).toSet(),
+): List<YearMonth> = timeline
+    .asSequence()
+    .filter { it.calls > 0 || it.totalTokens > 0 || it.tokens > 0 }
+    .map { YearMonth.from(Instant.ofEpochMilli(it.bucketMs).atZone(zoneId)) }
+    .filter(candidates::contains)
+    .distinct()
+    .sortedDescending()
+    .toList()
 
 internal fun effectiveUsageRange(
     response: MonitoringResponseDto,

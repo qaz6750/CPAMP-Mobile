@@ -60,6 +60,30 @@ class UsageWindowTest {
     }
 
     @Test
+    fun `available months include only timeline buckets with usage`() {
+        val zone = ZoneId.of("Asia/Shanghai")
+        val candidates = setOf(YearMonth.of(2026, 5), YearMonth.of(2026, 6), YearMonth.of(2026, 7))
+        val timeline = listOf(
+            MonitoringTimelineDto(
+                bucketMs = ZonedDateTime.of(2026, 7, 3, 0, 0, 0, 0, zone).toInstant().toEpochMilli(),
+                calls = 2,
+            ),
+            MonitoringTimelineDto(
+                bucketMs = ZonedDateTime.of(2026, 6, 15, 0, 0, 0, 0, zone).toInstant().toEpochMilli(),
+                totalTokens = 30,
+            ),
+            MonitoringTimelineDto(
+                bucketMs = ZonedDateTime.of(2026, 5, 20, 0, 0, 0, 0, zone).toInstant().toEpochMilli(),
+            ),
+        )
+
+        assertEquals(
+            listOf(YearMonth.of(2026, 7), YearMonth.of(2026, 6)),
+            availableUsageMonths(timeline, zone, candidates),
+        )
+    }
+
+    @Test
     fun `effective range starts on first active local date`() {
         val zone = ZoneId.of("Asia/Shanghai")
         val start = ZonedDateTime.of(2026, 3, 1, 0, 0, 0, 0, zone).toInstant().toEpochMilli()

@@ -116,7 +116,9 @@ fun UsageAnalyticsScreen(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    UsageWindow.entries.forEach { window ->
+                    UsageWindow.entries
+                        .filter { it != UsageWindow.SpecificMonth || state.availableMonths.isNotEmpty() }
+                        .forEach { window ->
                         FilterChip(
                             selected = state.window == window,
                             onClick = { viewModel.setWindow(window) },
