@@ -28,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,11 +46,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.settings.AppLanguage
 import com.cpamp.mobile.data.settings.AppTheme
-import com.cpamp.mobile.data.update.UpdateStatus
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.security.AppLockUiState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+
 
 @Composable
 fun SettingsScreen(
@@ -64,6 +61,7 @@ fun SettingsScreen(
     onSetLanguage: (AppLanguage) -> Unit,
     onSetAllowScreenshots: (Boolean) -> Unit,
     onSetHideAddresses: (Boolean) -> Unit,
+    onOpenUpdates: () -> Unit,
     updateViewModel: AppUpdateViewModel = hiltViewModel(),
     cacheViewModel: CacheCleanupViewModel = hiltViewModel(),
 ) {
@@ -71,7 +69,6 @@ fun SettingsScreen(
     val cacheState by cacheViewModel.state.collectAsStateWithLifecycle()
     var showUpstreamLicense by rememberSaveable { mutableStateOf(false) }
     var confirmClearCache by rememberSaveable { mutableStateOf(false) }
-    var showUpdateDetails by rememberSaveable { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -79,15 +76,6 @@ fun SettingsScreen(
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-    LaunchedEffect(updateState.status, updateState.release?.tagName) {
-        if (updateState.status == UpdateStatus.Available) showUpdateDetails = true
-    }
-    LaunchedEffect(updateState.status) {
-        while (isActive && updateState.status == UpdateStatus.Downloading) {
-            delay(750)
-            updateViewModel.refreshDownloadStatus()
-        }
     }
     AppBackground {
         LazyColumn(
@@ -235,8 +223,7 @@ fun SettingsScreen(
             item {
                 UpdateSettingsCard(
                     state = updateState,
-                    onCheck = updateViewModel::checkForUpdates,
-                    onShowUpdate = { showUpdateDetails = true },
+                    onShowUpdate = onOpenUpdates,
                     onOpenSourceLicenses = { showUpstreamLicense = true },
                 )
             }
@@ -298,13 +285,6 @@ fun SettingsScreen(
                     Text(stringResource(R.string.cancel))
                 }
             },
-        )
-    }
-    if (showUpdateDetails && updateState.release != null) {
-        UpdateDetailsDialog(
-            state = updateState,
-            onDismiss = { showUpdateDetails = false },
-            onDownload = updateViewModel::downloadUpdate,
         )
     }
 }

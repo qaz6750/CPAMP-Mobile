@@ -1,34 +1,16 @@
 package com.cpamp.mobile.ui.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.InstallMobile
-import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,16 +19,13 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.data.update.AppUpdateState
 import com.cpamp.mobile.data.update.UpdateError
 import com.cpamp.mobile.data.update.UpdateStatus
-import com.cpamp.mobile.data.update.displayBody
 
 @Composable
 internal fun UpdateSettingsCard(
     state: AppUpdateState,
-    onCheck: () -> Unit,
     onShowUpdate: () -> Unit,
     onOpenSourceLicenses: () -> Unit,
 ) {
-    val context = LocalContext.current
     SettingsCard(stringResource(R.string.about_updates)) {
         Text(
             stringResource(R.string.current_version, BuildConfig.VERSION_NAME),
@@ -65,38 +44,17 @@ internal fun UpdateSettingsCard(
                 )
             }
         }
-        Text(updateStatusText(state), style = MaterialTheme.typography.bodySmall, color = statusColor(state))
-        when (state.status) {
-            UpdateStatus.Available, UpdateStatus.Downloading, UpdateStatus.Verifying -> Button(
-                onClick = onShowUpdate,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Outlined.Download, contentDescription = null)
-                Text(stringResource(R.string.view_update_details), modifier = Modifier.padding(start = 8.dp))
-            }
-            UpdateStatus.ReadyToInstall -> Button(
-                onClick = { state.installUri?.let { context.installUpdate(it) } },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Outlined.InstallMobile, contentDescription = null)
-                Text(stringResource(R.string.install_update), modifier = Modifier.padding(start = 8.dp))
-            }
-            else -> Button(
-                onClick = onCheck,
-                enabled = state.status !in setOf(
-                    UpdateStatus.Checking,
-                    UpdateStatus.Downloading,
-                    UpdateStatus.Verifying,
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                if (state.status == UpdateStatus.Checking) {
-                    CircularProgressIndicator(Modifier.padding(end = 8.dp), strokeWidth = 2.dp)
-                } else {
-                    Icon(Icons.Outlined.Refresh, contentDescription = null)
-                }
-                Text(stringResource(R.string.check_for_updates), modifier = Modifier.padding(start = 8.dp))
-            }
+        Text(updateStatusText(state), style = MaterialTheme.typography.bodySmall, color = updateStatusColor(state))
+        Button(
+            onClick = onShowUpdate,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.view_update_details))
+            Icon(
+                Icons.Outlined.ChevronRight,
+                contentDescription = null,
+                modifier = Modifier.padding(start = 8.dp),
+            )
         }
         TextButton(onClick = onOpenSourceLicenses, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.open_source_licenses))
@@ -104,108 +62,8 @@ internal fun UpdateSettingsCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun UpdateDetailsDialog(
-    state: AppUpdateState,
-    onDismiss: () -> Unit,
-    onDownload: () -> Unit,
-) {
-    val context = LocalContext.current
-    val language = LocalConfiguration.current.locales[0].language
-    val release = state.release ?: return
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.background,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Icon(
-                        Icons.Outlined.Download,
-                        contentDescription = null,
-                        modifier = Modifier.padding(11.dp),
-                    )
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(
-                        stringResource(R.string.update_details_title, release.tagName.removePrefix("v")),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    release.publishedAt?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
-            release.displayBody(language)?.let { body ->
-                Text(
-                    body,
-                    modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (state.status in setOf(UpdateStatus.Downloading, UpdateStatus.Verifying)) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        updateStatusText(state),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    state.progressPercent?.let { progress ->
-                        LinearProgressIndicator(
-                            progress = { progress / 100f },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    } ?: LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.cancel))
-                }
-                when (state.status) {
-                    UpdateStatus.Available -> Button(onClick = onDownload) {
-                        Icon(Icons.Outlined.Download, contentDescription = null)
-                        Text(stringResource(R.string.download_update), modifier = Modifier.padding(start = 8.dp))
-                    }
-                    UpdateStatus.ReadyToInstall -> Button(
-                        onClick = { state.installUri?.let(context::installUpdate) },
-                    ) {
-                        Icon(Icons.Outlined.InstallMobile, contentDescription = null)
-                        Text(stringResource(R.string.install_update), modifier = Modifier.padding(start = 8.dp))
-                    }
-                    else -> Unit
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun updateStatusText(state: AppUpdateState): String = when (state.status) {
+internal fun updateStatusText(state: AppUpdateState): String = when (state.status) {
     UpdateStatus.Idle -> stringResource(R.string.update_manual_check)
     UpdateStatus.Checking -> stringResource(R.string.update_checking)
     UpdateStatus.NoRelease -> stringResource(R.string.update_no_release)
@@ -228,7 +86,7 @@ private fun updateStatusText(state: AppUpdateState): String = when (state.status
 }
 
 @Composable
-private fun statusColor(state: AppUpdateState) = when (state.status) {
+internal fun updateStatusColor(state: AppUpdateState) = when (state.status) {
     UpdateStatus.Failed -> MaterialTheme.colorScheme.error
     UpdateStatus.Available, UpdateStatus.ReadyToInstall -> MaterialTheme.colorScheme.primary
     else -> MaterialTheme.colorScheme.onSurfaceVariant

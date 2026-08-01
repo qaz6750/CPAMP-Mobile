@@ -22,6 +22,7 @@ import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.security.AppLockUiState
 import com.cpamp.mobile.ui.settings.AppearanceUiState
+import com.cpamp.mobile.ui.settings.AppUpdateScreen
 import com.cpamp.mobile.ui.settings.SettingsScreen
 import com.cpamp.mobile.ui.system.SystemScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
@@ -151,6 +152,13 @@ private fun ConnectedApp(
                     onSetLanguage = onSetLanguage,
                     onSetAllowScreenshots = onSetAllowScreenshots,
                     onSetHideAddresses = onSetHideAddresses,
+                    onOpenUpdates = { navController.navigate(APP_UPDATE_ROUTE) },
+                )
+            }
+            composable(APP_UPDATE_ROUTE) {
+                AppUpdateScreen(
+                    contentPadding = contentPadding,
+                    onBack = navController::popBackStack,
                 )
             }
         }
@@ -158,3 +166,4 @@ private fun ConnectedApp(
 }
 
 private const val CREDENTIAL_QUOTA_ROUTE = "credential-quota"
+private const val APP_UPDATE_ROUTE = "app-update"

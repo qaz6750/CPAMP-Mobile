@@ -26,6 +26,7 @@ enum class AppDestination(
         fun fromRoute(route: String?): AppDestination =
             when (route) {
                 "credential-quota" -> Traffic
+                "app-update" -> Settings
                 else -> entries.firstOrNull { it.route == route } ?: Overview
             }
     }

@@ -49,6 +49,11 @@
     <string name="usage_calls_value">%1$s calls</string>
     <string name="this_month">This month</string>
     <string name="specific_month">Specific month</string>
+    <string name="update_page_subtitle">Review version details, release notes, and finish the upgrade</string>
+    <string name="update_version_section">Version and upgrade</string>
+    <string name="update_notes_section">Release notes</string>
+    <string name="update_security_section">Update security</string>
+    <string name="update_security_summary">Updates download only from the fixed GitHub release path, verify SHA-256, application package, and signing certificate before install, and reject HTTPS-to-HTTP downgrades.</string>
     <string name="today">Today</string>
     <string name="share_usage">Share usage report</string>
     <string name="share_usage_failed">The usage report could not be generated.</string>
@@ -268,6 +273,7 @@
     <string name="credential_quota_inspection_running">An inspection is already running on Manager Server. Refresh when it finishes.</string>
     <string name="credential_quota_inspection_unauthorized">The Admin Key cannot start server inspections.</string>
     <string name="credential_quota_inspection_unsupported">This Manager Server does not support starting inspections.</string>
+    <string name="credential_quota_inspection_use_usage">This Manager Server does not support starting inspections. Live quota refresh remains available above.</string>
     <string name="credential_quota_inspection_network_error">Unable to reach Manager Server to start the inspection.</string>
     <string name="credential_quota_inspection_rate_limited">Manager Server rejected frequent inspection requests. Try again later.</string>
     <string name="credential_quota_inspection_failed">Manager Server could not start the inspection.</string>
@@ -275,7 +281,6 @@
     <string name="credential_quota_source">Server inspection #%1$d · %2$s</string>
     <string name="credential_quota_direct_source">Live provider quota · %1$s</string>
     <string name="credential_quota_cached_notice">Showing cached quota results because the live refresh failed.</string>
-    <string name="credential_quota_inspection_use_usage">This Manager Server does not support starting inspections. Live quota refresh remains available above.</string>
     <string name="credential_quota_count">%1$d credentials · %2$d queryable</string>
     <string name="credential_quota_loading">Refreshing credential quotas…</string>
     <string name="credential_quota_unavailable">Credential quotas are temporarily unavailable.</string>
@@ -296,13 +301,13 @@
     <string name="credential_quota_window_other">Quota window</string>
     <string name="credential_quota_item_error">Unable to read this credential quota.</string>
     <string name="credential_quota_server_result_error">The latest server inspection did not produce quota windows for this credential.</string>
+    <string name="credential_quota_provider_request_error">The provider quota request failed for this credential.</string>
     <string name="credential_quota_missing_auth">This credential has no usable authentication index.</string>
     <string name="credential_quota_rate_limited">The provider rate-limited this quota request.</string>
     <string name="credential_quota_provider_unavailable">The provider is temporarily unavailable.</string>
     <string name="credential_quota_invalid_response">The provider returned an unsupported quota response.</string>
     <string name="credential_quota_stale_item">Refresh failed. Showing the last in-memory quota result.</string>
     <string name="credential_quota_stale_notice">The credential list could not be refreshed. Existing in-memory results remain visible.</string>
-    <string name="credential_quota_provider_request_error">The provider quota request failed for this credential.</string>
     <string name="credential_quota_failed_badge">Failed</string>
     <string name="credential_quota_no_windows">No rate-limit window was reported for this credential.</string>
     <string name="credential_quota_active">Active</string>
