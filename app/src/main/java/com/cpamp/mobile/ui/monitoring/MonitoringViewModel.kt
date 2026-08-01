@@ -10,6 +10,7 @@ import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.model.EventsPageRequestDto
+import com.cpamp.mobile.data.remote.model.MonitoringFiltersDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
@@ -34,6 +35,9 @@ enum class TrafficWindow(val durationMs: Long) {
 data class TrafficFilter(
     val failedOnly: Boolean = false,
     val window: TrafficWindow = TrafficWindow.Day,
+    val models: String = "",
+    val providers: String = "",
+    val minLatencyMs: Long = 0,
 ) {
     val cacheable: Boolean
         get() = window == TrafficWindow.Day
@@ -107,6 +111,21 @@ class MonitoringViewModel @Inject constructor(
         mutableState.update { it.copy(filter = filter.value) }
     }
 
+    fun setModels(value: String) {
+        filter.update { it.copy(models = value.take(FILTER_TEXT_LIMIT)) }
+        mutableState.update { it.copy(filter = filter.value) }
+    }
+
+    fun setProviders(value: String) {
+        filter.update { it.copy(providers = value.take(FILTER_TEXT_LIMIT)) }
+        mutableState.update { it.copy(filter = filter.value) }
+    }
+
+    fun setMinLatency(value: Long) {
+        filter.update { it.copy(minLatencyMs = value.coerceAtLeast(0)) }
+        mutableState.update { it.copy(filter = filter.value) }
+    }
+
     fun refresh() {
         if (mutableState.value.loading || mutableState.value.refreshing) return
         val session = sessionRepository.session.value ?: return
@@ -130,6 +149,12 @@ class MonitoringViewModel @Inject constructor(
             toMs = now,
             nowMs = now,
             timeZone = ZoneId.systemDefault().id,
+            filters = MonitoringFiltersDto(
+                models = currentFilter.models.asFilterValues(),
+                providers = currentFilter.providers.asFilterValues(),
+                failedOnly = currentFilter.failedOnly,
+                minLatencyMs = currentFilter.minLatencyMs,
+            ),
             include = MonitoringIncludeDto(
                 summary = true,
                 eventsPage = EventsPageRequestDto(limit = 50),
@@ -166,6 +191,13 @@ class MonitoringViewModel @Inject constructor(
         }
     }
 }
+
+internal fun String.asFilterValues(): List<String> = split(',')
+    .map(String::trim)
+    .filter(String::isNotEmpty)
+    .distinct()
+
+private const val FILTER_TEXT_LIMIT = 240
 
 private fun Throwable.toMonitoringError(): MonitoringError = when (this) {
     is RemoteFailure.Unauthorized -> MonitoringError.Unauthorized

@@ -258,6 +258,13 @@
     <string name="failed_filter_local_hint">“仅失败”会立即筛选当前已加载的请求。</string>
     <string name="failed_filter_empty_hint">切换到“全部”即可恢复当前已加载的请求。</string>
     <string name="time_filter_refresh_hint">所选时间范围将在下次手动刷新时应用。</string>
+    <string name="filter_models">模型</string>
+    <string name="filter_providers">提供商</string>
+    <string name="filter_comma_separated">用逗号分隔</string>
+    <string name="filter_min_latency">最低延迟</string>
+    <string name="filter_any_latency">不限</string>
+    <string name="filter_latency_ms">%1$d 毫秒</string>
+    <string name="filters_refresh_hint">点击刷新应用这些筛选条件。</string>
     <string name="event_tokens_value">%1$s Token</string>
     <string name="event_latency_value">%1$s</string>
     <string name="event_ttft_value">首字 %1$s</string>

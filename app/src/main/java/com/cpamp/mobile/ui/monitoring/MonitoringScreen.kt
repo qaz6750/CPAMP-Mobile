@@ -94,6 +94,9 @@ fun MonitoringScreen(
                     filter = state.filter,
                     onWindowSelected = viewModel::setWindow,
                     onFailedOnlyChanged = viewModel::setFailedOnly,
+                    onModelsChanged = viewModel::setModels,
+                    onProvidersChanged = viewModel::setProviders,
+                    onMinLatencyChanged = viewModel::setMinLatency,
                 )
             }
             if (state.fromCache || state.error != null) {
@@ -154,7 +157,9 @@ fun MonitoringScreen(
                     ContentStateCard(
                         message = stringResource(R.string.no_matching_requests) + "\n" +
                             stringResource(
-                                if (state.filter.failedOnly) R.string.failed_filter_empty_hint else R.string.adjust_filters,
+                                if (state.filter.failedOnly && state.filter.models.isBlank() &&
+                                    state.filter.providers.isBlank() && state.filter.minLatencyMs == 0L
+                                ) R.string.failed_filter_empty_hint else R.string.adjust_filters,
                             ),
                     )
                 }

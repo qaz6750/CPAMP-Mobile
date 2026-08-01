@@ -13,6 +13,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,6 +27,9 @@ internal fun TrafficFilterCard(
     filter: TrafficFilter,
     onWindowSelected: (TrafficWindow) -> Unit,
     onFailedOnlyChanged: (Boolean) -> Unit,
+    onModelsChanged: (String) -> Unit,
+    onProvidersChanged: (String) -> Unit,
+    onMinLatencyChanged: (Long) -> Unit,
 ) {
     AppCard {
         Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -71,15 +75,66 @@ internal fun TrafficFilterCard(
                     ),
                 )
             }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterTextField(
+                    value = filter.models,
+                    onValueChange = onModelsChanged,
+                    label = stringResource(R.string.filter_models),
+                    modifier = Modifier.weight(1f),
+                )
+                FilterTextField(
+                    value = filter.providers,
+                    onValueChange = onProvidersChanged,
+                    label = stringResource(R.string.filter_providers),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    stringResource(R.string.filter_min_latency),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    MIN_LATENCY_OPTIONS.forEach { latencyMs ->
+                        FilterChip(
+                            selected = filter.minLatencyMs == latencyMs,
+                            onClick = { onMinLatencyChanged(latencyMs) },
+                            label = {
+                                Text(
+                                    if (latencyMs == 0L) stringResource(R.string.filter_any_latency)
+                                    else stringResource(R.string.filter_latency_ms, latencyMs),
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
             Text(
-                stringResource(
-                    if (filter.failedOnly) R.string.failed_filter_local_hint else R.string.time_filter_refresh_hint,
-                ),
+                stringResource(R.string.filters_refresh_hint),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
+}
+
+@Composable
+private fun FilterTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, maxLines = 1) },
+        placeholder = { Text(stringResource(R.string.filter_comma_separated), maxLines = 1) },
+        singleLine = true,
+        modifier = modifier,
+    )
 }
 
 @StringRes
@@ -88,3 +143,5 @@ private fun TrafficWindow.labelResource(): Int = when (this) {
     TrafficWindow.Day -> R.string.last_24_hours
     TrafficWindow.Week -> R.string.last_7_days
 }
+
+private val MIN_LATENCY_OPTIONS = listOf(0L, 500L, 1_000L, 2_000L)
