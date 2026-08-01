@@ -1,23 +1,36 @@
 package com.cpamp.mobile.ui.monitoring
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
 import com.cpamp.mobile.ui.components.AppCard
@@ -31,8 +44,49 @@ internal fun TrafficFilterCard(
     onProvidersChanged: (String) -> Unit,
     onMinLatencyChanged: (Long) -> Unit,
 ) {
+    val advancedFilterCount = listOf(
+        filter.models.isNotBlank(),
+        filter.providers.isNotBlank(),
+        filter.minLatencyMs > 0,
+    ).count { it }
+    var advancedExpanded by rememberSaveable { mutableStateOf(advancedFilterCount > 0) }
+
     AppCard {
-        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Icon(
+                    Icons.Outlined.Tune,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    stringResource(R.string.request_filters),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (advancedFilterCount > 0) {
+                    Text(
+                        stringResource(R.string.active_advanced_filter_count, advancedFilterCount),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                IconButton(onClick = { advancedExpanded = !advancedExpanded }) {
+                    Icon(
+                        if (advancedExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                        contentDescription = stringResource(
+                            if (advancedExpanded) R.string.collapse_advanced_filters
+                            else R.string.expand_advanced_filters,
+                        ),
+                    )
+                }
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 TrafficWindow.entries.forEach { window ->
                     FilterChip(
@@ -75,39 +129,44 @@ internal fun TrafficFilterCard(
                     ),
                 )
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterTextField(
-                    value = filter.models,
-                    onValueChange = onModelsChanged,
-                    label = stringResource(R.string.filter_models),
-                    modifier = Modifier.weight(1f),
-                )
-                FilterTextField(
-                    value = filter.providers,
-                    onValueChange = onProvidersChanged,
-                    label = stringResource(R.string.filter_providers),
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(R.string.filter_min_latency),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    MIN_LATENCY_OPTIONS.forEach { latencyMs ->
-                        FilterChip(
-                            selected = filter.minLatencyMs == latencyMs,
-                            onClick = { onMinLatencyChanged(latencyMs) },
-                            label = {
-                                Text(
-                                    if (latencyMs == 0L) stringResource(R.string.filter_any_latency)
-                                    else stringResource(R.string.filter_latency_ms, latencyMs),
-                                )
-                            },
-                            modifier = Modifier.weight(1f),
+            AnimatedVisibility(visible = advancedExpanded) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    FilterTextField(
+                        value = filter.models,
+                        onValueChange = onModelsChanged,
+                        label = stringResource(R.string.filter_models),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    FilterTextField(
+                        value = filter.providers,
+                        onValueChange = onProvidersChanged,
+                        label = stringResource(R.string.filter_providers),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            stringResource(R.string.filter_min_latency),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            MIN_LATENCY_OPTIONS.forEach { latencyMs ->
+                                FilterChip(
+                                    selected = filter.minLatencyMs == latencyMs,
+                                    onClick = { onMinLatencyChanged(latencyMs) },
+                                    label = {
+                                        Text(
+                                            if (latencyMs == 0L) stringResource(R.string.filter_any_latency)
+                                            else stringResource(R.string.filter_latency_ms, latencyMs),
+                                        )
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }

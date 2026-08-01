@@ -265,6 +265,10 @@
     <string name="filter_any_latency">Any</string>
     <string name="filter_latency_ms">%1$d ms</string>
     <string name="filters_refresh_hint">Tap refresh to apply these filters.</string>
+    <string name="request_filters">Filters</string>
+    <string name="active_advanced_filter_count">%1$d advanced</string>
+    <string name="expand_advanced_filters">Show advanced filters</string>
+    <string name="collapse_advanced_filters">Hide advanced filters</string>
     <string name="event_tokens_value">%1$s tokens</string>
     <string name="event_latency_value">%1$s</string>
     <string name="event_ttft_value">First %1$s</string>

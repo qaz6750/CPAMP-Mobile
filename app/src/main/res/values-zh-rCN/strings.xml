@@ -265,6 +265,10 @@
     <string name="filter_any_latency">不限</string>
     <string name="filter_latency_ms">%1$d 毫秒</string>
     <string name="filters_refresh_hint">点击刷新应用这些筛选条件。</string>
+    <string name="request_filters">筛选</string>
+    <string name="active_advanced_filter_count">高级 %1$d 项</string>
+    <string name="expand_advanced_filters">展开高级筛选</string>
+    <string name="collapse_advanced_filters">收起高级筛选</string>
     <string name="event_tokens_value">%1$s Token</string>
     <string name="event_latency_value">%1$s</string>
     <string name="event_ttft_value">首字 %1$s</string>
