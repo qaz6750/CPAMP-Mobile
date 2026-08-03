@@ -2,7 +2,6 @@ package com.cpamp.mobile.ui.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,7 +25,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -122,16 +120,12 @@ private fun FloatingNavigationItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
     Surface(
-        modifier = modifier.heightIn(min = 48.dp).clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            onClick = onClick,
-        ),
+        modifier = modifier.heightIn(min = 48.dp).clickable(onClick = onClick),
         color = Color.Transparent,
         contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(16.dp),
+        clip = true,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp),
