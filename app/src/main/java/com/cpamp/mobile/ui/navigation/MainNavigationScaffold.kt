@@ -125,7 +125,6 @@ private fun FloatingNavigationItem(
         color = Color.Transparent,
         contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(16.dp),
-        clip = true,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp),
