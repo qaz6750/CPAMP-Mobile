@@ -26,8 +26,8 @@
     <string name="accounts_health_ready">额度可用</string>
     <string name="accounts_health_not_refreshed">尚未刷新</string>
     <string name="accounts_health_basic">基础状态</string>
-    <string name="accounts_filter_all">全部 · %1$d</string>
-    <string name="accounts_filter_provider">%1$s · %2$d</string>
+    <string name="accounts_filter_all">全部</string>
+    <string name="accounts_filter_provider">%1$s</string>
     <string name="accounts_filter_empty">此提供商下暂无账号。</string>
     <string name="accounts_overview_total">总账号</string>
     <string name="accounts_overview_healthy">正常可用</string>

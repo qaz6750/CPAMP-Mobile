@@ -26,8 +26,8 @@
     <string name="accounts_health_ready">Quota available</string>
     <string name="accounts_health_not_refreshed">Not refreshed</string>
     <string name="accounts_health_basic">Basic status</string>
-    <string name="accounts_filter_all">All · %1$d</string>
-    <string name="accounts_filter_provider">%1$s · %2$d</string>
+    <string name="accounts_filter_all">All</string>
+    <string name="accounts_filter_provider">%1$s</string>
     <string name="accounts_filter_empty">No accounts match this provider.</string>
     <string name="accounts_overview_total">Total accounts</string>
     <string name="accounts_overview_healthy">Healthy</string>

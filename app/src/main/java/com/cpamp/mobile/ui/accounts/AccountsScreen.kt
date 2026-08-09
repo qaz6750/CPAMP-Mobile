@@ -1,6 +1,7 @@
 package com.cpamp.mobile.ui.accounts
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,13 +28,13 @@ import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Speed
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -231,22 +233,100 @@ private fun AccountProviderFilters(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FilterChip(
-            selected = selectedProvider == null,
-            onClick = { onProviderSelected(null) },
-            label = { Text(stringResource(R.string.accounts_filter_all, totalCount)) },
-        )
-        providers.forEach { provider ->
-            FilterChip(
-                selected = selectedProvider == provider,
-                onClick = { onProviderSelected(provider) },
-                leadingIcon = { CredentialProviderIcon(provider, modifier = Modifier.height(18.dp)) },
-                label = { Text(stringResource(R.string.accounts_filter_provider, providerLabel(provider), accountCounts[provider] ?: 0)) },
-            )
+        Surface(
+            shape = AccountCardShape,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AccountProviderTab(
+                    label = stringResource(R.string.accounts_filter_all),
+                    count = totalCount,
+                    selected = selectedProvider == null,
+                    onClick = { onProviderSelected(null) },
+                )
+                providers.forEach { provider ->
+                    VerticalDivider(
+                        modifier = Modifier.height(18.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    AccountProviderTab(
+                        label = stringResource(R.string.accounts_filter_provider, providerLabel(provider)),
+                        count = accountCounts[provider] ?: 0,
+                        selected = selectedProvider == provider,
+                        onClick = { onProviderSelected(provider) },
+                        leadingIcon = {
+                            CredentialProviderIcon(provider, modifier = Modifier.size(18.dp))
+                        },
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun AccountProviderTab(
+    label: String,
+    count: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+    leadingIcon: (@Composable () -> Unit)? = null,
+) {
+    Surface(
+        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+        contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        shape = RoundedCornerShape(10.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .clickable(onClick = onClick)
+                .heightIn(min = 36.dp)
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            leadingIcon?.invoke()
+            Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            Surface(
+                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f),
+                contentColor = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                shape = RoundedCornerShape(50),
+            ) {
+                Text(
+                    count.toString(),
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccountCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    content: @Composable () -> Unit,
+) {
+    AppCard(
+        modifier = modifier,
+        containerColor = containerColor,
+        shape = AccountCardShape,
+        content = content,
+    )
+}
+
+@Composable
+private fun AccountPanel(content: @Composable () -> Unit) {
+    AppCard(
+        shape = AccountPanelShape,
+        content = content,
+    )
 }
 
 @Composable
@@ -290,7 +370,7 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
 
 @Composable
 private fun AccountHealthMetricCard(metric: AccountHealthMetric, modifier: Modifier = Modifier) {
-    AppCard(modifier = modifier) {
+    AccountCard(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = 82.dp).padding(14.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -325,7 +405,7 @@ private data class AccountHealthMetric(
 
 @Composable
 private fun AccountsNotice(message: String, isError: Boolean) {
-    AppCard(
+    AccountCard(
         containerColor = if (isError) MaterialTheme.colorScheme.errorContainer
         else MaterialTheme.colorScheme.secondaryContainer,
     ) {
@@ -348,7 +428,7 @@ private fun AccountSectionTitle(@StringRes label: Int, count: Int) {
 @Composable
 private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
     val remaining = account.minimumRemainingPercent()
-    AppCard(
+    AccountCard(
         modifier = Modifier.clickable(onClick = onClick),
         containerColor = if (account.status == AccountStatus.Disabled) {
             MaterialTheme.colorScheme.surfaceVariant
@@ -357,7 +437,7 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
         },
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -406,7 +486,7 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
 
 @Composable
 private fun AccountIdentityCard(account: AccountHealth, observedAtMs: Long?) {
-    AppCard {
+    AccountPanel {
         Column(
             modifier = Modifier.fillMaxWidth().padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -457,7 +537,7 @@ private fun AccountDetailValue(@StringRes label: Int, value: String) {
 
 @Composable
 private fun AccountQuotaCard(account: AccountHealth) {
-    AppCard {
+    AccountPanel {
         Column(
             modifier = Modifier.fillMaxWidth().padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -493,8 +573,12 @@ private fun AccountQuotaCard(account: AccountHealth) {
 @Composable
 private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
     val remaining = window.remainingPercent?.coerceIn(0.0, 100.0)
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f), shape = MaterialTheme.shapes.medium) {
-        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(13.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(window.durationLabel(), style = MaterialTheme.typography.labelLarge)
                 Text(
@@ -543,7 +627,12 @@ internal fun AccountStatusBadge(account: AccountHealth) {
         account.quotaState == AccountQuotaState.NotRequested -> R.string.accounts_health_not_refreshed to MaterialTheme.colorScheme.primary
         else -> R.string.accounts_health_basic to MaterialTheme.colorScheme.onSurfaceVariant
     }
-    Surface(color = color.copy(alpha = 0.12f), contentColor = color, shape = RoundedCornerShape(8.dp)) {
+    Surface(
+        color = color.copy(alpha = 0.12f),
+        contentColor = color,
+        shape = RoundedCornerShape(50),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.24f)),
+    ) {
         Text(stringResource(label), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
     }
 }
@@ -589,6 +678,9 @@ internal fun AccountQuotaWindow.durationLabel(): String = when {
 }
 
 internal val QuotaOrange = androidx.compose.ui.graphics.Color(0xFFF59E0B)
+
+private val AccountCardShape = RoundedCornerShape(12.dp)
+private val AccountPanelShape = RoundedCornerShape(14.dp)
 
 @StringRes
 private fun AccountsError.messageResource(): Int = when (this) {
