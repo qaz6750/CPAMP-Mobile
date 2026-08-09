@@ -84,4 +84,40 @@ class CodexInspectionModelsTest {
         assertNull(detail.results[0].quotaWindows)
         assertNull(detail.results[1].quotaWindows)
     }
+
+    @Test
+    fun `resolves camel and snake case account identity fields`() {
+        val detail = json.decodeFromString<CodexInspectionRunDetailDto>(
+            """
+            {
+              "results": [
+                {
+                  "fileName": "camel.json",
+                  "displayAccount": "camel@example.com",
+                  "authIndex": "camel-index",
+                  "planType": "pro"
+                },
+                {
+                  "file_name": "snake.json",
+                  "display_account": "snake@example.com",
+                  "auth_index": "snake-index",
+                  "plan_type": "team"
+                }
+              ]
+            }
+            """.trimIndent(),
+        )
+
+        val camel = detail.results[0]
+        assertEquals("camel.json", camel.resolvedFileName)
+        assertEquals("camel@example.com", camel.resolvedDisplayAccount)
+        assertEquals("camel-index", camel.resolvedAuthIndex)
+        assertEquals("pro", camel.resolvedPlanType)
+
+        val snake = detail.results[1]
+        assertEquals("snake.json", snake.resolvedFileName)
+        assertEquals("snake@example.com", snake.resolvedDisplayAccount)
+        assertEquals("snake-index", snake.resolvedAuthIndex)
+        assertEquals("team", snake.resolvedPlanType)
+    }
 }
