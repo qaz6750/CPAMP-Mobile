@@ -59,7 +59,7 @@ fun MonitoringScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                val fallback = stringResource(R.string.nav_traffic)
+                val fallback = stringResource(R.string.nav_monitoring)
                 PageHeader(
                     eyebrow = state.profile?.let { profile ->
                         safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)

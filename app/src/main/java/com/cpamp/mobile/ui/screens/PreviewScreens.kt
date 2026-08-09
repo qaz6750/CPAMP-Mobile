@@ -109,7 +109,7 @@ fun OverviewPreviewScreen(contentPadding: PaddingValues) {
 @Composable
 fun TrafficPreviewScreen(contentPadding: PaddingValues) = PreviewListScreen(
     contentPadding = contentPadding,
-    eyebrow = stringResource(R.string.nav_traffic),
+    eyebrow = stringResource(R.string.nav_monitoring),
     title = stringResource(R.string.traffic_title),
     subtitle = stringResource(R.string.traffic_subtitle),
     rows = listOf(stringResource(R.string.preview_live), stringResource(R.string.preview_failures)),

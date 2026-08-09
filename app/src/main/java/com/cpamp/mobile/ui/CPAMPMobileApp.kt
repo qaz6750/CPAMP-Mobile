@@ -116,7 +116,7 @@ private fun ConnectedApp(
                     hideAddresses = appearanceState.settings.hideAddresses,
                 )
             }
-            composable(AppDestination.Traffic.route) {
+            composable(AppDestination.Monitoring.route) {
                 MonitoringScreen(
                     contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,

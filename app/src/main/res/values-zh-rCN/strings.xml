@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">CPAMP Mobile</string>
     <string name="nav_overview">概览</string>
-    <string name="nav_traffic">监控</string>
+    <string name="nav_monitoring">监控</string>
     <string name="nav_usage">用量</string>
     <string name="nav_accounts">账号</string>
     <string name="overview_title">运行概览</string>

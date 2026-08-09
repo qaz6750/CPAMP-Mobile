@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">CPAMP Mobile</string>
     <string name="nav_overview">Overview</string>
-    <string name="nav_traffic">Monitoring</string>
+    <string name="nav_monitoring">Monitoring</string>
     <string name="nav_usage">Usage</string>
     <string name="nav_accounts">Accounts</string>
     <string name="overview_title">Command center</string>
