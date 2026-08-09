@@ -40,7 +40,7 @@ class MonitoringRepository @Inject constructor(
                 CacheEntity(
                     profileId = session.profile.id,
                     kind = CACHE_KIND,
-                    payload = json.encodeToString(response.cacheSafeCopy()),
+                    payload = json.encodeToString(response),
                     updatedAt = System.currentTimeMillis(),
                 ),
             )
@@ -48,28 +48,7 @@ class MonitoringRepository @Inject constructor(
         return response
     }
 
-    private fun MonitoringResponseDto.cacheSafeCopy(): MonitoringResponseDto = copy(
-        apiKeyStats = emptyList(),
-        credentialStats = emptyList(),
-        recentFailures = emptyList(),
-        events = events?.copy(
-            items = events.items.map { event ->
-                event.copy(
-                    requestId = "",
-                    eventHash = "",
-                    path = "",
-                    authIndex = "",
-                    source = "",
-                    accountSnapshot = "",
-                    authLabelSnapshot = "",
-                    authProviderSnapshot = "",
-                    failSummary = "",
-                )
-            },
-        ),
-    )
-
     private companion object {
-        const val CACHE_KIND = "monitoring.v1"
+        const val CACHE_KIND = "monitoring-summary.v2"
     }
 }

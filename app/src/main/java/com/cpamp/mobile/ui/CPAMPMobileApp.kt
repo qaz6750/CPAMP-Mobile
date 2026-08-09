@@ -118,7 +118,6 @@ private fun ConnectedApp(
                 MonitoringScreen(
                     contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
-                    onOpenCredentialQuotas = { navController.navigate(CREDENTIAL_QUOTA_ROUTE) },
                 )
             }
             composable(CREDENTIAL_QUOTA_ROUTE) {

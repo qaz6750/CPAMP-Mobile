@@ -9,8 +9,6 @@ class TrafficFilterTest {
     fun onlyDefaultDayFilter_isCacheable() {
         assertTrue(TrafficFilter().cacheable)
         assertFalse(TrafficFilter(failedOnly = true).cacheable)
-        assertFalse(TrafficFilter(models = listOf("gpt-5")).cacheable)
-        assertFalse(TrafficFilter(providers = listOf("openai")).cacheable)
         assertFalse(TrafficFilter(window = TrafficWindow.Hour).cacheable)
     }
 }

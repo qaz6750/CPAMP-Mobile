@@ -41,32 +41,6 @@ class RemoteModelsTest {
     }
 
     @Test
-    fun `monitoring event preserves failure and cursor fields`() {
-        val payload = """
-            {
-              "generated_at_ms": 20,
-              "events": {
-                "items": [{
-                  "event_hash": "evt-1",
-                  "timestamp_ms": 19,
-                  "model": "gpt-test",
-                  "failed": true,
-                  "fail_status_code": 429
-                }],
-                "next_before_ms": 19,
-                "next_before_id": 3,
-                "has_more": true,
-                "total_count": 1
-              }
-            }
-        """.trimIndent()
-
-        val decoded = json.decodeFromString<MonitoringResponseDto>(payload)
-        assertEquals("evt-1", decoded.events?.items?.single()?.stableId)
-        assertEquals(true, decoded.events?.hasMore)
-    }
-
-    @Test
     fun `monitoring timeline preserves health and token structure`() {
         val payload = """
             {

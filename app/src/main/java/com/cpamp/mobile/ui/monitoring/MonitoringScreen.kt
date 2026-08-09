@@ -9,46 +9,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Toll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
-import com.cpamp.mobile.data.remote.model.RequestEventDto
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
-import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
@@ -57,11 +43,9 @@ import com.cpamp.mobile.ui.components.PageHeader
 fun MonitoringScreen(
     contentPadding: PaddingValues,
     hideAddresses: Boolean,
-    onOpenCredentialQuotas: () -> Unit,
     viewModel: MonitoringViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    var selectedEvent by remember { mutableStateOf<RequestEventDto?>(null) }
 
     AppBackground {
         LazyColumn(
@@ -95,12 +79,8 @@ fun MonitoringScreen(
             item {
                 TrafficFilterCard(
                     filter = state.filter,
-                    availableModels = state.availableModels,
-                    availableProviders = state.availableProviders,
                     onWindowSelected = viewModel::setWindow,
                     onFailedOnlyChanged = viewModel::setFailedOnly,
-                    onModelsChanged = viewModel::setModels,
-                    onProvidersChanged = viewModel::setProviders,
                 )
             }
             if (state.fromCache || state.error != null) {
@@ -132,99 +112,9 @@ fun MonitoringScreen(
                     }
                 }
             }
-            item {
-                CredentialQuotaEntry(onClick = onOpenCredentialQuotas)
+            if (!state.loading && state.response?.summary == null) {
+                item { ContentStateCard(message = stringResource(R.string.no_matching_requests)) }
             }
-            val events = state.visibleEvents
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        stringResource(R.string.request_events),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    state.response?.events?.let {
-                        Text(
-                            stringResource(R.string.event_count, state.visibleEventCount),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-            if (events.isEmpty() && !state.loading) {
-                item {
-                    ContentStateCard(
-                        message = stringResource(R.string.no_matching_requests) + "\n" +
-                            stringResource(
-                                if (state.filter.failedOnly && state.filter.models.isEmpty() &&
-                                    state.filter.providers.isEmpty()
-                                ) R.string.failed_filter_empty_hint else R.string.adjust_filters,
-                            ),
-                    )
-                }
-            } else {
-                items(events, key = RequestEventDto::stableId) { event ->
-                    RequestEventCard(event = event, onClick = { selectedEvent = event })
-                }
-            }
-        }
-    }
-
-    selectedEvent?.let { event ->
-        Dialog(
-            onDismissRequest = { selectedEvent = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            AppCard(
-                modifier = Modifier.fillMaxWidth(0.9f).widthIn(max = 380.dp).heightIn(min = 400.dp, max = 500.dp),
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    RequestEventDetailsTitle(event)
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    RequestEventDetails(event, modifier = Modifier.weight(1f))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { selectedEvent = null }) {
-                            Text(stringResource(R.string.dismiss))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CredentialQuotaEntry(onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Icon(Icons.Outlined.Key, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(stringResource(R.string.credential_quota), fontWeight = FontWeight.SemiBold)
-                Text(
-                    stringResource(R.string.credential_quota_entry_help),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Icon(Icons.Outlined.ChevronRight, contentDescription = null)
         }
     }
 }

@@ -15,11 +15,8 @@ data class MonitoringRequestDto(
 
 @Serializable
 data class MonitoringFiltersDto(
-    val models: List<String> = emptyList(),
-    val providers: List<String> = emptyList(),
     @SerialName("failed_only") val failedOnly: Boolean = false,
     @SerialName("include_failed") val includeFailed: Boolean? = null,
-    @SerialName("min_latency_ms") val minLatencyMs: Long = 0,
 )
 
 @Serializable
@@ -32,15 +29,7 @@ data class MonitoringIncludeDto(
     @SerialName("credential_stats") val credentialStats: Boolean = false,
     @SerialName("api_key_stats") val apiKeyStats: Boolean = false,
     @SerialName("recent_failures") val recentFailures: Int = 0,
-    @SerialName("events_page") val eventsPage: EventsPageRequestDto? = null,
     val granularity: String = "auto",
-)
-
-@Serializable
-data class EventsPageRequestDto(
-    val limit: Int = 100,
-    @SerialName("before_ms") val beforeMs: Long? = null,
-    @SerialName("before_id") val beforeId: Long? = null,
 )
 
 @Serializable
@@ -53,7 +42,6 @@ data class MonitoringResponseDto(
     @SerialName("api_key_stats") val apiKeyStats: List<ApiKeyStatDto> = emptyList(),
     @SerialName("credential_stats") val credentialStats: List<CredentialStatDto> = emptyList(),
     @SerialName("recent_failures") val recentFailures: List<RecentFailureDto> = emptyList(),
-    val events: EventsResponseDto? = null,
 )
 
 @Serializable
@@ -141,42 +129,7 @@ data class ModelShareDto(
     val share: Double = 0.0,
 )
 
-@Serializable
-data class EventsResponseDto(
-    val items: List<RequestEventDto> = emptyList(),
-    @SerialName("next_before_ms") val nextBeforeMs: Long = 0,
-    @SerialName("next_before_id") val nextBeforeId: Long = 0,
-    @SerialName("has_more") val hasMore: Boolean = false,
-    @SerialName("total_count") val totalCount: Long = 0,
-)
 
-@Serializable
-data class RequestEventDto(
-    @SerialName("request_id") val requestId: String = "",
-    @SerialName("event_hash") val eventHash: String = "",
-    @SerialName("timestamp_ms") val timestampMs: Long = 0,
-    val model: String = "",
-    @SerialName("resolved_model") val resolvedModel: String = "",
-    val endpoint: String = "",
-    val method: String = "",
-    val path: String = "",
-    @SerialName("auth_index") val authIndex: String = "",
-    val source: String = "",
-    @SerialName("account_snapshot") val accountSnapshot: String = "",
-    @SerialName("auth_label_snapshot") val authLabelSnapshot: String = "",
-    @SerialName("auth_provider_snapshot") val authProviderSnapshot: String = "",
-    @SerialName("input_tokens") val inputTokens: Long = 0,
-    @SerialName("output_tokens") val outputTokens: Long = 0,
-    @SerialName("cached_tokens") val cachedTokens: Long = 0,
-    @SerialName("reasoning_tokens") val reasoningTokens: Long = 0,
-    @SerialName("total_tokens") val totalTokens: Long = 0,
-    @SerialName("latency_ms") val latencyMs: Long? = null,
-    @SerialName("ttft_ms") val ttftMs: Long? = null,
-    val failed: Boolean = false,
-    @SerialName("fail_status_code") val failStatusCode: Long? = null,
-    @SerialName("fail_summary") val failSummary: String = "",
-) {
-    val stableId: String
-        get() = eventHash.ifBlank { requestId.ifBlank { "$timestampMs:$model:$endpoint" } }
-}
+
+
 

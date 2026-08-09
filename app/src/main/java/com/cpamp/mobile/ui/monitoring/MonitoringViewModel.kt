@@ -9,7 +9,6 @@ import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.monitoring.MonitoringRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
-import com.cpamp.mobile.data.remote.model.EventsPageRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringFiltersDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
@@ -35,11 +34,9 @@ enum class TrafficWindow(val durationMs: Long) {
 data class TrafficFilter(
     val failedOnly: Boolean = false,
     val window: TrafficWindow = TrafficWindow.Day,
-    val models: List<String> = emptyList(),
-    val providers: List<String> = emptyList(),
 ) {
     val cacheable: Boolean
-        get() = window == TrafficWindow.Day && !failedOnly && models.isEmpty() && providers.isEmpty()
+        get() = window == TrafficWindow.Day && !failedOnly
 }
 
 data class MonitoringUiState(
@@ -51,17 +48,7 @@ data class MonitoringUiState(
     val fromCache: Boolean = false,
     val updatedAt: Long? = null,
     val error: MonitoringError? = null,
-    val availableModels: List<String> = emptyList(),
-    val availableProviders: List<String> = emptyList(),
-) {
-    val visibleEvents
-        get() = response?.events?.items.orEmpty().let { events ->
-            if (filter.failedOnly) events.filter { it.failed } else events
-        }
-
-    val visibleEventCount: Int
-        get() = visibleEvents.size
-}
+)
 
 enum class MonitoringError { Unauthorized, RateLimited, Timeout, Network, Server }
 
@@ -94,8 +81,6 @@ class MonitoringViewModel @Inject constructor(
                             response = cached.response,
                             fromCache = true,
                             updatedAt = cached.updatedAt,
-                            availableModels = cached.response.modelFilterOptions(),
-                            availableProviders = cached.response.providerFilterOptions(),
                         )
                     }
                 }
@@ -111,16 +96,6 @@ class MonitoringViewModel @Inject constructor(
 
     fun setWindow(value: TrafficWindow) {
         filter.update { it.copy(window = value) }
-        mutableState.update { it.copy(filter = filter.value) }
-    }
-
-    fun setModels(value: List<String>) {
-        filter.update { it.copy(models = value.distinct()) }
-        mutableState.update { it.copy(filter = filter.value) }
-    }
-
-    fun setProviders(value: List<String>) {
-        filter.update { it.copy(providers = value.distinct()) }
         mutableState.update { it.copy(filter = filter.value) }
     }
 
@@ -148,14 +123,9 @@ class MonitoringViewModel @Inject constructor(
             nowMs = now,
             timeZone = ZoneId.systemDefault().id,
             filters = MonitoringFiltersDto(
-                models = currentFilter.models,
-                providers = currentFilter.providers,
                 failedOnly = currentFilter.failedOnly,
             ),
-            include = MonitoringIncludeDto(
-                summary = true,
-                eventsPage = EventsPageRequestDto(limit = 50),
-            ),
+            include = MonitoringIncludeDto(summary = true),
         )
         runSuspendCatching {
             monitoringRepository.refresh(session, request, cacheResult = currentFilter.cacheable)
@@ -176,8 +146,6 @@ class MonitoringViewModel @Inject constructor(
                     fromCache = false,
                     updatedAt = System.currentTimeMillis(),
                     error = null,
-                    availableModels = (state.availableModels + response.modelFilterOptions()).filterOptions(),
-                    availableProviders = (state.availableProviders + response.providerFilterOptions()).filterOptions(),
                 )
             }
         }.onFailure { error ->
@@ -198,19 +166,6 @@ class MonitoringViewModel @Inject constructor(
         }
     }
 }
-
-private fun MonitoringResponseDto.modelFilterOptions(): List<String> = events?.items.orEmpty()
-    .map { it.model }
-    .filterOptions()
-
-private fun MonitoringResponseDto.providerFilterOptions(): List<String> = events?.items.orEmpty()
-    .map { it.authProviderSnapshot }
-    .filterOptions()
-
-private fun List<String>.filterOptions(): List<String> = map(String::trim)
-    .filter(String::isNotEmpty)
-    .distinct()
-    .sortedBy { it.lowercase() }
 
 private fun Throwable.toMonitoringError(): MonitoringError = when (this) {
     is RemoteFailure.Unauthorized -> MonitoringError.Unauthorized
