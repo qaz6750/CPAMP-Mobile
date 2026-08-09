@@ -11,13 +11,15 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.cpamp.mobile.data.settings.AppLanguage
 import com.cpamp.mobile.data.settings.AppTheme
+import com.cpamp.mobile.ui.accounts.AccountDetailScreen
+import com.cpamp.mobile.ui.accounts.AccountsScreen
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionUiState
 import com.cpamp.mobile.ui.auth.SessionViewModel
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
-import com.cpamp.mobile.ui.monitoring.CredentialQuotaScreen
 import com.cpamp.mobile.ui.monitoring.MonitoringScreen
+import com.cpamp.mobile.ui.navigation.ACCOUNT_DETAIL_ROUTE
 import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.security.AppLockUiState
@@ -26,6 +28,7 @@ import com.cpamp.mobile.ui.settings.AppUpdateScreen
 import com.cpamp.mobile.ui.settings.SettingsScreen
 import com.cpamp.mobile.ui.system.SystemScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
+import java.util.Base64
 
 @Composable
 fun CPAMPMobileApp(
@@ -120,9 +123,17 @@ private fun ConnectedApp(
                     hideAddresses = appearanceState.settings.hideAddresses,
                 )
             }
-            composable(CREDENTIAL_QUOTA_ROUTE) {
-                CredentialQuotaScreen(
+            composable(AppDestination.Accounts.route) {
+                AccountsScreen(
                     contentPadding = contentPadding,
+                    hideAddresses = appearanceState.settings.hideAddresses,
+                    onOpenAccount = { accountId -> navController.navigate(accountDetailRoute(accountId)) },
+                )
+            }
+            composable(ACCOUNT_DETAIL_ROUTE) { entry ->
+                AccountDetailScreen(
+                    contentPadding = contentPadding,
+                    accountId = entry.arguments?.getString("accountId").orEmpty().decodeAccountId(),
                     onBack = navController::popBackStack,
                 )
             }
@@ -164,5 +175,13 @@ private fun ConnectedApp(
     }
 }
 
-private const val CREDENTIAL_QUOTA_ROUTE = "credential-quota"
 private const val APP_UPDATE_ROUTE = "app-update"
+
+private fun accountDetailRoute(accountId: String): String {
+    val encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(accountId.toByteArray(Charsets.UTF_8))
+    return "account/$encoded"
+}
+
+private fun String.decodeAccountId(): String = runCatching {
+    String(Base64.getUrlDecoder().decode(this), Charsets.UTF_8)
+}.getOrDefault("")
