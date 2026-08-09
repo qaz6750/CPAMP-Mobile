@@ -17,8 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -49,6 +47,7 @@ import com.cpamp.mobile.data.settings.AppTheme
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.security.AppLockUiState
 
 
@@ -103,7 +102,7 @@ fun SettingsScreen(
             }
             if (appearanceState.error) {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                    AppCard(containerColor = MaterialTheme.colorScheme.errorContainer) {
                         Text(
                             stringResource(R.string.settings_change_failed),
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -245,9 +244,7 @@ fun SettingsScreen(
                 )
             }
             item {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                ) {
+                AppCard(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                     Text(
                         stringResource(R.string.security_privacy_summary),
                         modifier = Modifier.fillMaxWidth().padding(16.dp),

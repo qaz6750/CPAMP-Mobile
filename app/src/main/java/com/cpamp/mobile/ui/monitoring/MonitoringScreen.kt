@@ -14,8 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Toll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +33,7 @@ import com.cpamp.mobile.ui.common.asTime
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
@@ -129,7 +128,7 @@ private fun MonitoringNotice(state: MonitoringUiState) {
         state.fromCache -> stringResource(R.string.cached_data_notice, state.updatedAt?.asTime().orEmpty())
         else -> ""
     }
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+    AppCard(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
         Text(message, modifier = Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -141,10 +140,9 @@ private fun CompactMetric(
     icon: ImageVector,
     modifier: Modifier = Modifier,
 ) {
-    Card(
+    AppCard(
         modifier = modifier,
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             Modifier.heightIn(min = 96.dp).padding(12.dp),

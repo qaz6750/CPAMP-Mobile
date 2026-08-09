@@ -21,8 +21,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Token
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +45,7 @@ import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.components.AppBackground
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
@@ -155,7 +154,7 @@ fun UsageAnalyticsScreen(
             val response = state.response
             if (response == null && !state.loading) {
                 item {
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))) {
+                    AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)) {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -291,14 +290,14 @@ fun UsageAnalyticsScreen(
 
 @Composable
 private fun UsageNotice(text: String) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+    AppCard(containerColor = MaterialTheme.colorScheme.errorContainer) {
         Text(text, modifier = Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
     }
 }
 
 @Composable
 private fun UsageRangeNotice(text: String) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+    AppCard(containerColor = MaterialTheme.colorScheme.primaryContainer) {
         Text(
             text,
             modifier = Modifier.fillMaxWidth().padding(14.dp),

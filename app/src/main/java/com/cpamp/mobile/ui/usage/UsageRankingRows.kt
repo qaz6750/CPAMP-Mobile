@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +25,7 @@ import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.compactTokens
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.ModelProviderIcon
 
 internal fun LazyListScope.usageRankingItems(
@@ -57,7 +56,7 @@ private fun RankingRow(
     successRate: Double,
     model: String? = null,
 ) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))) {
+    AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
