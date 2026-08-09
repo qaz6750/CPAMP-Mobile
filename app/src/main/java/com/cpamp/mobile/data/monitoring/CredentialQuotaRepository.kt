@@ -1,5 +1,9 @@
 package com.cpamp.mobile.data.monitoring
 
+import com.cpamp.mobile.data.accounts.AccountHealth
+import com.cpamp.mobile.data.accounts.AccountHealthFailure
+import com.cpamp.mobile.data.accounts.AccountQuotaState
+import com.cpamp.mobile.data.accounts.AccountStatus
 import com.cpamp.mobile.data.cache.CacheDao
 import com.cpamp.mobile.data.cache.CacheEntity
 import com.cpamp.mobile.data.remote.SessionApiClientFactory
@@ -64,7 +68,7 @@ class CredentialQuotaRepository @Inject constructor(
         val fetchedAtMs = System.currentTimeMillis()
         val snapshot = CredentialQuotaSnapshot(
             finishedAtMs = fetchedAtMs,
-            quotas = api.loadDirectCredentialQuotas(json, fetchedAtMs),
+            quotas = api.loadDirectCredentialQuotas(json, fetchedAtMs).map(AccountHealth::toCredentialQuota),
             cachedAtMs = fetchedAtMs,
         )
         // Persist quota aggregates only; account identifiers remain memory-only.
@@ -92,6 +96,38 @@ class CredentialQuotaRepository @Inject constructor(
         const val CACHE_KIND = "credential-quotas.v1"
     }
 }
+
+private fun AccountHealth.toCredentialQuota(): CredentialQuota = CredentialQuota(
+    name = name,
+    account = account,
+    provider = provider,
+    accountStatus = when (status) {
+        AccountStatus.Active -> CredentialAccountStatus.Active
+        AccountStatus.Disabled -> CredentialAccountStatus.Disabled
+    },
+    planType = planType,
+    windows = windows.map { window ->
+        CredentialQuotaWindow(
+            durationSeconds = window.durationSeconds,
+            remainingPercent = window.remainingPercent,
+            resetAtMs = window.resetAtMs,
+            resetLabel = window.resetLabel,
+            label = window.label,
+        )
+    },
+    queryState = when (quotaState) {
+        AccountQuotaState.Available -> CredentialQuotaQueryState.Success
+        AccountQuotaState.NotRequested,
+        AccountQuotaState.Unsupported,
+        -> CredentialQuotaQueryState.NotRequested
+        AccountQuotaState.Failed -> CredentialQuotaQueryState.Failed
+    },
+    failure = when (failure) {
+        AccountHealthFailure.Inspection -> CredentialQuotaFailure.ServerResult
+        AccountHealthFailure.ProviderRequest -> CredentialQuotaFailure.ProviderRequest
+        null -> null
+    },
+)
 
 internal fun CodexInspectionResultDto.toCredentialQuota(): CredentialQuota {
     val windows = quotaWindows.orEmpty().map { window ->

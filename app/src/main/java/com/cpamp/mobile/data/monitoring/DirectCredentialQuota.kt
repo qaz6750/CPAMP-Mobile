@@ -1,6 +1,13 @@
 package com.cpamp.mobile.data.monitoring
 
+import com.cpamp.mobile.data.accounts.AccountHealth
+import com.cpamp.mobile.data.accounts.AccountHealthFailure
+import com.cpamp.mobile.data.accounts.AccountHealthSource
+import com.cpamp.mobile.data.accounts.AccountQuotaState
+import com.cpamp.mobile.data.accounts.AccountQuotaWindow
+import com.cpamp.mobile.data.accounts.AccountStatus
 import com.cpamp.mobile.data.remote.CPAMPApi
+import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.model.ApiCallRequestDto
 import com.cpamp.mobile.data.remote.model.ApiCallResponseDto
 import com.cpamp.mobile.data.remote.model.AuthFileDto
@@ -31,8 +38,10 @@ private val supportedProviders = setOf("antigravity", "claude", "codex", "kimi",
 internal suspend fun CPAMPApi.loadDirectCredentialQuotas(
     json: Json,
     fetchedAtMs: Long,
-): List<CredentialQuota> {
-    val files = remoteCall { authFiles() }.files.filter { it.resolvedProvider in supportedProviders }
+    targetFiles: List<AuthFileDto>? = null,
+): List<AccountHealth> {
+    val files = (targetFiles ?: remoteCall { authFiles() }.files)
+        .filter { it.resolvedProvider in supportedProviders }
     val semaphore = Semaphore(ACCOUNT_CONCURRENCY)
     return coroutineScope {
         files.map { file ->
@@ -40,7 +49,7 @@ internal suspend fun CPAMPApi.loadDirectCredentialQuotas(
                 if (file.disabled) {
                     file.baseQuota(
                         windows = emptyList(),
-                        queryState = CredentialQuotaQueryState.NotRequested,
+                        quotaState = AccountQuotaState.NotRequested,
                     )
                 } else {
                     semaphore.withPermit {
@@ -48,10 +57,11 @@ internal suspend fun CPAMPApi.loadDirectCredentialQuotas(
                             file.loadQuota(this@loadDirectCredentialQuotas, json, fetchedAtMs)
                         } catch (error: Exception) {
                             if (error is CancellationException) throw error
+                            if (error is RemoteFailure.Unauthorized) throw error
                             file.baseQuota(
                                 windows = emptyList(),
-                                queryState = CredentialQuotaQueryState.Failed,
-                                failure = CredentialQuotaFailure.ProviderRequest,
+                                quotaState = AccountQuotaState.Failed,
+                                failure = AccountHealthFailure.ProviderRequest,
                             )
                         }
                     }
@@ -65,7 +75,7 @@ private suspend fun AuthFileDto.loadQuota(
     api: CPAMPApi,
     json: Json,
     fetchedAtMs: Long,
-): CredentialQuota = when (resolvedProvider) {
+): AccountHealth = when (resolvedProvider) {
     "codex" -> loadCodexQuota(api, json, fetchedAtMs)
     "claude" -> loadClaudeQuota(api, json, fetchedAtMs)
     "kimi" -> loadKimiQuota(api, json)
@@ -78,7 +88,7 @@ private suspend fun AuthFileDto.loadCodexQuota(
     api: CPAMPApi,
     json: Json,
     fetchedAtMs: Long,
-): CredentialQuota {
+): AccountHealth {
     val headers = linkedMapOf(
         "Authorization" to "Bearer \$TOKEN\$",
         "Content-Type" to "application/json",
@@ -104,7 +114,7 @@ private suspend fun AuthFileDto.loadCodexQuota(
     return baseQuota(windows = windows, planType = plan)
 }
 
-private fun JsonObject.codexWindows(fetchedAtMs: Long, label: String): List<CredentialQuotaWindow> {
+private fun JsonObject.codexWindows(fetchedAtMs: Long, label: String): List<AccountQuotaWindow> {
     val reached = value("limit_reached", "limitReached").asBoolean() == true
     return listOfNotNull(
         value("primary_window", "primaryWindow").asObject()
@@ -118,12 +128,12 @@ private fun JsonObject.toUsedPercentWindow(
     fetchedAtMs: Long,
     label: String = "",
     reached: Boolean = false,
-): CredentialQuotaWindow? {
+): AccountQuotaWindow? {
     val usedPercent = value("used_percent", "usedPercent").asDouble() ?: 100.0.takeIf { reached }
     val duration = value("limit_window_seconds", "limitWindowSeconds").asLong()?.coerceAtLeast(0) ?: 0
     val resetAtMs = resolveResetAtMs(this, fetchedAtMs)
     if (usedPercent == null && duration == 0L && resetAtMs == null) return null
-    return CredentialQuotaWindow(
+    return AccountQuotaWindow(
         durationSeconds = duration,
         remainingPercent = usedPercent?.let(::remainingFromUsed),
         resetAtMs = resetAtMs,
@@ -135,7 +145,7 @@ private suspend fun AuthFileDto.loadClaudeQuota(
     api: CPAMPApi,
     json: Json,
     fetchedAtMs: Long,
-): CredentialQuota = coroutineScope {
+): AccountHealth = coroutineScope {
     val headers = mapOf(
         "Authorization" to "Bearer \$TOKEN\$",
         "Content-Type" to "application/json",
@@ -161,6 +171,7 @@ private suspend fun AuthFileDto.loadClaudeQuota(
             )
         } catch (error: Exception) {
             if (error is CancellationException) throw error
+            if (error is RemoteFailure.Unauthorized) throw error
             null
         }
     }
@@ -172,8 +183,8 @@ private suspend fun AuthFileDto.loadClaudeQuota(
     )
 }
 
-private fun JsonObject.claudeWindows(fetchedAtMs: Long): List<CredentialQuotaWindow> {
-    val windows = mutableListOf<CredentialQuotaWindow>()
+private fun JsonObject.claudeWindows(fetchedAtMs: Long): List<AccountQuotaWindow> {
+    val windows = mutableListOf<AccountQuotaWindow>()
     val topLevelWindows = listOf(
         Triple("five_hour", 18_000L, ""),
         Triple("seven_day", 604_800L, ""),
@@ -188,7 +199,7 @@ private fun JsonObject.claudeWindows(fetchedAtMs: Long): List<CredentialQuotaWin
             val used = raw.value("utilization", "percent").asDouble()
             val reset = raw.value("resets_at", "resetsAt", "reset_at", "resetAt").asString()
             if (used != null || !reset.isNullOrBlank()) {
-                windows += CredentialQuotaWindow(
+                windows += AccountQuotaWindow(
                     durationSeconds = duration,
                     remainingPercent = used?.let(::remainingFromUsed),
                     resetAtMs = reset.toEpochMs(),
@@ -216,7 +227,7 @@ private fun JsonObject.claudeWindows(fetchedAtMs: Long): List<CredentialQuotaWin
         val used = limit.value("percent").asDouble()
         val reset = limit.value("resets_at", "resetsAt", "reset_at", "resetAt").asString()
         if (used != null || !reset.isNullOrBlank()) {
-            windows += CredentialQuotaWindow(
+            windows += AccountQuotaWindow(
                 durationSeconds = duration,
                 remainingPercent = used?.let(::remainingFromUsed),
                 resetAtMs = reset.toEpochMs(),
@@ -250,7 +261,7 @@ private fun JsonObject?.claudePlanType(): String {
 private suspend fun AuthFileDto.loadKimiQuota(
     api: CPAMPApi,
     json: Json,
-): CredentialQuota {
+): AccountHealth {
     val payload = api.requestQuota(
         json,
         requiredAuthIndex,
@@ -266,7 +277,7 @@ private suspend fun AuthFileDto.loadKimiQuota(
         if (used == null && remaining == null && limit == null) return@mapNotNull null
         val reset = record.value("reset_time", "resetTime", "reset_at", "resetAt").asString()
         val label = record.value("model", "name", "label", "window", "id").asString().orEmpty()
-        CredentialQuotaWindow(
+        AccountQuotaWindow(
             durationSeconds = durationFromText(label),
             remainingPercent = when {
                 remaining != null && limit != null && limit > 0 ->
@@ -287,7 +298,7 @@ private suspend fun AuthFileDto.loadKimiQuota(
 private suspend fun AuthFileDto.loadXaiQuota(
     api: CPAMPApi,
     json: Json,
-): CredentialQuota = coroutineScope {
+): AccountHealth = coroutineScope {
     val headers = linkedMapOf(
         "Authorization" to "Bearer \$TOKEN\$",
         "x-xai-token-auth" to "xai-grok-cli",
@@ -307,6 +318,7 @@ private suspend fun AuthFileDto.loadXaiQuota(
             )
         } catch (error: Exception) {
             if (error is CancellationException) throw error
+            if (error is RemoteFailure.Unauthorized) throw error
             null
         }
     }
@@ -321,6 +333,7 @@ private suspend fun AuthFileDto.loadXaiQuota(
             )
         } catch (error: Exception) {
             if (error is CancellationException) throw error
+            if (error is RemoteFailure.Unauthorized) throw error
             null
         }
     }
@@ -339,13 +352,13 @@ private suspend fun AuthFileDto.loadXaiQuota(
     baseQuota(windows = buildXaiWindows(weekly, monthly))
 }
 
-private fun buildXaiWindows(weekly: JsonObject?, monthly: JsonObject?): List<CredentialQuotaWindow> {
-    val windows = mutableListOf<CredentialQuotaWindow>()
+private fun buildXaiWindows(weekly: JsonObject?, monthly: JsonObject?): List<AccountQuotaWindow> {
+    val windows = mutableListOf<AccountQuotaWindow>()
     weekly?.let { config ->
         val period = config.value("currentPeriod", "current_period").asObject()
         val reset = period?.value("end").asString()
         config.value("creditUsagePercent", "credit_usage_percent").asDouble()?.let { used ->
-            windows += CredentialQuotaWindow(
+            windows += AccountQuotaWindow(
                 durationSeconds = 604_800,
                 remainingPercent = remainingFromUsed(used),
                 resetAtMs = reset.toEpochMs(),
@@ -355,7 +368,7 @@ private fun buildXaiWindows(weekly: JsonObject?, monthly: JsonObject?): List<Cre
         config.value("productUsage", "product_usage").asArray().orEmpty().forEachIndexed { index, item ->
             val product = item.asObject() ?: return@forEachIndexed
             val used = product.value("usagePercent", "usage_percent").asDouble() ?: return@forEachIndexed
-            windows += CredentialQuotaWindow(
+            windows += AccountQuotaWindow(
                 durationSeconds = 604_800,
                 remainingPercent = remainingFromUsed(used),
                 resetAtMs = reset.toEpochMs(),
@@ -369,7 +382,7 @@ private fun buildXaiWindows(weekly: JsonObject?, monthly: JsonObject?): List<Cre
         val reset = config.value("billingPeriodEnd", "billing_period_end").asString()
             ?: config.value("currentPeriod", "current_period").asObject()?.value("end").asString()
         if (monthlyLimit != null && monthlyLimit > 0 && used != null) {
-            windows += CredentialQuotaWindow(
+            windows += AccountQuotaWindow(
                 durationSeconds = 2_592_000,
                 remainingPercent = (100.0 - minOf(used, monthlyLimit) * 100.0 / monthlyLimit).coerceIn(0.0, 100.0),
                 resetAtMs = reset.toEpochMs(),
@@ -380,7 +393,7 @@ private fun buildXaiWindows(weekly: JsonObject?, monthly: JsonObject?): List<Cre
         val onDemandUsed = config.value("onDemandUsed", "on_demand_used").asCentValue()
             ?: if (used != null && monthlyLimit != null) (used - monthlyLimit).coerceAtLeast(0.0) else null
         if (onDemandCap != null && onDemandCap > 0 && onDemandUsed != null) {
-            windows += CredentialQuotaWindow(
+            windows += AccountQuotaWindow(
                 durationSeconds = 2_592_000,
                 remainingPercent = (100.0 - onDemandUsed * 100.0 / onDemandCap).coerceIn(0.0, 100.0),
                 resetAtMs = reset.toEpochMs(),
@@ -394,7 +407,7 @@ private fun buildXaiWindows(weekly: JsonObject?, monthly: JsonObject?): List<Cre
 private suspend fun AuthFileDto.loadAntigravityQuota(
     api: CPAMPApi,
     json: Json,
-): CredentialQuota {
+): AccountHealth {
     val headers = mapOf(
         "Authorization" to "Bearer \$TOKEN\$",
         "Content-Type" to "application/json",
@@ -423,13 +436,14 @@ private suspend fun AuthFileDto.loadAntigravityQuota(
             if (windows.isNotEmpty()) return baseQuota(windows = windows)
         } catch (error: Exception) {
             if (error is CancellationException) throw error
+            if (error is RemoteFailure.Unauthorized) throw error
             lastFailure = error
         }
     }
     throw lastFailure ?: IllegalStateException("Empty Antigravity quota response")
 }
 
-private fun JsonObject.antigravityWindows(): List<CredentialQuotaWindow> {
+private fun JsonObject.antigravityWindows(): List<AccountQuotaWindow> {
     val grouped = value("groups").asArray().orEmpty().flatMap { groupElement ->
         val group = groupElement.asObject() ?: return@flatMap emptyList()
         val groupLabel = group.value("displayName", "display_name").asString().orEmpty()
@@ -439,7 +453,7 @@ private fun JsonObject.antigravityWindows(): List<CredentialQuotaWindow> {
             val reset = bucket.value("resetTime", "reset_time").asString()
             val label = bucket.value("displayName", "display_name").asString().orEmpty()
                 .ifBlank { groupLabel }
-            CredentialQuotaWindow(
+            AccountQuotaWindow(
                 durationSeconds = durationFromText(bucket.value("window").asString().orEmpty()),
                 remainingPercent = normalizeRemainingFraction(fraction),
                 resetAtMs = reset.toEpochMs(),
@@ -455,7 +469,7 @@ private fun JsonObject.antigravityWindows(): List<CredentialQuotaWindow> {
         val fraction = quota.value("remainingFraction", "remaining_fraction", "remaining").asDouble()
             ?: return@mapNotNull null
         val reset = quota.value("resetTime", "reset_time").asString()
-        CredentialQuotaWindow(
+        AccountQuotaWindow(
             durationSeconds = 0,
             remainingPercent = normalizeRemainingFraction(fraction),
             resetAtMs = reset.toEpochMs(),
@@ -491,22 +505,25 @@ private fun ApiCallResponseDto.normalizedBody(json: Json): JsonElement? {
 }
 
 private fun AuthFileDto.baseQuota(
-    windows: List<CredentialQuotaWindow>,
-    queryState: CredentialQuotaQueryState = CredentialQuotaQueryState.Success,
-    failure: CredentialQuotaFailure? = null,
+    windows: List<AccountQuotaWindow>,
+    quotaState: AccountQuotaState = AccountQuotaState.Available,
+    failure: AccountHealthFailure? = null,
     planType: String = resolvedPlanType,
-): CredentialQuota = CredentialQuota(
+): AccountHealth = AccountHealth(
+    stableId = stableAccountId,
+    authIndex = resolvedAuthIndex,
     name = name,
     account = resolvedAccount,
     provider = resolvedProvider,
-    accountStatus = if (disabled) CredentialAccountStatus.Disabled else CredentialAccountStatus.Active,
+    status = if (disabled) AccountStatus.Disabled else AccountStatus.Active,
     planType = planType,
     windows = windows,
-    queryState = queryState,
+    quotaState = quotaState,
     failure = failure,
+    source = AccountHealthSource.Direct,
 )
 
-private val AuthFileDto.resolvedProvider: String
+internal val AuthFileDto.resolvedProvider: String
     get() {
         val candidates = sequenceOf(type, provider)
             .map(String::trim)
@@ -523,9 +540,11 @@ private val AuthFileDto.resolvedProvider: String
         return candidates.firstOrNull { it in supportedProviders } ?: candidates.firstOrNull().orEmpty()
     }
 
+internal val AuthFileDto.resolvedAuthIndex: String
+    get() = authIndex.asString().orEmpty().ifBlank { snakeAuthIndex.asString().orEmpty() }
+
 private val AuthFileDto.requiredAuthIndex: String
-    get() = authIndex.asString().orEmpty()
-        .ifBlank { snakeAuthIndex.asString().orEmpty() }
+    get() = resolvedAuthIndex
         .ifBlank { error("Missing auth index") }
 
 private val AuthFileDto.resolvedProjectId: String
@@ -533,7 +552,7 @@ private val AuthFileDto.resolvedProjectId: String
         .ifBlank { metadata.asObject()?.value("project_id", "projectId").asString().orEmpty() }
         .ifBlank { DEFAULT_ANTIGRAVITY_PROJECT }
 
-private val AuthFileDto.resolvedPlanType: String
+internal val AuthFileDto.resolvedPlanType: String
     get() = planType.ifBlank { snakePlanType }.trim()
         .ifBlank { idToken.asObject()?.value("plan_type", "planType").asString().orEmpty() }
 
@@ -585,7 +604,7 @@ private fun JsonElement?.asIdentityObject(json: Json): JsonObject? {
     }.getOrNull()
 }
 
-private val AuthFileDto.resolvedAccount: String
+internal val AuthFileDto.resolvedAccount: String
     get() = sequenceOf(
         account,
         email,
@@ -594,6 +613,19 @@ private val AuthFileDto.resolvedAccount: String
         label,
         name,
     ).map(String::trim).firstOrNull(String::isNotEmpty).orEmpty()
+
+internal val AuthFileDto.supportsDirectQuota: Boolean
+    get() = resolvedProvider in supportedProviders && resolvedAuthIndex.isNotBlank()
+
+internal val AuthFileDto.stableAccountId: String
+    get() = "$resolvedProvider\u0000${resolvedAuthIndex.ifBlank { name.trim() }}"
+
+internal fun AuthFileDto.toBaseAccountHealth(
+    quotaState: AccountQuotaState,
+): AccountHealth = baseQuota(
+    windows = emptyList(),
+    quotaState = quotaState,
+)
 
 private val AuthFileDto.resolvedXaiUserId: String?
     get() {
