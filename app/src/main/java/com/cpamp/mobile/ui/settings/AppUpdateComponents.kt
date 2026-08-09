@@ -2,9 +2,14 @@ package com.cpamp.mobile.ui.settings
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.InstallMobile
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -12,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,9 +30,12 @@ import com.cpamp.mobile.data.update.UpdateStatus
 @Composable
 internal fun UpdateSettingsCard(
     state: AppUpdateState,
+    onCheckForUpdates: () -> Unit,
+    onDownloadUpdate: () -> Unit,
     onShowUpdate: () -> Unit,
     onOpenSourceLicenses: () -> Unit,
 ) {
+    val context = LocalContext.current
     SettingsCard(stringResource(R.string.about_updates)) {
         Text(
             stringResource(R.string.current_version, BuildConfig.VERSION_NAME),
@@ -46,20 +55,49 @@ internal fun UpdateSettingsCard(
             }
         }
         Text(updateStatusText(state), style = MaterialTheme.typography.bodySmall, color = updateStatusColor(state))
-        Button(
-            onClick = onShowUpdate,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(R.string.view_update_details))
-            Icon(
-                Icons.Outlined.ChevronRight,
-                contentDescription = null,
-                modifier = Modifier.padding(start = 8.dp),
+        when (state.status) {
+            UpdateStatus.Available -> UpdateActionButton(
+                label = stringResource(R.string.download_update),
+                icon = { Icon(Icons.Outlined.Download, contentDescription = null) },
+                onClick = onDownloadUpdate,
             )
+            UpdateStatus.ReadyToInstall -> UpdateActionButton(
+                label = stringResource(R.string.install_update),
+                icon = { Icon(Icons.Outlined.InstallMobile, contentDescription = null) },
+                onClick = { state.installUri?.let(context::installUpdate) },
+            )
+            UpdateStatus.Checking, UpdateStatus.Downloading, UpdateStatus.Verifying -> UpdateActionButton(
+                label = updateStatusText(state),
+                icon = { CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp) },
+                enabled = false,
+                onClick = {},
+            )
+            else -> UpdateActionButton(
+                label = stringResource(R.string.check_for_updates),
+                icon = { Icon(Icons.Outlined.Refresh, contentDescription = null) },
+                onClick = onCheckForUpdates,
+            )
+        }
+        TextButton(onClick = onShowUpdate, modifier = Modifier.align(Alignment.End)) {
+            Text(stringResource(R.string.view_update_details))
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null)
         }
         TextButton(onClick = onOpenSourceLicenses, modifier = Modifier.align(Alignment.End)) {
             Text(stringResource(R.string.open_source_licenses))
         }
+    }
+}
+
+@Composable
+private fun UpdateActionButton(
+    label: String,
+    icon: @Composable () -> Unit,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    Button(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+        icon()
+        Text(label, modifier = Modifier.padding(start = 8.dp))
     }
 }
 

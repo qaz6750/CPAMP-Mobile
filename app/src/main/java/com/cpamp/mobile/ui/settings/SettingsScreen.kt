@@ -239,6 +239,8 @@ fun SettingsScreen(
             item {
                 UpdateSettingsCard(
                     state = updateState,
+                    onCheckForUpdates = updateViewModel::checkForUpdates,
+                    onDownloadUpdate = updateViewModel::downloadUpdate,
                     onShowUpdate = onOpenUpdates,
                     onOpenSourceLicenses = { showUpstreamLicense = true },
                 )
