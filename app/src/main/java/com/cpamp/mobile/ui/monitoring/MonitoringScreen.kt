@@ -112,7 +112,7 @@ fun MonitoringScreen(
                 }
             }
             if (!state.loading && state.response?.summary == null) {
-                item { ContentStateCard(message = stringResource(R.string.no_matching_requests)) }
+                item { ContentStateCard(message = stringResource(R.string.monitoring_empty_summary)) }
             }
         }
     }
