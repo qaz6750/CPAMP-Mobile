@@ -26,8 +26,8 @@ android {
         applicationId = "com.cpamp.mobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "1.3.5"
+        versionCode = 21
+        versionName = "1.3.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
