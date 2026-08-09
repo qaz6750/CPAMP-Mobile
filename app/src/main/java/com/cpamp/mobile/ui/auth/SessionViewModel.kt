@@ -6,6 +6,7 @@ import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.auth.ConnectionException
 import com.cpamp.mobile.data.auth.SessionException
 import com.cpamp.mobile.data.auth.SessionRepository
+import com.cpamp.mobile.data.cache.CacheCleanupRepository
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,11 +44,15 @@ enum class AuthUiError {
 @HiltViewModel
 class SessionViewModel @Inject constructor(
     private val repository: SessionRepository,
+    private val cacheCleanupRepository: CacheCleanupRepository,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(SessionUiState())
     val state: StateFlow<SessionUiState> = mutableState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            runSuspendCatching { cacheCleanupRepository.clearLegacyMonitoringEvents() }
+        }
         viewModelScope.launch {
             repository.profiles.collectLatest { stored ->
                 mutableState.update { it.copy(profiles = stored.profiles) }

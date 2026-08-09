@@ -16,6 +16,9 @@ interface CacheDao {
     @Query("DELETE FROM response_cache WHERE profileId = :profileId")
     suspend fun deleteProfile(profileId: String)
 
+    @Query("DELETE FROM response_cache WHERE kind = :kind")
+    suspend fun deleteKind(kind: String)
+
     @Query("DELETE FROM response_cache")
     suspend fun clear()
 }

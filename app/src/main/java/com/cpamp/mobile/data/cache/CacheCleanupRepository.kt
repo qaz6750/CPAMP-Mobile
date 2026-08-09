@@ -16,6 +16,10 @@ class CacheCleanupRepository @Inject constructor(
     private val cacheDao: CacheDao,
     private val updateRepository: AppUpdateRepository,
 ) {
+    suspend fun clearLegacyMonitoringEvents() {
+        cacheDao.deleteKind(LEGACY_MONITORING_CACHE_KIND)
+    }
+
     suspend fun clearRegenerableCache() {
         val failures = mutableListOf<Throwable>()
         runSuspendCatching { cacheDao.clear() }.onFailure(failures::add)
@@ -33,6 +37,7 @@ class CacheCleanupRepository @Inject constructor(
 
     private companion object {
         const val SHARED_REPORTS_DIRECTORY = "shared-reports"
+        const val LEGACY_MONITORING_CACHE_KIND = "monitoring.v1"
     }
 }
 
