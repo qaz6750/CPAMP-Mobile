@@ -11,8 +11,8 @@
     <string name="metric_tokens">Tokens today</string>
     <string name="metric_cost">Estimated cost</string>
     <string name="preview_trend">Usage trend</string>
-    <string name="traffic_title">Request monitoring</string>
-    <string name="traffic_subtitle">Watch latency, failures and model usage</string>
+    <string name="monitoring_title">Request monitoring</string>
+    <string name="monitoring_subtitle">Watch latency, failures and model usage</string>
     <string name="accounts_title">Account health</string>
     <string name="accounts_subtitle">Read-only credential status and provider quota visibility</string>
     <string name="accounts_refresh_quotas">Refresh provider quotas</string>

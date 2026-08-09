@@ -26,9 +26,9 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.ui.components.AppCard
 
 @Composable
-internal fun TrafficFilterCard(
-    filter: TrafficFilter,
-    onWindowSelected: (TrafficWindow) -> Unit,
+internal fun MonitoringFilterCard(
+    filter: MonitoringFilter,
+    onWindowSelected: (MonitoringWindow) -> Unit,
     onFailedOnlyChanged: (Boolean) -> Unit,
 ) {
     AppCard {
@@ -52,7 +52,7 @@ internal fun TrafficFilterCard(
                 )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                TrafficWindow.entries.forEach { window ->
+                MonitoringWindow.entries.forEach { window ->
                     FilterChip(
                         selected = filter.window == window,
                         onClick = { onWindowSelected(window) },
@@ -105,11 +105,10 @@ internal fun TrafficFilterCard(
 }
 
 @StringRes
-private fun TrafficWindow.labelResource(): Int = when (this) {
-    TrafficWindow.Hour -> R.string.last_hour
-    TrafficWindow.Day -> R.string.last_24_hours
-    TrafficWindow.Week -> R.string.last_7_days
+private fun MonitoringWindow.labelResource(): Int = when (this) {
+    MonitoringWindow.Hour -> R.string.last_hour
+    MonitoringWindow.Day -> R.string.last_24_hours
+    MonitoringWindow.Week -> R.string.last_7_days
 }
 
 private val COMPACT_CONTROL_HEIGHT = 36.dp
-

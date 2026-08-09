@@ -63,8 +63,8 @@ fun MonitoringScreen(
                     eyebrow = state.profile?.let { profile ->
                         safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)
                     } ?: fallback,
-                    title = stringResource(R.string.traffic_title),
-                    subtitle = stringResource(R.string.traffic_subtitle),
+                    title = stringResource(R.string.monitoring_title),
+                    subtitle = stringResource(R.string.monitoring_subtitle),
                     trailing = {
                         LoadingIconButton(
                             icon = Icons.Outlined.Refresh,
@@ -76,7 +76,7 @@ fun MonitoringScreen(
                 )
             }
             item {
-                TrafficFilterCard(
+                MonitoringFilterCard(
                     filter = state.filter,
                     onWindowSelected = viewModel::setWindow,
                     onFailedOnlyChanged = viewModel::setFailedOnly,

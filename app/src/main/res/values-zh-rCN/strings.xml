@@ -11,8 +11,8 @@
     <string name="metric_tokens">今日 Token</string>
     <string name="metric_cost">预估成本</string>
     <string name="preview_trend">用量趋势</string>
-    <string name="traffic_title">请求监控</string>
-    <string name="traffic_subtitle">查看延迟、失败和模型用量</string>
+    <string name="monitoring_title">请求监控</string>
+    <string name="monitoring_subtitle">查看延迟、失败和模型用量</string>
     <string name="accounts_title">账号健康</string>
     <string name="accounts_subtitle">只读查看凭据状态与提供商额度</string>
     <string name="accounts_refresh_quotas">刷新提供商额度</string>

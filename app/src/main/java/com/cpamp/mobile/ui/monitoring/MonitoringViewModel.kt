@@ -25,24 +25,24 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class TrafficWindow(val durationMs: Long) {
+enum class MonitoringWindow(val durationMs: Long) {
     Hour(MILLIS_PER_HOUR),
     Day(MILLIS_PER_DAY),
     Week(MILLIS_PER_WEEK),
 }
 
-data class TrafficFilter(
+data class MonitoringFilter(
     val failedOnly: Boolean = false,
-    val window: TrafficWindow = TrafficWindow.Day,
+    val window: MonitoringWindow = MonitoringWindow.Day,
 ) {
     val cacheable: Boolean
-        get() = window == TrafficWindow.Day && !failedOnly
+        get() = window == MonitoringWindow.Day && !failedOnly
 }
 
 data class MonitoringUiState(
     val profile: ServerProfile? = null,
     val response: MonitoringResponseDto? = null,
-    val filter: TrafficFilter = TrafficFilter(),
+    val filter: MonitoringFilter = MonitoringFilter(),
     val loading: Boolean = true,
     val refreshing: Boolean = false,
     val fromCache: Boolean = false,
@@ -59,7 +59,7 @@ class MonitoringViewModel @Inject constructor(
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(MonitoringUiState())
     val state: StateFlow<MonitoringUiState> = mutableState.asStateFlow()
-    private val filter = MutableStateFlow(TrafficFilter())
+    private val filter = MutableStateFlow(MonitoringFilter())
 
     init {
         viewModelScope.launch {
@@ -68,7 +68,7 @@ class MonitoringViewModel @Inject constructor(
                     mutableState.value = MonitoringUiState(loading = false)
                     return@collectLatest
                 }
-                val defaultFilter = TrafficFilter()
+                val defaultFilter = MonitoringFilter()
                 filter.value = defaultFilter
                 mutableState.value = MonitoringUiState(
                     profile = session.profile,
@@ -94,7 +94,7 @@ class MonitoringViewModel @Inject constructor(
         mutableState.update { it.copy(filter = filter.value) }
     }
 
-    fun setWindow(value: TrafficWindow) {
+    fun setWindow(value: MonitoringWindow) {
         filter.update { it.copy(window = value) }
         mutableState.update { it.copy(filter = filter.value) }
     }
@@ -106,7 +106,7 @@ class MonitoringViewModel @Inject constructor(
     }
 
     private suspend fun refreshInternal(
-        currentFilter: TrafficFilter,
+        currentFilter: MonitoringFilter,
         session: AuthenticatedSession,
     ) {
         mutableState.update { state ->
