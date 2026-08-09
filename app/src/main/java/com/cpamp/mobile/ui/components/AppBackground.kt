@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
 
 @Composable
 fun AppBackground(
@@ -15,14 +16,16 @@ fun AppBackground(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val background = MaterialTheme.colorScheme.background
-    val surfaceTint = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.18f)
+    val primaryTint = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f)
+    val secondaryTint = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.24f)
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
-                    colors = listOf(surfaceTint, background, background),
-                    endY = 920f,
+                Brush.linearGradient(
+                    colors = listOf(primaryTint, secondaryTint, background, background),
+                    start = Offset.Zero,
+                    end = Offset(980f, 1180f),
                 ),
             ),
         content = content,

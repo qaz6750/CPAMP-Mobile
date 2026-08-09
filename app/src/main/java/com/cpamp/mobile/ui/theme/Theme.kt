@@ -11,11 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(20.dp),
 )
 
 private val LightColors = lightColorScheme(
@@ -77,30 +77,30 @@ private val DarkColors = darkColorScheme(
 )
 
 private object ColorTokens {
-    val Secondary = Color(0xFF3F6EB8)
-    val SecondaryDark = Color(0xFFB5C8F4)
-    val SecondaryContainerLight = Color(0xFFE9EFFA)
-    val PrimaryContainerDark = Color(0xFF173A78)
+    val Secondary = Color(0xFF0F766E)
+    val SecondaryDark = Color(0xFF7DD3C7)
+    val SecondaryContainerLight = Color(0xFFE2F4F1)
+    val PrimaryContainerDark = Color(0xFF193A6F)
     val OnPrimaryContainerDark = Color(0xFFDCE7FF)
-    val SurfaceVariantLight = Color(0xFFF1F3F5)
-    val SurfaceVariantDark = Color(0xFF292B2E)
-    val OnSurfaceVariantDark = Color(0xFFC2C6CE)
-    val OnSurfaceVariantLight = Color(0x99000000)
-    val OutlineLight = Color(0x33000000)
-    val OutlineDark = Color(0x33FFFFFF)
-    val OutlineDarkStrong = Color(0x5CFFFFFF)
-    val OnDark = Color(0xE6FFFFFF)
-    val TertiaryContainerLight = Color(0xFFEAF6E8)
-    val OnTertiaryContainerLight = Color(0xFF245A20)
-    val InversePrimaryLight = Color(0xFF7DD3FC)
-    val SuccessDark = Color(0xFF83D47B)
-    val OnTertiaryDark = Color(0xFF082A08)
-    val TertiaryContainerDark = Color(0xFF173F19)
-    val OnTertiaryContainerDark = Color(0xFFB6F1AD)
-    val OnSecondaryDark = Color(0xFF14213B)
-    val SecondaryContainerDark = Color(0xFF293750)
-    val OnSecondaryContainerDark = Color(0xFFD9E3FF)
-    val Error = Color(0xFFE84026)
+    val SurfaceVariantLight = Color(0xFFF0F2F5)
+    val SurfaceVariantDark = Color(0xFF25282C)
+    val OnSurfaceVariantDark = Color(0xFFC5C8CE)
+    val OnSurfaceVariantLight = Color(0xFF5F6877)
+    val OutlineLight = Color(0xFFD7DCE3)
+    val OutlineDark = Color(0xFF353A40)
+    val OutlineDarkStrong = Color(0xFF555B63)
+    val OnDark = Color(0xFFF1F3F5)
+    val TertiaryContainerLight = Color(0xFFE1F5EE)
+    val OnTertiaryContainerLight = Color(0xFF075E47)
+    val InversePrimaryLight = Color(0xFFA9C7FF)
+    val SuccessDark = Color(0xFF6ED8B5)
+    val OnTertiaryDark = Color(0xFF06382C)
+    val TertiaryContainerDark = Color(0xFF123D32)
+    val OnTertiaryContainerDark = Color(0xFFA3ECD3)
+    val OnSecondaryDark = Color(0xFF063B37)
+    val SecondaryContainerDark = Color(0xFF173E3B)
+    val OnSecondaryContainerDark = Color(0xFFA9E6DE)
+    val Error = Color(0xFFD93C32)
     val ErrorDark = Color(0xFFFFB4A8)
     val OnErrorDark = Color(0xFF690005)
     val ErrorContainerDark = Color(0xFF5A1B19)
