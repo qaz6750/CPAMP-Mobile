@@ -153,7 +153,7 @@ class AccountHealthRepository @Inject constructor(
             CacheEntity(
                 profileId = session.profile.id,
                 kind = CACHE_KIND,
-                payload = json.encodeToString(snapshot.cacheSafe()),
+                payload = json.encodeToString(snapshot.toCacheSafeSnapshot()),
                 updatedAt = observedAtMs,
             ),
         )
@@ -188,22 +188,22 @@ class AccountHealthRepository @Inject constructor(
         }
     }
 
-    private fun AccountHealthSnapshot.cacheSafe(): AccountHealthSnapshot = copy(
-        accounts = accounts.mapIndexed { index, account ->
-            account.copy(
-                stableId = "cached:${index + 1}",
-                authIndex = "",
-                name = "Credential ${index + 1}",
-                account = "",
-                source = AccountHealthSource.Cache,
-            )
-        },
-    )
-
     private companion object {
         const val CACHE_KIND = "account-health.v2"
     }
 }
+
+internal fun AccountHealthSnapshot.toCacheSafeSnapshot(): AccountHealthSnapshot = copy(
+    accounts = accounts.mapIndexed { index, account ->
+        account.copy(
+            stableId = "cached:${index + 1}",
+            authIndex = "",
+            name = "Credential ${index + 1}",
+            account = "",
+            source = AccountHealthSource.Cache,
+        )
+    },
+)
 
 private fun CodexInspectionResultDto.toAccountHealth(file: AuthFileDto): AccountHealth {
     val windows = resolvedQuotaWindows.orEmpty().map { window ->
