@@ -3,7 +3,6 @@ package com.cpamp.mobile.ui.navigation
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.QueryStats
@@ -20,7 +19,6 @@ enum class AppDestination(
     Traffic("traffic", R.string.nav_traffic, Icons.Outlined.QueryStats),
     Usage("usage", R.string.nav_usage, Icons.Outlined.BarChart),
     Accounts("accounts", R.string.nav_accounts, Icons.Outlined.AccountCircle),
-    Operations("operations", R.string.nav_operations, Icons.Outlined.AdminPanelSettings),
     Settings("settings", R.string.settings_title, Icons.Outlined.Settings),
     ;
 

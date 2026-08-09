@@ -6,26 +6,15 @@ import com.cpamp.mobile.data.remote.model.AuthFilesResponseDto
 import com.cpamp.mobile.data.remote.model.CodexInspectionRunDetailDto
 import com.cpamp.mobile.data.remote.model.CodexInspectionRunsResponseDto
 import com.cpamp.mobile.data.remote.model.DashboardSummaryDto
-import com.cpamp.mobile.data.remote.model.LogsDto
-import com.cpamp.mobile.data.remote.model.ManagerInfoDto
-import com.cpamp.mobile.data.remote.model.ManagerStatusDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.model.MonitoringResponseDto
-import kotlinx.serialization.json.JsonElement
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface CPAMPApi {
-    @GET("usage-service/info")
-    suspend fun info(): ManagerInfoDto
-
-    @GET("status")
-    suspend fun status(): ManagerStatusDto
-
     @GET("v0/management/dashboard/summary")
     suspend fun dashboard(
         @Query("today_start_ms") todayStartMs: Long,
@@ -48,15 +37,5 @@ interface CPAMPApi {
 
     @GET("v0/management/codex-inspection/runs/{id}")
     suspend fun codexInspectionRun(@Path("id") id: Long): CodexInspectionRunDetailDto
-
-    @GET("v0/management/logs")
-    suspend fun logs(
-        @Query("after") after: Long? = null,
-        @Query("cursor") cursor: String? = null,
-        @Query("limit") limit: Int = 300,
-    ): LogsDto
-
-    @DELETE("v0/management/logs")
-    suspend fun clearLogs(): JsonElement
 
 }

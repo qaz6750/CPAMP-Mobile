@@ -26,7 +26,6 @@ import com.cpamp.mobile.ui.security.AppLockUiState
 import com.cpamp.mobile.ui.settings.AppearanceUiState
 import com.cpamp.mobile.ui.settings.AppUpdateScreen
 import com.cpamp.mobile.ui.settings.SettingsScreen
-import com.cpamp.mobile.ui.system.SystemScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
 import java.util.Base64
 
@@ -139,13 +138,6 @@ private fun ConnectedApp(
             }
             composable(AppDestination.Usage.route) {
                 UsageAnalyticsScreen(contentPadding)
-            }
-            composable(AppDestination.Operations.route) {
-                SystemScreen(
-                    contentPadding = contentPadding,
-                    session = session,
-                    appearanceState = appearanceState,
-                )
             }
             composable(AppDestination.Settings.route) {
                 SettingsScreen(

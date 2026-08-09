@@ -116,19 +116,6 @@ fun TrafficPreviewScreen(contentPadding: PaddingValues) = PreviewListScreen(
 )
 
 @Composable
-fun SystemPreviewScreen(contentPadding: PaddingValues) = PreviewListScreen(
-    contentPadding = contentPadding,
-    eyebrow = stringResource(R.string.nav_operations),
-    title = stringResource(R.string.system_title),
-    subtitle = stringResource(R.string.system_subtitle),
-    rows = listOf(
-        stringResource(R.string.system_status),
-        stringResource(R.string.system_logs),
-        stringResource(R.string.system_servers),
-    ),
-)
-
-@Composable
 private fun PreviewListScreen(
     contentPadding: PaddingValues,
     eyebrow: String,
