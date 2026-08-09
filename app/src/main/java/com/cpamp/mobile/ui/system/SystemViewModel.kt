@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class SystemTab { Status, Logs, Servers }
+enum class SystemTab { Status, Logs }
 
 enum class SystemNotice { RequestFailed, LogsCleared }
 
@@ -177,7 +177,6 @@ class SystemViewModel @Inject constructor(
                             it.copy(loading = false, notice = SystemNotice.RequestFailed)
                         }
                     }
-                SystemTab.Servers -> mutableState.update { it.copy(loading = false) }
             }
         }
     }

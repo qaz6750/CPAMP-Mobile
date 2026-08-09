@@ -16,9 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
-import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.DeleteOutline
-import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
@@ -48,8 +46,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.domain.model.AuthenticatedSession
-import com.cpamp.mobile.domain.model.ServerProfile
-import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.CategoryListRow
@@ -61,16 +57,11 @@ import com.cpamp.mobile.ui.settings.AppearanceUiState
 fun SystemScreen(
     contentPadding: PaddingValues,
     session: AuthenticatedSession,
-    profiles: List<ServerProfile>,
-    onSwitchServer: (String) -> Unit,
-    onDeleteServer: (String) -> Unit,
-    onDisconnect: () -> Unit,
     appearanceState: AppearanceUiState,
     viewModel: SystemViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirmClearLogs by rememberSaveable { mutableStateOf(false) }
-    var deleteProfile by remember { mutableStateOf<ServerProfile?>(null) }
 
     AppBackground {
         LazyColumn(
@@ -103,7 +94,7 @@ fun SystemScreen(
                     SystemTab.entries.forEach { tab ->
                         CategoryListRow(
                             title = stringResource(tab.labelResource),
-                            supporting = tab.supportingText(state, profiles.size),
+                            supporting = tab.supportingText(state),
                             icon = tab.icon,
                             selected = state.tab == tab,
                             onClick = { viewModel.selectTab(tab) },
@@ -172,23 +163,6 @@ fun SystemScreen(
                         }
                     }
                 }
-                SystemTab.Servers -> {
-                    items(profiles, key = ServerProfile::id) { profile ->
-                        ServerCard(
-                            profile = profile,
-                            active = profile.id == session.profile.id,
-                            hideAddress = appearanceState.settings.hideAddresses,
-                            onSwitch = { onSwitchServer(profile.id) },
-                            onDelete = { deleteProfile = profile },
-                        )
-                    }
-                    item {
-                        Button(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) {
-                            Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
-                            Text(stringResource(R.string.disconnect), modifier = Modifier.padding(start = 8.dp))
-                        }
-                    }
-                }
             }
         }
     }
@@ -201,26 +175,6 @@ fun SystemScreen(
             onConfirm = {
                 confirmClearLogs = false
                 viewModel.clearLogs()
-            },
-        )
-    }
-    deleteProfile?.let { profile ->
-        val fallback = stringResource(R.string.system_servers)
-        ConfirmSystemAction(
-            title = stringResource(R.string.delete_server_title),
-            message = stringResource(
-                R.string.delete_server_body,
-                safeServerName(
-                    profile.name,
-                    profile.baseUrl,
-                    appearanceState.settings.hideAddresses,
-                    fallback,
-                ),
-            ),
-            onDismiss = { deleteProfile = null },
-            onConfirm = {
-                deleteProfile = null
-                onDeleteServer(profile.id)
             },
         )
     }
@@ -317,19 +271,16 @@ private val SystemTab.labelResource: Int
     get() = when (this) {
         SystemTab.Status -> R.string.system_status
         SystemTab.Logs -> R.string.system_logs
-        SystemTab.Servers -> R.string.system_servers
     }
 
 private val SystemTab.icon: ImageVector
     get() = when (this) {
         SystemTab.Status -> Icons.Outlined.MonitorHeart
         SystemTab.Logs -> Icons.AutoMirrored.Outlined.ListAlt
-        SystemTab.Servers -> Icons.Outlined.Dns
     }
 
 @Composable
-private fun SystemTab.supportingText(state: SystemUiState, profileCount: Int): String = when (this) {
+private fun SystemTab.supportingText(state: SystemUiState): String = when (this) {
     SystemTab.Status -> stringResource(if (state.status == null) R.string.manual_refresh_required else R.string.system_data_loaded)
     SystemTab.Logs -> stringResource(R.string.item_count, state.logs.size)
-    SystemTab.Servers -> stringResource(R.string.item_count, profileCount)
 }

@@ -144,16 +144,14 @@ private fun ConnectedApp(
                 SystemScreen(
                     contentPadding = contentPadding,
                     session = session,
-                    profiles = sessionState.profiles,
-                    onSwitchServer = onSwitchServer,
-                    onDeleteServer = onDeleteServer,
-                    onDisconnect = onDisconnect,
                     appearanceState = appearanceState,
                 )
             }
             composable(AppDestination.Settings.route) {
                 SettingsScreen(
                     contentPadding = contentPadding,
+                    session = session,
+                    profiles = sessionState.profiles,
                     appLockState = appLockState,
                     appearanceState = appearanceState,
                     onSetAppLockEnabled = onSetAppLockEnabled,
@@ -162,6 +160,9 @@ private fun ConnectedApp(
                     onSetLanguage = onSetLanguage,
                     onSetAllowScreenshots = onSetAllowScreenshots,
                     onSetHideAddresses = onSetHideAddresses,
+                    onSwitchServer = onSwitchServer,
+                    onDeleteServer = onDeleteServer,
+                    onDisconnect = onDisconnect,
                     onOpenUpdates = { navController.navigate(APP_UPDATE_ROUTE) },
                 )
             }

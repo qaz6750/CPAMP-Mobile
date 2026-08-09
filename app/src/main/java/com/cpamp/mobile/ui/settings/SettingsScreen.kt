@@ -46,6 +46,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpamp.mobile.R
 import com.cpamp.mobile.data.settings.AppLanguage
 import com.cpamp.mobile.data.settings.AppTheme
+import com.cpamp.mobile.domain.model.AuthenticatedSession
+import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.security.AppLockUiState
 
@@ -53,6 +55,8 @@ import com.cpamp.mobile.ui.security.AppLockUiState
 @Composable
 fun SettingsScreen(
     contentPadding: PaddingValues,
+    session: AuthenticatedSession,
+    profiles: List<ServerProfile>,
     appLockState: AppLockUiState,
     appearanceState: AppearanceUiState,
     onSetAppLockEnabled: (Boolean) -> Unit,
@@ -61,6 +65,9 @@ fun SettingsScreen(
     onSetLanguage: (AppLanguage) -> Unit,
     onSetAllowScreenshots: (Boolean) -> Unit,
     onSetHideAddresses: (Boolean) -> Unit,
+    onSwitchServer: (String) -> Unit,
+    onDeleteServer: (String) -> Unit,
+    onDisconnect: () -> Unit,
     onOpenUpdates: () -> Unit,
     updateViewModel: AppUpdateViewModel = hiltViewModel(),
     cacheViewModel: CacheCleanupViewModel = hiltViewModel(),
@@ -105,6 +112,16 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+            item {
+                ServerManagementSettings(
+                    session = session,
+                    profiles = profiles,
+                    hideAddresses = appearanceState.settings.hideAddresses,
+                    onSwitchServer = onSwitchServer,
+                    onDeleteServer = onDeleteServer,
+                    onDisconnect = onDisconnect,
+                )
             }
             item {
                 SettingsCard(stringResource(R.string.system_security)) {
