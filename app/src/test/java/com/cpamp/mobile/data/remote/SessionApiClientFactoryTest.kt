@@ -48,7 +48,7 @@ class SessionApiClientFactoryTest {
         server.enqueue(MockResponse().setResponseCode(503).setBody("{}"))
         server.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        factory.api(session()).status()
+        factory.api(session()).authFiles()
 
         assertEquals(2, server.requestCount)
     }
@@ -68,8 +68,8 @@ class SessionApiClientFactoryTest {
         server.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
         server.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        factory.api(session(profileId = "one", key = "first-secret")).status()
-        factory.api(session(profileId = "two", key = "second-secret")).status()
+        factory.api(session(profileId = "one", key = "first-secret")).authFiles()
+        factory.api(session(profileId = "two", key = "second-secret")).authFiles()
 
         assertEquals("Bearer first-secret", server.takeRequest().getHeader("Authorization"))
         assertEquals("Bearer second-secret", server.takeRequest().getHeader("Authorization"))
