@@ -6,7 +6,7 @@ CPAMP Mobile is a native Android administration and observability client for a c
 
 **Current version:** `1.3.5`
 
-- 📊 Traffic, usage, quota, and service health
+- 📊 Overview, usage analytics, aggregate monitoring, and account health
 - 🔐 Keystore-backed credentials with no telemetry
 - 🌐 Simplified Chinese and English
 
@@ -37,7 +37,7 @@ HTTPS uses the Android system trust store and hostname verification. Certificate
 
 Arbitrary HTTP addresses are supported only as an explicit compatibility option. HTTP sends the Admin Key and management data without transport encryption. A network observer may read or modify that traffic.
 
-Each HTTP server requires an explicit warning confirmation before first use. The login screen, saved server list, and connected system view continue to identify the connection as unencrypted. Local Keystore encryption cannot protect credentials while they travel over HTTP.
+Each HTTP server requires an explicit warning confirmation before first use. The login screen, saved server list, and server management in Settings continue to identify the connection as unencrypted. Local Keystore encryption cannot protect credentials while they travel over HTTP.
 
 ## ✨ Features
 
@@ -45,18 +45,18 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 | --- | --- |
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
 | Overview | Health, daily requests, success rate, tokens, estimated cost, interactive token/request trends, and real provider marks |
-| Monitoring | Manual refresh, time/status filters, request details including time to first token, privacy-safe cached recent data, and server inspection quotas |
 | Usage | Interactive usage buckets, on-demand rankings, and privacy-safe Today/7-day/30-day share images |
-| Operations | Manager/collector status, filtered paged logs, log clearing, and saved-server management |
-| Settings | App lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
+| Monitoring | Manual refresh, time/status filters, and privacy-safe cached aggregate request summaries |
+| Accounts | Read-only credential inventory, status, completed-inspection results, and explicitly refreshed provider quota windows |
+| Settings | Saved-server management, app lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
 | Security | Keystore AES-GCM, optional biometric/device-credential app lock, configurable screenshot protection, no backup |
-| Appearance | Blue-and-white light theme, navy dark theme, Simplified Chinese and English |
+| Appearance | Blue-and-white light theme, charcoal dark theme, Simplified Chinese and English |
 
 Destructive changes show the affected object and require confirmation. Switching servers cancels requests from the previous server and rebuilds screen state so cached data cannot cross profiles.
 
-All Manager Server network screens use explicit manual refresh. Monitoring requests only the visible summary and event page; Usage computes only the selected ranking; Operations loads only the selected status or log section. Changing filters or categories never triggers a background request. A share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
+Monitoring requests aggregate summaries only and never downloads a request-event page or request details. Changing its time or status filter updates local state until the user taps refresh. Usage computes only the selected ranking, and a share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
 
-The quota screen reads the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. It can also request a one-off server inspection through `POST /v0/management/codex-inspection/runs`; provider APIs are never queried by the phone. The screen identifies the Manager Server as the source, shows the inspection completion time, and can reuse a privacy-safe per-profile cache when the server is temporarily unavailable. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
+Accounts reads the Manager Server credential inventory and the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. It never starts an inspection. An explicit refresh can use the Manager Server's authenticated API-call proxy to request quota windows from supported providers; unsupported providers still expose basic read-only account health. Individual provider failures degrade only the affected account. The per-profile fallback cache stores only ordered placeholders and aggregate status/quota data, never account labels, file names, authentication indexes, or raw responses. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
 
 ## 🧭 Architecture
 
@@ -80,8 +80,11 @@ flowchart LR
 
 	HTTP -->|Admin Key over HTTPS| Manager[CPA-Manager-Plus Manager Server]
 	Manager --> Gateway[CPA / CLIProxyAPI gateway data]
+	Manager --> Inventory[Credential inventory]
 	Manager --> Inspection[Codex inspection runs]
-	Inspection -->|standardized completed result| HTTP
+	Inventory -->|read-only account status| HTTP
+	Inspection -->|latest completed result| HTTP
+	Manager -->|explicit supported quota query| Providers[Provider quota APIs]
 ```
 
 Room stores only profile-isolated, privacy-safe response data. DataStore holds non-secret application settings and server metadata. Admin Keys remain encrypted by Android Keystore and are attached only to requests for the selected server profile.
@@ -172,7 +175,8 @@ Tags matching `v*` create a GitHub Release only when all signing secrets are pre
 - Admin Keys are encrypted separately from server metadata with Android Keystore AES-GCM.
 - Enabling app lock migrates ciphertext to a user-authenticated Keystore key; disabling it migrates back and removes the obsolete key.
 - Admin Keys are not written to Room, DataStore, saved-state Bundles, logs, crash uploads, or backups.
-- Monitoring cache is isolated by server profile and removes request identifiers, account labels, paths, and failure summaries.
+- Monitoring cache is isolated by server profile and stores aggregate summaries only; request-event rows and details are never cached.
+- Accounts keeps live account identity only in memory. Its per-profile fallback cache stores placeholder identities and aggregate health/quota values without labels, file names, authentication indexes, or raw provider responses.
 - Screenshots and recent-task previews are allowed by default and can be disabled from Settings.
 - Shared usage images contain aggregate requests, success rate, tokens, cost, timeline and top-model data only. They exclude server names, addresses, keys, credentials and account labels.
 - In-app updates accept only HTTPS assets with fixed release names, a matching SHA-256, and the installed application's signing identity. Android still requires explicit installer confirmation.
