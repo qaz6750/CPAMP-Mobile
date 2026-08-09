@@ -88,12 +88,12 @@ private fun FloatingNavigationBar(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth().shadow(
-                elevation = 3.dp,
-                shape = RoundedCornerShape(16.dp),
-                ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.08f),
+                elevation = 6.dp,
+                shape = MaterialTheme.shapes.extraLarge,
+                ambientColor = Color.Black.copy(alpha = 0.08f),
+                spotColor = Color.Black.copy(alpha = 0.10f),
             ),
-            shape = RoundedCornerShape(16.dp),
+            shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
@@ -126,7 +126,7 @@ private fun FloatingNavigationItem(
         modifier = modifier.heightIn(min = 48.dp).clickable(onClick = onClick),
         color = Color.Transparent,
         contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp),

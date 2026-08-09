@@ -109,7 +109,7 @@ fun AppCard(
 ) {
     Card(
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -170,7 +170,7 @@ fun MetricCard(
 ) {
     Card(
         modifier = modifier.then(if (compact) Modifier.height(128.dp) else Modifier),
-        shape = MaterialTheme.shapes.small,
+        shape = if (compact) MaterialTheme.shapes.medium else MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),

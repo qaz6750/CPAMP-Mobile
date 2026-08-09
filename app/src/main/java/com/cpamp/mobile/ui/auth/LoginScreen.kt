@@ -126,7 +126,7 @@ fun LoginScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
-                    shape = MaterialTheme.shapes.small,
+                    shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                     ),
@@ -299,7 +299,7 @@ private fun SavedProfileCard(
     )
     Card(
         modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
-        shape = MaterialTheme.shapes.small,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
