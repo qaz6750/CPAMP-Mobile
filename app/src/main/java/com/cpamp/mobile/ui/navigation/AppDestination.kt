@@ -16,8 +16,8 @@ enum class AppDestination(
     val icon: ImageVector,
 ) {
     Overview("overview", R.string.nav_overview, Icons.Outlined.GridView),
-    Traffic("traffic", R.string.nav_traffic, Icons.Outlined.QueryStats),
     Usage("usage", R.string.nav_usage, Icons.Outlined.BarChart),
+    Traffic("traffic", R.string.nav_traffic, Icons.Outlined.QueryStats),
     Accounts("accounts", R.string.nav_accounts, Icons.Outlined.AccountCircle),
     Settings("settings", R.string.settings_title, Icons.Outlined.Settings),
     ;
