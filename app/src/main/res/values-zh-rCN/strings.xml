@@ -24,11 +24,15 @@
     <string name="accounts_no_plan">未提供套餐信息</string>
     <string name="accounts_open_details">打开账号详情</string>
     <string name="accounts_health_ready">额度可用</string>
+    <string name="accounts_health_quota_warning">额度偏低</string>
+    <string name="accounts_health_quota_critical">额度将尽</string>
     <string name="accounts_health_not_refreshed">尚未刷新</string>
     <string name="accounts_health_basic">基础状态</string>
     <string name="accounts_filter_all">全部</string>
     <string name="accounts_filter_provider">%1$s</string>
     <string name="accounts_filter_empty">此提供商下暂无账号。</string>
+    <string name="accounts_credentials">凭证 / 账号</string>
+    <string name="accounts_credential_unknown">凭据文件不可用</string>
     <string name="accounts_overview_total">总账号</string>
     <string name="accounts_overview_healthy">正常可用</string>
     <string name="accounts_overview_attention">需要处理</string>
