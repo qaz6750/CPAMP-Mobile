@@ -333,14 +333,14 @@ private fun AccountPanel(content: @Composable () -> Unit) {
 private fun AccountHealthOverview(accounts: List<AccountHealth>) {
     val healthy = accounts.count {
         it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Available &&
-            (it.minimumRemainingPercent() ?: 100.0) >= 50.0
+            quotaLevel(it.minimumRemainingPercent()) == QuotaLevel.Healthy
     }
     val needsAttention = accounts.count {
         it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Failed
     }
     val quotaRisk = accounts.count {
         it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Available &&
-            (it.minimumRemainingPercent() ?: 100.0) < 50.0
+            quotaLevel(it.minimumRemainingPercent()) in setOf(QuotaLevel.Warning, QuotaLevel.Critical)
     }
     val disabled = accounts.count { it.status == AccountStatus.Disabled }
     val pending = accounts.count {
@@ -654,8 +654,8 @@ internal enum class QuotaLevel { Healthy, Warning, Critical, Unknown }
 
 internal fun quotaLevel(remainingPercent: Double?): QuotaLevel = when {
     remainingPercent == null -> QuotaLevel.Unknown
-    remainingPercent >= 50.0 -> QuotaLevel.Healthy
-    remainingPercent >= 20.0 -> QuotaLevel.Warning
+    remainingPercent >= 70.0 -> QuotaLevel.Healthy
+    remainingPercent >= 30.0 -> QuotaLevel.Warning
     else -> QuotaLevel.Critical
 }
 
