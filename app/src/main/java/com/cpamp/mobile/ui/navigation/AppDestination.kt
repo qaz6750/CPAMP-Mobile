@@ -5,7 +5,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.cpamp.mobile.R
@@ -17,7 +16,6 @@ enum class AppDestination(
 ) {
     Overview("overview", R.string.nav_overview, Icons.Outlined.GridView),
     Usage("usage", R.string.nav_usage, Icons.Outlined.BarChart),
-    Monitoring("monitoring", R.string.nav_monitoring, Icons.Outlined.QueryStats),
     Accounts("accounts", R.string.nav_accounts, Icons.Outlined.AccountCircle),
     Settings("settings", R.string.settings_title, Icons.Outlined.Settings),
     ;
