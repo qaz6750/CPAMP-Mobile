@@ -26,6 +26,15 @@
     <string name="accounts_health_ready">Quota available</string>
     <string name="accounts_health_not_refreshed">Not refreshed</string>
     <string name="accounts_health_basic">Basic status</string>
+    <string name="accounts_filter_all">All · %1$d</string>
+    <string name="accounts_filter_provider">%1$s · %2$d</string>
+    <string name="accounts_filter_empty">No accounts match this provider.</string>
+    <string name="accounts_overview_total">Total accounts</string>
+    <string name="accounts_overview_healthy">Healthy</string>
+    <string name="accounts_overview_attention">Needs attention</string>
+    <string name="accounts_overview_risk">Quota risk</string>
+    <string name="accounts_overview_disabled">Disabled</string>
+    <string name="accounts_overview_pending">Pending</string>
     <string name="accounts_unauthorized">The Admin Key cannot read account health.</string>
     <string name="accounts_rate_limited">Manager Server rejected frequent account requests. Try again later.</string>
     <string name="accounts_network_error">Unable to reach Manager Server for account health.</string>

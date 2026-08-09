@@ -2,6 +2,7 @@ package com.cpamp.mobile.ui.accounts
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,14 +10,23 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -25,9 +35,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,8 +76,12 @@ fun AccountsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val accounts = state.snapshot?.accounts.orEmpty()
-    val active = accounts.filter { it.status == AccountStatus.Active }
-    val disabled = accounts.filter { it.status == AccountStatus.Disabled }
+    val providers = accounts.map { it.provider.normalizedProvider() }.distinct().sorted()
+    var selectedProvider by rememberSaveable { mutableStateOf<String?>(null) }
+    val effectiveProvider = selectedProvider?.takeIf(providers::contains)
+    val visibleAccounts = accounts.filter { effectiveProvider == null || it.provider.normalizedProvider() == effectiveProvider }
+    val active = visibleAccounts.filter { it.status == AccountStatus.Active }
+    val disabled = visibleAccounts.filter { it.status == AccountStatus.Disabled }
 
     AppBackground {
         LazyColumn(
@@ -111,12 +130,27 @@ fun AccountsScreen(
             state.error?.let { error ->
                 item { AccountsNotice(stringResource(error.messageResource()), true) }
             }
+            if (accounts.isNotEmpty()) {
+                item {
+                    AccountProviderFilters(
+                        providers = providers,
+                        selectedProvider = effectiveProvider,
+                        accountCounts = accounts.groupingBy { it.provider.normalizedProvider() }.eachCount(),
+                        totalCount = accounts.size,
+                        onProviderSelected = { selectedProvider = it },
+                    )
+                }
+                item { AccountHealthOverview(accounts) }
+            }
             when {
                 state.loading && accounts.isEmpty() -> item {
                     ContentStateCard(stringResource(R.string.accounts_loading), loading = true)
                 }
                 accounts.isEmpty() -> item {
                     ContentStateCard(stringResource(R.string.accounts_empty))
+                }
+                visibleAccounts.isEmpty() -> item {
+                    ContentStateCard(stringResource(R.string.accounts_filter_empty))
                 }
                 else -> {
                     if (active.isNotEmpty()) {
@@ -188,6 +222,108 @@ fun AccountDetailScreen(
 }
 
 @Composable
+private fun AccountProviderFilters(
+    providers: List<String>,
+    selectedProvider: String?,
+    accountCounts: Map<String, Int>,
+    totalCount: Int,
+    onProviderSelected: (String?) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FilterChip(
+            selected = selectedProvider == null,
+            onClick = { onProviderSelected(null) },
+            label = { Text(stringResource(R.string.accounts_filter_all, totalCount)) },
+        )
+        providers.forEach { provider ->
+            FilterChip(
+                selected = selectedProvider == provider,
+                onClick = { onProviderSelected(provider) },
+                leadingIcon = { CredentialProviderIcon(provider, modifier = Modifier.height(18.dp)) },
+                label = { Text(stringResource(R.string.accounts_filter_provider, providerLabel(provider), accountCounts[provider] ?: 0)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccountHealthOverview(accounts: List<AccountHealth>) {
+    val healthy = accounts.count {
+        it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Available &&
+            (it.minimumRemainingPercent() ?: 100.0) >= 50.0
+    }
+    val needsAttention = accounts.count {
+        it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Failed
+    }
+    val quotaRisk = accounts.count {
+        it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Available &&
+            (it.minimumRemainingPercent() ?: 100.0) < 50.0
+    }
+    val disabled = accounts.count { it.status == AccountStatus.Disabled }
+    val pending = accounts.count {
+        it.status == AccountStatus.Active && it.quotaState in setOf(
+            AccountQuotaState.NotRequested,
+            AccountQuotaState.Unsupported,
+        )
+    }
+    val metrics = listOf(
+        AccountHealthMetric(R.string.accounts_overview_total, accounts.size, Icons.Outlined.AccountCircle, MaterialTheme.colorScheme.primary),
+        AccountHealthMetric(R.string.accounts_overview_healthy, healthy, Icons.Outlined.CheckCircle, MaterialTheme.colorScheme.tertiary),
+        AccountHealthMetric(R.string.accounts_overview_attention, needsAttention, Icons.Outlined.ErrorOutline, MaterialTheme.colorScheme.error),
+        AccountHealthMetric(R.string.accounts_overview_risk, quotaRisk, Icons.Outlined.Speed, QuotaOrange),
+        AccountHealthMetric(R.string.accounts_overview_disabled, disabled, Icons.Outlined.Block, MaterialTheme.colorScheme.onSurfaceVariant),
+        AccountHealthMetric(R.string.accounts_overview_pending, pending, Icons.Outlined.HelpOutline, MaterialTheme.colorScheme.secondary),
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        metrics.chunked(2).forEach { rowMetrics ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowMetrics.forEach { metric ->
+                    AccountHealthMetricCard(metric, Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccountHealthMetricCard(metric: AccountHealthMetric, modifier: Modifier = Modifier) {
+    AppCard(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 82.dp).padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                color = metric.color.copy(alpha = 0.12f),
+                contentColor = metric.color,
+                shape = MaterialTheme.shapes.medium,
+            ) {
+                Icon(metric.icon, contentDescription = null, modifier = Modifier.padding(8.dp).height(20.dp))
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(metric.count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    stringResource(metric.label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                )
+            }
+        }
+    }
+}
+
+private data class AccountHealthMetric(
+    @StringRes val label: Int,
+    val count: Int,
+    val icon: ImageVector,
+    val color: Color,
+)
+
+@Composable
 private fun AccountsNotice(message: String, isError: Boolean) {
     AppCard(
         containerColor = if (isError) MaterialTheme.colorScheme.errorContainer
@@ -211,6 +347,7 @@ private fun AccountSectionTitle(@StringRes label: Int, count: Int) {
 
 @Composable
 private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
+    val remaining = account.minimumRemainingPercent()
     AppCard(
         modifier = Modifier.clickable(onClick = onClick),
         containerColor = if (account.status == AccountStatus.Disabled) {
@@ -244,15 +381,22 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     AccountStatusBadge(account)
-                    account.windows.minOfOrNull { it.remainingPercent ?: 101.0 }
-                        ?.takeIf { it <= 100.0 }
-                        ?.let { remaining ->
+                    remaining?.let {
                             Text(
-                                stringResource(R.string.credential_quota_remaining, remaining),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = quotaLevelColor(quotaLevel(remaining)),
+                                stringResource(R.string.credential_quota_remaining, it),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = quotaLevelColor(quotaLevel(it)),
+                                fontWeight = FontWeight.SemiBold,
                             )
-                        }
+                    }
+                }
+                if (remaining != null) {
+                    LinearProgressIndicator(
+                        progress = { (remaining / 100.0).toFloat() },
+                        modifier = Modifier.fillMaxWidth().height(6.dp),
+                        color = quotaLevelColor(quotaLevel(remaining)),
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    )
                 }
             }
             Icon(Icons.Outlined.ChevronRight, contentDescription = stringResource(R.string.accounts_open_details))
@@ -349,38 +493,46 @@ private fun AccountQuotaCard(account: AccountHealth) {
 @Composable
 private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
     val remaining = window.remainingPercent?.coerceIn(0.0, 100.0)
-    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(window.durationLabel(), style = MaterialTheme.typography.labelLarge)
-            Text(
-                remaining?.let { stringResource(R.string.credential_quota_remaining, it) }
-                    ?: stringResource(R.string.credential_quota_remaining_unknown),
-                style = MaterialTheme.typography.labelMedium,
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f), shape = MaterialTheme.shapes.medium) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(window.durationLabel(), style = MaterialTheme.typography.labelLarge)
+                Text(
+                    remaining?.let { stringResource(R.string.credential_quota_remaining, it) }
+                        ?: stringResource(R.string.credential_quota_remaining_unknown),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = quotaLevelColor(quotaLevel(remaining)),
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            LinearProgressIndicator(
+                progress = { ((remaining ?: 0.0) / 100.0).toFloat() },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = quotaLevelColor(quotaLevel(remaining)),
+                trackColor = MaterialTheme.colorScheme.surface,
             )
-        }
-        LinearProgressIndicator(
-            progress = { ((remaining ?: 0.0) / 100.0).toFloat() },
-            modifier = Modifier.fillMaxWidth().height(8.dp),
-            color = quotaLevelColor(quotaLevel(remaining)),
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
-        )
-        window.resetAtMs?.let {
-            Text(
-                stringResource(R.string.credential_quota_reset, it.asDateTime()),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        window.resetLabel.takeIf { it.isNotBlank() && it != "-" }?.let { label ->
-            Text(
-                stringResource(R.string.credential_quota_reset, label),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            window.resetAtMs?.let {
+                Text(
+                    stringResource(R.string.credential_quota_reset, it.asDateTime()),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            window.resetLabel.takeIf { it.isNotBlank() && it != "-" }?.let { label ->
+                Text(
+                    stringResource(R.string.credential_quota_reset, label),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
+
+private fun AccountHealth.minimumRemainingPercent(): Double? =
+    windows.mapNotNull(AccountQuotaWindow::remainingPercent).minOrNull()?.coerceIn(0.0, 100.0)
+
+private fun String.normalizedProvider(): String = trim().lowercase()
 
 @Composable
 internal fun AccountStatusBadge(account: AccountHealth) {
