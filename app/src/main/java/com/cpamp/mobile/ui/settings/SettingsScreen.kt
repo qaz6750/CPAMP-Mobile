@@ -48,6 +48,7 @@ import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AppCard
+import com.cpamp.mobile.ui.components.PageHeader
 import com.cpamp.mobile.ui.security.AppLockUiState
 
 
@@ -95,10 +96,11 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                Column {
-                    Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
-                    Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                PageHeader(
+                    eyebrow = stringResource(R.string.nav_settings),
+                    title = stringResource(R.string.settings_title),
+                    subtitle = stringResource(R.string.settings_subtitle),
+                )
             }
             if (appearanceState.error) {
                 item {

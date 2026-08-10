@@ -22,11 +22,11 @@ private val LightColors = lightColorScheme(
     primary = BrandBlue,
     onPrimary = White,
     primaryContainer = BrandBlueLight,
-    onPrimaryContainer = Ink,
-    secondary = ColorTokens.Secondary,
+    onPrimaryContainer = BrandBlueActive,
+    secondary = Slate,
     onSecondary = White,
-    secondaryContainer = ColorTokens.SecondaryContainerLight,
-    onSecondaryContainer = Ink,
+    secondaryContainer = SlateLight,
+    onSecondaryContainer = SlateDark,
     tertiary = Success,
     onTertiary = White,
     tertiaryContainer = ColorTokens.TertiaryContainerLight,
@@ -43,7 +43,10 @@ private val LightColors = lightColorScheme(
     inverseSurface = Ink,
     inverseOnSurface = Sky,
     inversePrimary = ColorTokens.InversePrimaryLight,
-    error = ColorTokens.Error,
+    error = Error,
+    onError = White,
+    errorContainer = ColorTokens.ErrorContainerLight,
+    onErrorContainer = ColorTokens.OnErrorContainerLight,
 )
 
 private val DarkColors = darkColorScheme(
@@ -79,9 +82,7 @@ private val DarkColors = darkColorScheme(
 private object ColorTokens {
     val SurfaceLight = Color(0xF0FFFFFF)
     val SurfaceDark = NavySurface.copy(alpha = 0.90f)
-    val Secondary = Color(0xFF14B8A6)
-    val SecondaryDark = Color(0xFF2DD4BF)
-    val SecondaryContainerLight = Color(0xFFF0FDFA)
+    val SecondaryDark = Color(0xFF94A3B8)
     val PrimaryContainerDark = Color(0xFF1D3557)
     val OnPrimaryContainerDark = Color(0xFFDBEAFE)
     val SurfaceVariantLight = Color(0xFFF6FAFF)
@@ -100,10 +101,11 @@ private object ColorTokens {
     val OnTertiaryDark = Color(0xFF052E16)
     val TertiaryContainerDark = Color(0xFF14351F)
     val OnTertiaryContainerDark = Color(0xFF86EFAC)
-    val OnSecondaryDark = Color(0xFF042F2E)
-    val SecondaryContainerDark = Color(0xFF133B39)
-    val OnSecondaryContainerDark = Color(0xFF5EEAD4)
-    val Error = Color(0xFFEF4444)
+    val OnSecondaryDark = Color(0xFF0F172A)
+    val SecondaryContainerDark = Color(0xFF1E293B)
+    val OnSecondaryContainerDark = Color(0xFFCBD5E1)
+    val ErrorContainerLight = Color(0xFFFEF2F2)
+    val OnErrorContainerLight = Color(0xFF991B1B)
     val ErrorDark = Color(0xFFF87171)
     val OnErrorDark = Color(0xFF450A0A)
     val ErrorContainerDark = Color(0xFF3F171A)

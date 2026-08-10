@@ -184,7 +184,7 @@ private fun AnalyticsChartContainer(
     Card(
         modifier = modifier,
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -380,27 +380,14 @@ private data class AnalyticsDetailChartColors(
 @Composable
 private fun analyticsDetailChartColors(): AnalyticsDetailChartColors {
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    return if (dark) {
-        AnalyticsDetailChartColors(
-            healthSuccess = Color(0xFF95D475),
-            healthFailure = Color(0xFFFAB6B6),
-            healthLatency = Color(0xFF7DD3FC),
-            tokenInput = Color(0xFF60A5FA),
-            tokenOutput = Color(0xFF95D475),
-            tokenCached = Color(0xFF22D3EE),
-            tokenReasoning = Color(0xFFFBBF24),
-            grid = Color.White.copy(alpha = 0.10f),
-        )
-    } else {
-        AnalyticsDetailChartColors(
-            healthSuccess = Color(0xFF67C23A),
-            healthFailure = Color(0xFFF56C6C),
-            healthLatency = Color(0xFF0EA5E9),
-            tokenInput = Color(0xFF60A5FA),
-            tokenOutput = Color(0xFF22C55E),
-            tokenCached = Color(0xFF06B6D4),
-            tokenReasoning = Color(0xFFF59E0B),
-            grid = Color(0xFFD3E1EF),
-        )
-    }
+    return AnalyticsDetailChartColors(
+        healthSuccess = MaterialTheme.colorScheme.tertiary,
+        healthFailure = MaterialTheme.colorScheme.error,
+        healthLatency = MaterialTheme.colorScheme.primary,
+        tokenInput = MaterialTheme.colorScheme.primary,
+        tokenOutput = MaterialTheme.colorScheme.tertiary,
+        tokenCached = if (dark) Color(0xFF2DD4BF) else Color(0xFF14B8A6),
+        tokenReasoning = if (dark) Color(0xFFFBBF24) else Color(0xFFF59E0B),
+        grid = MaterialTheme.colorScheme.outlineVariant,
+    )
 }

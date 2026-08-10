@@ -104,7 +104,7 @@ fun PageHeader(
 @Composable
 fun AppCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     shape: Shape = MaterialTheme.shapes.large,
     content: @Composable () -> Unit,
@@ -174,7 +174,7 @@ fun MetricCard(
         modifier = modifier.then(if (compact) Modifier.height(128.dp) else Modifier),
         shape = if (compact) MaterialTheme.shapes.medium else MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),

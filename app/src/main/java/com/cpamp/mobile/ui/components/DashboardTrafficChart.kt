@@ -84,7 +84,7 @@ fun DashboardTrafficChart(
     Card(
         modifier = modifier,
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -380,21 +380,12 @@ private data class UsageTrendChartColors(
 @Composable
 private fun usageTrendChartColors(): UsageTrendChartColors {
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    return if (dark) {
-        UsageTrendChartColors(
-            requests = Color(0xFF79BBFF),
-            tokens = Color(0xFF2DD4BF),
-            cost = Color(0xFFFBBF24),
-            grid = Color.White.copy(alpha = 0.10f),
-        )
-    } else {
-        UsageTrendChartColors(
-            requests = Color(0xFF409EFF),
-            tokens = Color(0xFF14B8A6),
-            cost = Color(0xFFF59E0B),
-            grid = Color(0xFFD3E1EF),
-        )
-    }
+    return UsageTrendChartColors(
+        requests = MaterialTheme.colorScheme.primary,
+        tokens = if (dark) Color(0xFF2DD4BF) else Color(0xFF14B8A6),
+        cost = if (dark) Color(0xFFFBBF24) else Color(0xFFF59E0B),
+        grid = MaterialTheme.colorScheme.outlineVariant,
+    )
 }
 
 private fun chartX(index: Int, pointCount: Int, width: Float): Float =

@@ -52,6 +52,7 @@ import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
+import com.cpamp.mobile.ui.theme.Warning
 
 @Composable
 fun DashboardScreen(
@@ -210,7 +211,7 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
                     ?: stringResource(R.string.no_latency),
                 icon = Icons.Outlined.Payments,
                 modifier = modifier,
-                accent = MaterialTheme.colorScheme.secondary,
+                accent = Warning,
                 compact = true,
             )
         },
@@ -226,6 +227,7 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
 
 @Composable
 private fun DashboardNotice(state: DashboardUiState) {
+    val isError = state.error != null
     val text = when {
         state.error == DashboardError.Unauthorized -> stringResource(R.string.dashboard_unauthorized)
         state.error == DashboardError.RateLimited -> stringResource(R.string.dashboard_rate_limited)
@@ -237,8 +239,17 @@ private fun DashboardNotice(state: DashboardUiState) {
         )
         else -> ""
     }
-    AppCard(containerColor = MaterialTheme.colorScheme.secondaryContainer) {
-        Text(text, modifier = Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
+    AppCard(
+        containerColor = if (isError) MaterialTheme.colorScheme.errorContainer
+        else MaterialTheme.colorScheme.primaryContainer,
+    ) {
+        Text(
+            text,
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (isError) MaterialTheme.colorScheme.onErrorContainer
+            else MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }
 

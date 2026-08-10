@@ -305,7 +305,7 @@ private fun AccountProviderTab(
 @Composable
 private fun AccountCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
     content: @Composable () -> Unit,
 ) {
     AppCard(
@@ -396,9 +396,15 @@ internal fun AccountHealth.overviewState(): AccountOverviewState = when {
 private fun AccountsNotice(message: String, isError: Boolean) {
     AccountCard(
         containerColor = if (isError) MaterialTheme.colorScheme.errorContainer
-        else MaterialTheme.colorScheme.secondaryContainer,
+        else MaterialTheme.colorScheme.primaryContainer,
     ) {
-        Text(message, modifier = Modifier.fillMaxWidth().padding(14.dp), style = MaterialTheme.typography.bodySmall)
+        Text(
+            message,
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (isError) MaterialTheme.colorScheme.onErrorContainer
+            else MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }
 
@@ -423,7 +429,7 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
         containerColor = if (account.status == AccountStatus.Disabled) {
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.78f)
         } else {
-            MaterialTheme.colorScheme.surface
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)
         },
     ) {
         Column(

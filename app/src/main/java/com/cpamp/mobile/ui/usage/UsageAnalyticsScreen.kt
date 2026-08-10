@@ -154,7 +154,7 @@ fun UsageAnalyticsScreen(
             val response = state.response
             if (response == null && !state.loading) {
                 item {
-                    AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)) {
+                    AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)) {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
