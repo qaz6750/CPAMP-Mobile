@@ -3,6 +3,7 @@
     <string name="nav_overview">Overview</string>
     <string name="nav_usage">Usage</string>
     <string name="nav_accounts">Accounts</string>
+    <string name="nav_settings">Settings</string>
     <string name="overview_title">Command center</string>
     <string name="overview_subtitle">Your CPA gateway at a glance</string>
     <string name="metric_requests">Requests today</string>

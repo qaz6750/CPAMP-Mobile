@@ -3,6 +3,7 @@
     <string name="nav_overview">概览</string>
     <string name="nav_usage">用量</string>
     <string name="nav_accounts">账号</string>
+    <string name="nav_settings">设置</string>
     <string name="overview_title">运行概览</string>
     <string name="overview_subtitle">快速掌握 CPA 网关状态</string>
     <string name="metric_requests">今日请求</string>

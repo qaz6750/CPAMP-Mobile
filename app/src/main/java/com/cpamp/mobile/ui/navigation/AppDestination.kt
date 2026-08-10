@@ -17,7 +17,7 @@ enum class AppDestination(
     Overview("overview", R.string.nav_overview, Icons.Outlined.GridView),
     Usage("usage", R.string.nav_usage, Icons.Outlined.BarChart),
     Accounts("accounts", R.string.nav_accounts, Icons.Outlined.AccountCircle),
-    Settings("settings", R.string.settings_title, Icons.Outlined.Settings),
+    Settings("settings", R.string.nav_settings, Icons.Outlined.Settings),
     ;
 
     companion object {
