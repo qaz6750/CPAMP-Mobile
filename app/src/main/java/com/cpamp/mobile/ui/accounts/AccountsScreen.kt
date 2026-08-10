@@ -192,7 +192,7 @@ fun AccountDetailScreen(
             item {
                 PageHeader(
                     eyebrow = stringResource(R.string.nav_accounts),
-                    title = state.account?.displayTitle() ?: stringResource(R.string.accounts_detail_title),
+                    title = stringResource(R.string.accounts_detail_title),
                     subtitle = stringResource(R.string.accounts_detail_subtitle),
                     leading = {
                         IconButton(onClick = onBack) {
@@ -557,8 +557,8 @@ private fun AccountIdentityCard(account: AccountHealth, observedAtMs: Long?) {
             }
             Text(
                 account.displayTitle(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -602,13 +602,23 @@ private fun AccountQuotaCard(account: AccountHealth) {
         ) {
             Text(stringResource(R.string.accounts_quota), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             when {
-                account.status == AccountStatus.Disabled -> Text(
-                    stringResource(R.string.credential_quota_disabled_hint),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 account.quotaState == AccountQuotaState.Failed -> Text(
                     stringResource(account.failure.messageResource()),
                     color = MaterialTheme.colorScheme.error,
+                )
+                account.windows.isNotEmpty() -> {
+                    if (account.status == AccountStatus.Disabled) {
+                        Text(
+                            stringResource(R.string.credential_quota_disabled_with_windows_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    account.windows.forEach { window -> AccountQuotaWindowRow(window) }
+                }
+                account.status == AccountStatus.Disabled -> Text(
+                    stringResource(R.string.credential_quota_disabled_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 account.quotaState == AccountQuotaState.NotRequested -> Text(
                     stringResource(R.string.accounts_quota_not_refreshed),
@@ -622,7 +632,10 @@ private fun AccountQuotaCard(account: AccountHealth) {
                     stringResource(R.string.credential_quota_no_windows),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                else -> account.windows.forEach { window -> AccountQuotaWindowRow(window) }
+                else -> Text(
+                    stringResource(R.string.credential_quota_no_windows),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

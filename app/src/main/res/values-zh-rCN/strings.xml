@@ -274,6 +274,7 @@
     <string name="credential_quota_disabled">未启用</string>
     <string name="credential_quota_disabled_badge">未启用</string>
     <string name="credential_quota_disabled_hint">该凭证已停用，不会查询额度。</string>
+    <string name="credential_quota_disabled_with_windows_hint">该凭证已停用，以下为服务器最近一次巡检返回的额度。</string>
     <string name="dismiss">关闭</string>
     <string name="confirm_change">确认更改</string>
 </resources>

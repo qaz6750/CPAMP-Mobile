@@ -274,6 +274,7 @@
     <string name="credential_quota_disabled">Disabled</string>
     <string name="credential_quota_disabled_badge">Disabled</string>
     <string name="credential_quota_disabled_hint">This credential is disabled, so no quota is requested.</string>
+    <string name="credential_quota_disabled_with_windows_hint">This credential is disabled. Showing quota reported by the latest server inspection.</string>
     <string name="dismiss">Dismiss</string>
     <string name="confirm_change">Confirm change</string>
 </resources>

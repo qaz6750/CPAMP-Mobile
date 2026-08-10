@@ -225,15 +225,25 @@ private fun CodexInspectionResultDto.toAccountHealth(file: AuthFileDto): Account
         status = if (disabled) AccountStatus.Disabled else AccountStatus.Active,
         planType = resolvedPlanType.ifBlank { file.resolvedPlanType },
         windows = windows,
-        quotaState = when {
-            disabled -> AccountQuotaState.NotRequested
-            failed -> AccountQuotaState.Failed
-            windows.isNotEmpty() -> AccountQuotaState.Available
-            else -> AccountQuotaState.Unsupported
-        },
+        quotaState = resolvedInspectionQuotaState(
+            disabled = disabled,
+            failed = failed,
+            hasWindows = windows.isNotEmpty(),
+        ),
         failure = AccountHealthFailure.Inspection.takeIf { failed },
         source = AccountHealthSource.Inspection,
     )
+}
+
+internal fun resolvedInspectionQuotaState(
+        disabled: Boolean,
+        failed: Boolean,
+        hasWindows: Boolean,
+    ): AccountQuotaState = when {
+        failed -> AccountQuotaState.Failed
+        hasWindows -> AccountQuotaState.Available
+        disabled -> AccountQuotaState.NotRequested
+        else -> AccountQuotaState.Unsupported
 }
 
 private fun CodexInspectionResultDto.matchKey(): String? = resolvedAuthIndex
