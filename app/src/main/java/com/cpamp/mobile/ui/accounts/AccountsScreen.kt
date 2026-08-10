@@ -2,13 +2,16 @@ package com.cpamp.mobile.ui.accounts
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -31,7 +34,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +52,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -267,13 +270,13 @@ private fun AccountProviderTab(
     leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     Surface(
+        onClick = onClick,
         color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
         contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         shape = RoundedCornerShape(10.dp),
     ) {
         Row(
             modifier = Modifier
-                .clickable(onClick = onClick)
                 .heightIn(min = 36.dp)
                 .padding(horizontal = 10.dp, vertical = 5.dp),
             horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -336,10 +339,10 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
     }
     val disabled = accounts.count { it.status == AccountStatus.Disabled }
     val pending = accounts.count {
-        it.status == AccountStatus.Active && it.quotaState in setOf(
-            AccountQuotaState.NotRequested,
-            AccountQuotaState.Unsupported,
-        )
+        it.status == AccountStatus.Active && (
+            it.quotaState in setOf(AccountQuotaState.NotRequested, AccountQuotaState.Unsupported) ||
+                (it.quotaState == AccountQuotaState.Available && it.minimumRemainingPercent() == null)
+            )
     }
     val metrics = listOf(
         AccountHealthMetric(R.string.accounts_overview_total, accounts.size, Icons.Outlined.AccountCircle, MaterialTheme.colorScheme.primary),
@@ -434,20 +437,13 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AccountProviderBadge(account.provider)
-                    account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
-                        AccountPlanBadge(plan)
-                    }
+                AccountProviderBadge(account.provider)
+                account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
+                    AccountPlanBadge(plan, Modifier.weight(1f, fill = false))
                 }
-                AccountStatusBadge(account)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -476,30 +472,23 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (remaining != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AccountStatusBadge(account)
+                remaining?.let {
                     Text(
-                        stringResource(R.string.accounts_quota),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        stringResource(R.string.credential_quota_remaining, remaining),
+                        stringResource(R.string.credential_quota_remaining, it),
                         style = MaterialTheme.typography.labelMedium,
                         color = quotaLevelColor(level),
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                LinearProgressIndicator(
-                    progress = { (remaining / 100.0).toFloat() },
-                    modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)),
-                    color = quotaLevelColor(level),
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                )
+            }
+            if (remaining != null) {
+                QuotaProgressBar(remaining, modifier = Modifier.fillMaxWidth().height(7.dp))
             }
         }
     }
@@ -530,8 +519,9 @@ private fun AccountProviderBadge(provider: String) {
 }
 
 @Composable
-private fun AccountPlanBadge(plan: String) {
+private fun AccountPlanBadge(plan: String, modifier: Modifier = Modifier) {
     Surface(
+        modifier = modifier,
         color = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = RoundedCornerShape(50),
@@ -562,12 +552,17 @@ private fun AccountIdentityCard(account: AccountHealth, observedAtMs: Long?) {
             ) {
                 AccountProviderBadge(account.provider)
                 account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
-                    AccountPlanBadge(plan)
+                    AccountPlanBadge(plan, Modifier.weight(1f, fill = false))
                 }
-                androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-                AccountStatusBadge(account)
             }
-            Text(account.displayTitle(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                account.displayTitle(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            AccountStatusBadge(account)
             AccountDetailValue(R.string.accounts_provider, providerLabel(account.provider))
             AccountDetailValue(R.string.accounts_plan, account.planType.ifBlank { stringResource(R.string.accounts_no_plan) })
             AccountDetailValue(R.string.accounts_source, stringResource(account.source.labelResource()))
@@ -588,11 +583,12 @@ private fun AccountDetailValue(@StringRes label: Int, value: String) {
         )
         Text(
             value,
-            modifier = Modifier.padding(start = 16.dp),
+            modifier = Modifier.weight(1f).padding(start = 16.dp),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.End,
         )
     }
 }
@@ -634,29 +630,35 @@ private fun AccountQuotaCard(account: AccountHealth) {
 
 @Composable
 private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
-    val remaining = window.remainingPercent?.coerceIn(0.0, 100.0)
+    val remaining = normalizedRemainingPercent(window.remainingPercent)
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(Modifier.fillMaxWidth().padding(13.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(window.durationLabel(), style = MaterialTheme.typography.labelLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    window.durationLabel(),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Text(
                     remaining?.let { stringResource(R.string.credential_quota_remaining, it) }
                         ?: stringResource(R.string.credential_quota_remaining_unknown),
                     style = MaterialTheme.typography.labelMedium,
                     color = quotaLevelColor(quotaLevel(remaining)),
                     fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.End,
                 )
             }
-            LinearProgressIndicator(
-                progress = { ((remaining ?: 0.0) / 100.0).toFloat() },
-                modifier = Modifier.fillMaxWidth().height(8.dp),
-                color = quotaLevelColor(quotaLevel(remaining)),
-                trackColor = MaterialTheme.colorScheme.surface,
-            )
+            QuotaProgressBar(remaining, modifier = Modifier.fillMaxWidth().height(8.dp))
             window.resetAtMs?.let {
                 Text(
                     stringResource(R.string.credential_quota_reset, it.asDateTime()),
@@ -675,8 +677,32 @@ private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
     }
 }
 
+@Composable
+private fun QuotaProgressBar(remainingPercent: Double?, modifier: Modifier = Modifier) {
+    val normalized = normalizedRemainingPercent(remainingPercent)
+    val progress = normalized?.div(100.0)?.toFloat()
+    val shape = RoundedCornerShape(50)
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
+    ) {
+        progress?.let {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(it.coerceAtLeast(MinimumVisibleQuotaProgress))
+                    .background(quotaLevelColor(quotaLevel(normalized))),
+            )
+        }
+    }
+}
+
 private fun AccountHealth.minimumRemainingPercent(): Double? =
-    windows.mapNotNull(AccountQuotaWindow::remainingPercent).minOrNull()?.coerceIn(0.0, 100.0)
+    windows.mapNotNull { normalizedRemainingPercent(it.remainingPercent) }.minOrNull()
+
+internal fun normalizedRemainingPercent(remainingPercent: Double?): Double? =
+    remainingPercent?.takeIf(Double::isFinite)?.coerceIn(0.0, 100.0)
 
 private fun String.normalizedProvider(): String = trim().lowercase()
 
@@ -691,6 +717,8 @@ internal fun AccountStatusBadge(account: AccountHealth) {
         account.quotaState == AccountQuotaState.Available &&
             quotaLevel(account.minimumRemainingPercent()) == QuotaLevel.Warning ->
             R.string.accounts_health_quota_warning to QuotaOrange
+        account.quotaState == AccountQuotaState.Available && account.minimumRemainingPercent() == null ->
+            R.string.accounts_health_basic to MaterialTheme.colorScheme.onSurfaceVariant
         account.quotaState == AccountQuotaState.Available -> R.string.accounts_health_ready to MaterialTheme.colorScheme.tertiary
         account.quotaState == AccountQuotaState.NotRequested -> R.string.accounts_health_not_refreshed to MaterialTheme.colorScheme.primary
         else -> R.string.accounts_health_basic to MaterialTheme.colorScheme.onSurfaceVariant
@@ -738,11 +766,14 @@ private fun providerAccentColor(provider: String): Color = when (provider.trim()
 
 internal enum class QuotaLevel { Healthy, Warning, Critical, Unknown }
 
-internal fun quotaLevel(remainingPercent: Double?): QuotaLevel = when {
-    remainingPercent == null -> QuotaLevel.Unknown
-    remainingPercent >= 70.0 -> QuotaLevel.Healthy
-    remainingPercent >= 30.0 -> QuotaLevel.Warning
-    else -> QuotaLevel.Critical
+internal fun quotaLevel(remainingPercent: Double?): QuotaLevel {
+    val normalized = normalizedRemainingPercent(remainingPercent)
+    return when {
+        normalized == null -> QuotaLevel.Unknown
+        normalized >= 70.0 -> QuotaLevel.Healthy
+        normalized >= 30.0 -> QuotaLevel.Warning
+        else -> QuotaLevel.Critical
+    }
 }
 
 @Composable
@@ -764,6 +795,8 @@ internal fun AccountQuotaWindow.durationLabel(): String = when {
 }
 
 internal val QuotaOrange = androidx.compose.ui.graphics.Color(0xFFF59E0B)
+
+private const val MinimumVisibleQuotaProgress = 0.02f
 
 private val AccountCardShape = RoundedCornerShape(12.dp)
 private val AccountPanelShape = RoundedCornerShape(14.dp)
