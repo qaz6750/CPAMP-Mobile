@@ -1,7 +1,9 @@
 package com.cpamp.mobile.ui.accounts
 
 import com.cpamp.mobile.data.accounts.AccountHealth
+import com.cpamp.mobile.data.accounts.AccountHealthFailure
 import com.cpamp.mobile.data.accounts.AccountQuotaState
+import com.cpamp.mobile.data.accounts.AccountQuotaWindow
 import com.cpamp.mobile.data.accounts.AccountStatus
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -43,5 +45,40 @@ class AccountsScreenTest {
         assertEquals("user@example.com", base.displayTitle())
         assertEquals("credential.json", base.copy(account = "").displayTitle())
         assertEquals("OpenAI Codex", base.copy(account = "", name = "").displayTitle())
+    }
+
+    @Test
+    fun `provider failure with server windows needs attention only`() {
+        val account = AccountHealth(
+            stableId = "id",
+            authIndex = "1",
+            name = "credential.json",
+            account = "user@example.com",
+            provider = "codex",
+            status = AccountStatus.Active,
+            planType = "plus",
+            windows = listOf(AccountQuotaWindow(durationSeconds = 18_000, remainingPercent = 80.0)),
+            quotaState = AccountQuotaState.Available,
+            failure = AccountHealthFailure.ProviderRequest,
+        )
+
+        assertEquals(AccountOverviewState.NeedsAttention, account.overviewState())
+    }
+
+    @Test
+    fun `disabled account remains in disabled overview regardless of quota`() {
+        val account = AccountHealth(
+            stableId = "id",
+            authIndex = "1",
+            name = "credential.json",
+            account = "user@example.com",
+            provider = "codex",
+            status = AccountStatus.Disabled,
+            planType = "plus",
+            windows = listOf(AccountQuotaWindow(durationSeconds = 18_000, remainingPercent = 80.0)),
+            quotaState = AccountQuotaState.Available,
+        )
+
+        assertEquals(AccountOverviewState.Disabled, account.overviewState())
     }
 }

@@ -533,6 +533,7 @@ internal val AuthFileDto.resolvedProvider: String
                 when (value) {
                     "anthropic" -> "claude"
                     "grok" -> "xai"
+                    "openai" -> "codex"
                     else -> value
                 }
             }

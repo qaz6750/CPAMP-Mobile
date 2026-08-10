@@ -326,31 +326,14 @@ private fun AccountPanel(content: @Composable () -> Unit) {
 
 @Composable
 private fun AccountHealthOverview(accounts: List<AccountHealth>) {
-    val healthy = accounts.count {
-        it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Available &&
-            quotaLevel(it.minimumRemainingPercent()) == QuotaLevel.Healthy
-    }
-    val needsAttention = accounts.count {
-        it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Failed
-    }
-    val quotaRisk = accounts.count {
-        it.status == AccountStatus.Active && it.quotaState == AccountQuotaState.Available &&
-            quotaLevel(it.minimumRemainingPercent()) in setOf(QuotaLevel.Warning, QuotaLevel.Critical)
-    }
-    val disabled = accounts.count { it.status == AccountStatus.Disabled }
-    val pending = accounts.count {
-        it.status == AccountStatus.Active && (
-            it.quotaState in setOf(AccountQuotaState.NotRequested, AccountQuotaState.Unsupported) ||
-                (it.quotaState == AccountQuotaState.Available && it.minimumRemainingPercent() == null)
-            )
-    }
+    val states = accounts.map(AccountHealth::overviewState)
     val metrics = listOf(
         AccountHealthMetric(R.string.accounts_overview_total, accounts.size, Icons.Outlined.AccountCircle, MaterialTheme.colorScheme.primary),
-        AccountHealthMetric(R.string.accounts_overview_healthy, healthy, Icons.Outlined.CheckCircle, MaterialTheme.colorScheme.tertiary),
-        AccountHealthMetric(R.string.accounts_overview_attention, needsAttention, Icons.Outlined.ErrorOutline, MaterialTheme.colorScheme.error),
-        AccountHealthMetric(R.string.accounts_overview_risk, quotaRisk, Icons.Outlined.Speed, QuotaOrange),
-        AccountHealthMetric(R.string.accounts_overview_disabled, disabled, Icons.Outlined.Block, MaterialTheme.colorScheme.onSurfaceVariant),
-        AccountHealthMetric(R.string.accounts_overview_pending, pending, Icons.Outlined.HelpOutline, MaterialTheme.colorScheme.secondary),
+        AccountHealthMetric(R.string.accounts_overview_healthy, states.count { it == AccountOverviewState.Healthy }, Icons.Outlined.CheckCircle, MaterialTheme.colorScheme.tertiary),
+        AccountHealthMetric(R.string.accounts_overview_attention, states.count { it == AccountOverviewState.NeedsAttention }, Icons.Outlined.ErrorOutline, MaterialTheme.colorScheme.error),
+        AccountHealthMetric(R.string.accounts_overview_risk, states.count { it == AccountOverviewState.QuotaRisk }, Icons.Outlined.Speed, QuotaOrange),
+        AccountHealthMetric(R.string.accounts_overview_disabled, states.count { it == AccountOverviewState.Disabled }, Icons.Outlined.Block, MaterialTheme.colorScheme.onSurfaceVariant),
+        AccountHealthMetric(R.string.accounts_overview_pending, states.count { it == AccountOverviewState.Pending }, Icons.Outlined.HelpOutline, MaterialTheme.colorScheme.secondary),
     )
     Row(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -396,6 +379,18 @@ private data class AccountHealthMetric(
     val icon: ImageVector,
     val color: Color,
 )
+
+internal enum class AccountOverviewState { Healthy, NeedsAttention, QuotaRisk, Disabled, Pending }
+
+internal fun AccountHealth.overviewState(): AccountOverviewState = when {
+    status == AccountStatus.Disabled -> AccountOverviewState.Disabled
+    failure != null -> AccountOverviewState.NeedsAttention
+    quotaState != AccountQuotaState.Available -> AccountOverviewState.Pending
+    quotaLevel(minimumRemainingPercent()) == QuotaLevel.Healthy -> AccountOverviewState.Healthy
+    quotaLevel(minimumRemainingPercent()) in setOf(QuotaLevel.Warning, QuotaLevel.Critical) ->
+        AccountOverviewState.QuotaRisk
+    else -> AccountOverviewState.Pending
+}
 
 @Composable
 private fun AccountsNotice(message: String, isError: Boolean) {
@@ -602,11 +597,14 @@ private fun AccountQuotaCard(account: AccountHealth) {
         ) {
             Text(stringResource(R.string.accounts_quota), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             when {
-                account.quotaState == AccountQuotaState.Failed -> Text(
-                    stringResource(account.failure.messageResource()),
-                    color = MaterialTheme.colorScheme.error,
-                )
                 account.windows.isNotEmpty() -> {
+                    account.failure?.let { failure ->
+                        Text(
+                            stringResource(failure.messageResource()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                     if (account.status == AccountStatus.Disabled) {
                         Text(
                             stringResource(R.string.credential_quota_disabled_with_windows_hint),
@@ -616,6 +614,10 @@ private fun AccountQuotaCard(account: AccountHealth) {
                     }
                     account.windows.forEach { window -> AccountQuotaWindowRow(window) }
                 }
+                account.quotaState == AccountQuotaState.Failed -> Text(
+                    stringResource(account.failure.messageResource()),
+                    color = MaterialTheme.colorScheme.error,
+                )
                 account.status == AccountStatus.Disabled -> Text(
                     stringResource(R.string.credential_quota_disabled_hint),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -626,10 +628,6 @@ private fun AccountQuotaCard(account: AccountHealth) {
                 )
                 account.quotaState == AccountQuotaState.Unsupported -> Text(
                     stringResource(R.string.accounts_quota_unsupported),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                account.windows.isEmpty() -> Text(
-                    stringResource(R.string.credential_quota_no_windows),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 else -> Text(
@@ -723,7 +721,7 @@ private fun String.normalizedProvider(): String = trim().lowercase()
 internal fun AccountStatusBadge(account: AccountHealth) {
     val (label, color) = when {
         account.status == AccountStatus.Disabled -> R.string.credential_quota_disabled_badge to MaterialTheme.colorScheme.onSurfaceVariant
-        account.quotaState == AccountQuotaState.Failed -> R.string.credential_quota_failed_badge to MaterialTheme.colorScheme.error
+        account.failure != null -> R.string.credential_quota_failed_badge to MaterialTheme.colorScheme.error
         account.quotaState == AccountQuotaState.Available &&
             quotaLevel(account.minimumRemainingPercent()) == QuotaLevel.Critical ->
             R.string.accounts_health_quota_critical to MaterialTheme.colorScheme.error

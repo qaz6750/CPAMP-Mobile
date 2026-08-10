@@ -46,7 +46,6 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
 | Overview | Health, daily requests, success rate, tokens, estimated cost, interactive token/request trends, and real provider marks |
 | Usage | Interactive usage buckets, on-demand rankings, and privacy-safe Today/7-day/30-day share images |
-| Monitoring | Manual refresh, time/status filters, and privacy-safe cached aggregate request summaries |
 | Accounts | Read-only credential inventory, status, completed-inspection results, and explicitly refreshed provider quota windows |
 | Settings | Saved-server management, app lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
 | Security | Keystore AES-GCM, optional biometric/device-credential app lock, configurable screenshot protection, no backup |
@@ -54,7 +53,7 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 
 Destructive changes show the affected object and require confirmation. Switching servers cancels requests from the previous server and rebuilds screen state so cached data cannot cross profiles.
 
-Monitoring requests aggregate summaries only and never downloads a request-event page or request details. Changing its time or status filter updates local state until the user taps refresh. Usage computes only the selected ranking, and a share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
+Overview and Usage request aggregate analytics only and never download request-event pages or request details. Usage computes only the selected ranking, and a share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
 
 Accounts reads the Manager Server credential inventory and the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. It never starts an inspection. An explicit refresh can use the Manager Server's authenticated API-call proxy to request quota windows from supported providers; unsupported providers still expose basic read-only account health. Individual provider failures degrade only the affected account. The per-profile fallback cache stores only ordered placeholders and aggregate status/quota data, never account labels, file names, authentication indexes, or raw responses. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
 

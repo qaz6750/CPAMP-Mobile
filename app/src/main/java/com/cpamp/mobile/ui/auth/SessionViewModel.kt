@@ -51,7 +51,7 @@ class SessionViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            runSuspendCatching { cacheCleanupRepository.clearLegacyMonitoringEvents() }
+            runSuspendCatching { cacheCleanupRepository.clearLegacyResponseCaches() }
         }
         viewModelScope.launch {
             repository.profiles.collectLatest { stored ->

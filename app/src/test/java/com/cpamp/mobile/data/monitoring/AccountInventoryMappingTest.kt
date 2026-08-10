@@ -24,6 +24,18 @@ class AccountInventoryMappingTest {
     }
 
     @Test
+    fun `provider aliases resolve to direct quota implementations`() {
+        val openAi = AuthFileDto(
+            name = "openai.json",
+            provider = "openai",
+            authIndex = JsonPrimitive("7"),
+        )
+
+        assertEquals("codex", openAi.resolvedProvider)
+        assertTrue(openAi.supportsDirectQuota)
+    }
+
+    @Test
     fun `unsupported and disabled credentials remain visible with degraded quota state`() {
         val unsupported = AuthFileDto(name = "custom.json", provider = "custom-provider")
         val disabled = AuthFileDto(

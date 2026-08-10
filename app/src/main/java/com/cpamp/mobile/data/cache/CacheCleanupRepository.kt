@@ -16,8 +16,9 @@ class CacheCleanupRepository @Inject constructor(
     private val cacheDao: CacheDao,
     private val updateRepository: AppUpdateRepository,
 ) {
-    suspend fun clearLegacyMonitoringEvents() {
+    suspend fun clearLegacyResponseCaches() {
         cacheDao.deleteKind(LEGACY_MONITORING_CACHE_KIND)
+        cacheDao.deleteKind(LEGACY_ACCOUNT_HEALTH_CACHE_KIND)
     }
 
     suspend fun clearRegenerableCache() {
@@ -38,6 +39,7 @@ class CacheCleanupRepository @Inject constructor(
     private companion object {
         const val SHARED_REPORTS_DIRECTORY = "shared-reports"
         const val LEGACY_MONITORING_CACHE_KIND = "monitoring.v1"
+        const val LEGACY_ACCOUNT_HEALTH_CACHE_KIND = "account-health.v2"
     }
 }
 

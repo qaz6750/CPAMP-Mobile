@@ -6,6 +6,7 @@ import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.accounts.AccountHealth
 import com.cpamp.mobile.data.accounts.AccountHealthRepository
 import com.cpamp.mobile.data.accounts.AccountHealthSnapshot
+import com.cpamp.mobile.data.accounts.accountForDetail
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.domain.model.ServerProfile
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -71,10 +73,12 @@ class AccountsViewModel @Inject constructor(
     ) { session, snapshots ->
         val snapshot = session?.profile?.id?.let(snapshots::get)
         AccountDetailUiState(
-            account = snapshot?.accounts?.firstOrNull { it.stableId == accountId },
+            account = snapshot?.accountForDetail(accountId),
             observedAtMs = snapshot?.observedAtMs,
             fromCache = snapshot?.fromCache == true,
         )
+    }.scan(AccountDetailUiState()) { previous, current ->
+        retainCachedAccountDetail(previous, current, accountId)
     }
 
     private suspend fun load(refreshProviderQuotas: Boolean) {
@@ -112,6 +116,18 @@ class AccountsViewModel @Inject constructor(
                 }
             }
     }
+}
+
+internal fun retainCachedAccountDetail(
+    previous: AccountDetailUiState,
+    current: AccountDetailUiState,
+    accountId: String,
+): AccountDetailUiState = if (
+    current.account == null && previous.fromCache && previous.account?.stableId == accountId
+) {
+    previous
+} else {
+    current
 }
 
 private fun Throwable.toAccountsError(): AccountsError = when (this) {

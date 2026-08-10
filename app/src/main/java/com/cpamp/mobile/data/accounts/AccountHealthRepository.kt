@@ -131,8 +131,10 @@ class AccountHealthRepository @Inject constructor(
                 .associateBy(AccountHealth::stableId)
         }
         val accounts = files.map { file ->
-            directAccounts[file.stableAccountId]
-                ?: inspectionAccounts[file.stableAccountId]
+            preferredAccountHealth(
+                direct = directAccounts[file.stableAccountId],
+                inspection = inspectionAccounts[file.stableAccountId],
+            )
                 ?: file.toBaseAccountHealth(
                     quotaState = if (file.disabled) {
                         AccountQuotaState.NotRequested
@@ -189,21 +191,40 @@ class AccountHealthRepository @Inject constructor(
     }
 
     private companion object {
-        const val CACHE_KIND = "account-health.v2"
+        const val CACHE_KIND = "account-health.v3"
     }
 }
 
 internal fun AccountHealthSnapshot.toCacheSafeSnapshot(): AccountHealthSnapshot = copy(
     accounts = accounts.mapIndexed { index, account ->
         account.copy(
-            stableId = "cached:${index + 1}",
+            stableId = "$CACHED_ACCOUNT_ID_PREFIX${index + 1}",
             authIndex = "",
             name = "Credential ${index + 1}",
             account = "",
+            windows = account.windows.map { window ->
+                window.copy(resetLabel = "", label = "")
+            },
             source = AccountHealthSource.Cache,
         )
     },
 )
+
+internal fun AccountHealthSnapshot.accountForDetail(accountId: String): AccountHealth? {
+    return accounts.firstOrNull { it.stableId == accountId }
+}
+
+internal fun preferredAccountHealth(
+    direct: AccountHealth?,
+    inspection: AccountHealth?,
+): AccountHealth? {
+    if (direct == null) return inspection
+    if (direct.windows.isNotEmpty()) return direct
+    if (inspection?.windows?.isNotEmpty() == true) {
+        return inspection.copy(failure = direct.failure ?: inspection.failure)
+    }
+    return direct
+}
 
 private fun CodexInspectionResultDto.toAccountHealth(file: AuthFileDto): AccountHealth {
     val windows = resolvedQuotaWindows.orEmpty().map { window ->
@@ -236,14 +257,14 @@ private fun CodexInspectionResultDto.toAccountHealth(file: AuthFileDto): Account
 }
 
 internal fun resolvedInspectionQuotaState(
-        disabled: Boolean,
-        failed: Boolean,
-        hasWindows: Boolean,
-    ): AccountQuotaState = when {
-        failed -> AccountQuotaState.Failed
-        hasWindows -> AccountQuotaState.Available
-        disabled -> AccountQuotaState.NotRequested
-        else -> AccountQuotaState.Unsupported
+    disabled: Boolean,
+    failed: Boolean,
+    hasWindows: Boolean,
+): AccountQuotaState = when {
+    hasWindows -> AccountQuotaState.Available
+    failed -> AccountQuotaState.Failed
+    disabled -> AccountQuotaState.NotRequested
+    else -> AccountQuotaState.Unsupported
 }
 
 private fun CodexInspectionResultDto.matchKey(): String? = resolvedAuthIndex
@@ -255,5 +276,14 @@ private fun CodexInspectionResultDto.fallbackMatchKey(): String =
 
 private fun AuthFileDto.fallbackMatchKey(): String = accountMatchKey(resolvedProvider, name)
 
-private fun accountMatchKey(provider: String, identity: String): String =
-    "${provider.trim().lowercase()}\u0000${identity.trim()}"
+internal fun accountMatchKey(provider: String, identity: String): String {
+    val normalizedProvider = when (provider.trim().lowercase()) {
+        "anthropic" -> "claude"
+        "grok" -> "xai"
+        "openai" -> "codex"
+        else -> provider.trim().lowercase()
+    }
+    return "$normalizedProvider\u0000${identity.trim()}"
+}
+
+private const val CACHED_ACCOUNT_ID_PREFIX = "cached:"
