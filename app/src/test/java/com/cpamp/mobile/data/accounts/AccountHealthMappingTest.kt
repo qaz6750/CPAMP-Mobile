@@ -29,6 +29,7 @@ class AccountHealthMappingTest {
         )
         val failedDirect = accountHealth(
             quotaState = AccountQuotaState.Failed,
+            failure = AccountHealthFailure.ProviderRequest,
             source = AccountHealthSource.Direct,
         )
 
@@ -74,6 +75,7 @@ class AccountHealthMappingTest {
         stableId: String = "codex\u00001",
         windows: List<AccountQuotaWindow> = emptyList(),
         quotaState: AccountQuotaState = AccountQuotaState.NotRequested,
+        failure: AccountHealthFailure? = null,
         source: AccountHealthSource = AccountHealthSource.AuthFile,
     ) = AccountHealth(
         stableId = stableId,
@@ -85,6 +87,7 @@ class AccountHealthMappingTest {
         planType = "plus",
         windows = windows,
         quotaState = quotaState,
+        failure = failure,
         source = source,
     )
 }
