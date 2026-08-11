@@ -3,19 +3,10 @@ package com.cpamp.mobile.data.accounts
 import com.cpamp.mobile.data.cache.CacheDao
 import com.cpamp.mobile.data.cache.CacheEntity
 import com.cpamp.mobile.data.monitoring.loadDirectCredentialQuotas
-import com.cpamp.mobile.data.monitoring.resolvedAccount
-import com.cpamp.mobile.data.monitoring.resolvedAuthIndex
-import com.cpamp.mobile.data.monitoring.resolvedPlanType
-import com.cpamp.mobile.data.monitoring.resolvedProvider
 import com.cpamp.mobile.data.monitoring.stableAccountId
 import com.cpamp.mobile.data.monitoring.supportsDirectQuota
 import com.cpamp.mobile.data.monitoring.toBaseAccountHealth
-import com.cpamp.mobile.data.remote.CPAMPApi
-import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.remote.SessionApiClientFactory
-import com.cpamp.mobile.data.remote.model.AuthFileDto
-import com.cpamp.mobile.data.remote.model.CodexInspectionResultDto
-import com.cpamp.mobile.data.remote.model.CodexInspectionRunDetailDto
 import com.cpamp.mobile.data.remote.remoteCall
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import javax.inject.Inject
@@ -85,45 +76,17 @@ class AccountHealthRepository @Inject constructor(
         val entity = cacheDao.get(profileId, CACHE_KIND) ?: return null
         val snapshot = runCatching { json.decodeFromString<AccountHealthSnapshot>(entity.payload) }
             .getOrNull()
+            ?.toCacheSafeSnapshot()
             ?.copy(cachedAtMs = entity.updatedAt, fromCache = true)
         snapshot?.let { publish(profileId, it) }
         return snapshot
     }
 
-    suspend fun load(
-        session: AuthenticatedSession,
-        refreshProviderQuotas: Boolean = false,
-    ): AccountHealthSnapshot {
+    suspend fun load(session: AuthenticatedSession): AccountHealthSnapshot {
         val api = clientFactory.api(session)
         val observedAtMs = System.currentTimeMillis()
         val files = remoteCall { api.authFiles() }.files
-        val inspection = api.loadLatestCompletedInspection()
-        val inspectionByAccount = inspection?.results.orEmpty()
-            .mapNotNull { result ->
-                result.matchKey()?.let { key -> key to result }
-            }
-            .toMap()
-        val inspectionByFile = inspection?.results.orEmpty()
-            .associateBy { result -> result.fallbackMatchKey() }
-
-        val inspectionAccounts = mutableMapOf<String, AccountHealth>()
-        val directTargets = mutableListOf<AuthFileDto>()
-        files.forEach { file ->
-            val result = file.resolvedAuthIndex
-                .takeIf(String::isNotBlank)
-                ?.let { inspectionByAccount[accountMatchKey(file.resolvedProvider, it)] }
-                ?: inspectionByFile[file.fallbackMatchKey()]
-            val standardized = result?.takeIf {
-                it.resolvedQuotaWindows != null || it.error.isNotBlank() || it.resolvedErrorKind.isNotBlank()
-            }
-            if (standardized != null) {
-                inspectionAccounts[file.stableAccountId] = standardized.toAccountHealth(file)
-            }
-            if (refreshProviderQuotas && file.supportsDirectQuota && !file.disabled) {
-                directTargets += file
-            }
-        }
-
+        val directTargets = files.filter { file -> file.supportsDirectQuota && !file.disabled }
         val directAccounts = if (directTargets.isEmpty()) {
             emptyMap()
         } else {
@@ -131,10 +94,7 @@ class AccountHealthRepository @Inject constructor(
                 .associateBy(AccountHealth::stableId)
         }
         val accounts = files.map { file ->
-            preferredAccountHealth(
-                direct = directAccounts[file.stableAccountId],
-                inspection = inspectionAccounts[file.stableAccountId],
-            )
+            directAccounts[file.stableAccountId]
                 ?: file.toBaseAccountHealth(
                     quotaState = if (file.disabled) {
                         AccountQuotaState.NotRequested
@@ -146,8 +106,7 @@ class AccountHealthRepository @Inject constructor(
                 )
         }
         val snapshot = AccountHealthSnapshot(
-            inspectionRunId = inspection?.run?.id?.takeIf { it > 0 },
-            observedAtMs = inspection?.run?.resolvedFinishedAtMs?.takeIf { it > 0 } ?: observedAtMs,
+            observedAtMs = observedAtMs,
             accounts = accounts,
             cachedAtMs = observedAtMs,
         )
@@ -167,29 +126,6 @@ class AccountHealthRepository @Inject constructor(
         mutableSnapshots.update { current -> current + (profileId to snapshot) }
     }
 
-    private suspend fun CPAMPApi.loadLatestCompletedInspection(): CodexInspectionRunDetailDto? {
-        val latest = try {
-            remoteCall { codexInspectionRuns(limit = 20) }.items
-                .filter { it.status.equals("completed", ignoreCase = true) && it.id > 0 }
-                .maxByOrNull { maxOf(it.resolvedFinishedAtMs, it.resolvedUpdatedAtMs) }
-        } catch (error: RemoteFailure.NotFound) {
-            return null
-        } catch (error: RemoteFailure.Unauthorized) {
-            throw error
-        } catch (_: Exception) {
-            return null
-        } ?: return null
-        return try {
-            remoteCall { codexInspectionRun(latest.id) }
-        } catch (error: RemoteFailure.NotFound) {
-            null
-        } catch (error: RemoteFailure.Unauthorized) {
-            throw error
-        } catch (_: Exception) {
-            null
-        }
-    }
-
     private companion object {
         const val CACHE_KIND = "account-health.v3"
     }
@@ -205,6 +141,7 @@ internal fun AccountHealthSnapshot.toCacheSafeSnapshot(): AccountHealthSnapshot 
             windows = account.windows.map { window ->
                 window.copy(resetLabel = "", label = "")
             },
+            failure = account.failure?.takeUnless { it == AccountHealthFailure.Inspection },
             source = AccountHealthSource.Cache,
         )
     },
@@ -212,78 +149,6 @@ internal fun AccountHealthSnapshot.toCacheSafeSnapshot(): AccountHealthSnapshot 
 
 internal fun AccountHealthSnapshot.accountForDetail(accountId: String): AccountHealth? {
     return accounts.firstOrNull { it.stableId == accountId }
-}
-
-internal fun preferredAccountHealth(
-    direct: AccountHealth?,
-    inspection: AccountHealth?,
-): AccountHealth? {
-    if (direct == null) return inspection
-    if (direct.windows.isNotEmpty()) return direct
-    if (inspection?.windows?.isNotEmpty() == true) {
-        return inspection.copy(failure = direct.failure ?: inspection.failure)
-    }
-    return direct
-}
-
-private fun CodexInspectionResultDto.toAccountHealth(file: AuthFileDto): AccountHealth {
-    val windows = resolvedQuotaWindows.orEmpty().map { window ->
-        AccountQuotaWindow(
-            durationSeconds = window.resolvedLimitWindowSeconds?.toLong()?.coerceAtLeast(0) ?: 0,
-            remainingPercent = window.resolvedUsedPercent?.let { (100.0 - it).coerceIn(0.0, 100.0) },
-            resetLabel = window.resolvedResetLabel,
-            label = window.resolvedLabel,
-        )
-    }
-    val disabled = disabled || file.disabled
-    val failed = windows.isEmpty() && (error.isNotBlank() || resolvedErrorKind.isNotBlank())
-    return AccountHealth(
-        stableId = file.stableAccountId,
-        authIndex = file.resolvedAuthIndex,
-        name = resolvedFileName.ifBlank { file.name },
-        account = resolvedDisplayAccount.ifBlank { file.resolvedAccount },
-        provider = resolvedProvider.ifBlank { file.resolvedProvider },
-        status = if (disabled) AccountStatus.Disabled else AccountStatus.Active,
-        planType = resolvedPlanType.ifBlank { file.resolvedPlanType },
-        windows = windows,
-        quotaState = resolvedInspectionQuotaState(
-            disabled = disabled,
-            failed = failed,
-            hasWindows = windows.isNotEmpty(),
-        ),
-        failure = AccountHealthFailure.Inspection.takeIf { failed },
-        source = AccountHealthSource.Inspection,
-    )
-}
-
-internal fun resolvedInspectionQuotaState(
-    disabled: Boolean,
-    failed: Boolean,
-    hasWindows: Boolean,
-): AccountQuotaState = when {
-    hasWindows -> AccountQuotaState.Available
-    failed -> AccountQuotaState.Failed
-    disabled -> AccountQuotaState.NotRequested
-    else -> AccountQuotaState.Unsupported
-}
-
-private fun CodexInspectionResultDto.matchKey(): String? = resolvedAuthIndex
-    .takeIf(String::isNotBlank)
-    ?.let { accountMatchKey(resolvedProvider, it) }
-
-private fun CodexInspectionResultDto.fallbackMatchKey(): String =
-    accountMatchKey(resolvedProvider, resolvedFileName)
-
-private fun AuthFileDto.fallbackMatchKey(): String = accountMatchKey(resolvedProvider, name)
-
-internal fun accountMatchKey(provider: String, identity: String): String {
-    val normalizedProvider = when (provider.trim().lowercase()) {
-        "anthropic" -> "claude"
-        "grok" -> "xai"
-        "openai" -> "codex"
-        else -> provider.trim().lowercase()
-    }
-    return "$normalizedProvider\u0000${identity.trim()}"
 }
 
 private const val CACHED_ACCOUNT_ID_PREFIX = "cached:"

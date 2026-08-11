@@ -121,9 +121,7 @@ fun AccountsScreen(
             state.snapshot?.let { snapshot ->
                 item {
                     Text(
-                        snapshot.inspectionRunId?.let { runId ->
-                            stringResource(R.string.accounts_source_inspection, runId, snapshot.observedAtMs.asDateTime())
-                        } ?: stringResource(R.string.accounts_source_inventory, snapshot.observedAtMs.asDateTime()),
+                        stringResource(R.string.accounts_source_inventory, snapshot.observedAtMs.asDateTime()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

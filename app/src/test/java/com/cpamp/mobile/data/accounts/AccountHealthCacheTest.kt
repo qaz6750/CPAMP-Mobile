@@ -31,7 +31,8 @@ class AccountHealthCacheTest {
                         ),
                     ),
                     quotaState = AccountQuotaState.Available,
-                    source = AccountHealthSource.Direct,
+                    failure = AccountHealthFailure.Inspection,
+                    source = AccountHealthSource.Inspection,
                 ),
             ),
         )
@@ -43,6 +44,7 @@ class AccountHealthCacheTest {
         assertEquals("Credential 1", account.name)
         assertEquals("", account.account)
         assertEquals(AccountHealthSource.Cache, account.source)
+        assertEquals(null, account.failure)
         assertEquals("codex", account.provider)
         assertEquals(AccountQuotaState.Available, account.quotaState)
         assertEquals(80.0, account.windows.single().remainingPercent ?: -1.0, 0.001)

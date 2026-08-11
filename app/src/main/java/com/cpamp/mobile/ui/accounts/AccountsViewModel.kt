@@ -57,14 +57,14 @@ class AccountsViewModel @Inject constructor(
                 repository.cached(session.profile.id)?.let { cached ->
                     mutableState.update { it.copy(snapshot = cached, loading = false) }
                 }
-                load(refreshProviderQuotas = false)
+                load()
             }
         }
     }
 
     fun refresh() {
         if (mutableState.value.loading || mutableState.value.refreshing) return
-        viewModelScope.launch { load(refreshProviderQuotas = true) }
+        viewModelScope.launch { load() }
     }
 
     fun detail(accountId: String): Flow<AccountDetailUiState> = combine(
@@ -81,7 +81,7 @@ class AccountsViewModel @Inject constructor(
         retainCachedAccountDetail(previous, current, accountId)
     }
 
-    private suspend fun load(refreshProviderQuotas: Boolean) {
+    private suspend fun load() {
         val session = sessionRepository.session.value ?: return
         mutableState.update { state ->
             state.copy(
@@ -90,7 +90,7 @@ class AccountsViewModel @Inject constructor(
                 error = null,
             )
         }
-        runSuspendCatching { repository.load(session, refreshProviderQuotas) }
+        runSuspendCatching { repository.load(session) }
             .onSuccess { snapshot ->
                 if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
                 mutableState.update {
