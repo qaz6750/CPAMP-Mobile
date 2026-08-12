@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -49,8 +49,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -355,12 +355,42 @@ private fun AccountPanel(content: @Composable () -> Unit) {
 private fun AccountHealthOverview(accounts: List<AccountHealth>) {
     val states = accounts.map(AccountHealth::overviewState)
     val metrics = listOf(
-        AccountHealthMetric(R.string.accounts_overview_total, accounts.size, Icons.Outlined.AccountCircle, MaterialTheme.colorScheme.primary),
-        AccountHealthMetric(R.string.accounts_overview_healthy, states.count { it == AccountOverviewState.Healthy }, Icons.Outlined.CheckCircle, MaterialTheme.colorScheme.tertiary),
-        AccountHealthMetric(R.string.accounts_overview_attention, states.count { it == AccountOverviewState.NeedsAttention }, Icons.Outlined.ErrorOutline, MaterialTheme.colorScheme.error),
-        AccountHealthMetric(R.string.accounts_overview_risk, states.count { it == AccountOverviewState.QuotaRisk }, Icons.Outlined.Speed, QuotaOrange),
-        AccountHealthMetric(R.string.accounts_overview_disabled, states.count { it == AccountOverviewState.Disabled }, Icons.Outlined.Block, MaterialTheme.colorScheme.onSurfaceVariant),
-        AccountHealthMetric(R.string.accounts_overview_pending, states.count { it == AccountOverviewState.Pending }, Icons.Outlined.HelpOutline, MaterialTheme.colorScheme.secondary),
+        AccountHealthMetric(
+            label = R.string.accounts_overview_total,
+            count = accounts.size,
+            icon = Icons.Outlined.AccountCircle,
+            color = MaterialTheme.colorScheme.primary,
+        ),
+        AccountHealthMetric(
+            label = R.string.accounts_overview_healthy,
+            count = states.count { it == AccountOverviewState.Healthy },
+            icon = Icons.Outlined.CheckCircle,
+            color = MaterialTheme.colorScheme.tertiary,
+        ),
+        AccountHealthMetric(
+            label = R.string.accounts_overview_attention,
+            count = states.count { it == AccountOverviewState.NeedsAttention },
+            icon = Icons.Outlined.ErrorOutline,
+            color = MaterialTheme.colorScheme.error,
+        ),
+        AccountHealthMetric(
+            label = R.string.accounts_overview_risk,
+            count = states.count { it == AccountOverviewState.QuotaRisk },
+            icon = Icons.Outlined.Speed,
+            color = QuotaOrange,
+        ),
+        AccountHealthMetric(
+            label = R.string.accounts_overview_disabled,
+            count = states.count { it == AccountOverviewState.Disabled },
+            icon = Icons.Outlined.Block,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+        AccountHealthMetric(
+            label = R.string.accounts_overview_pending,
+            count = states.count { it == AccountOverviewState.Pending },
+            icon = Icons.Outlined.HelpOutline,
+            color = MaterialTheme.colorScheme.secondary,
+        ),
     )
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val columns = if (maxWidth >= 560.dp) 3 else 2
