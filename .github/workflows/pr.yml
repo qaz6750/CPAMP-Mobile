@@ -60,55 +60,10 @@ jobs:
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
 
-      - name: Require release signing
-        shell: bash
-        env:
-          KEYSTORE_BASE64: ${{ secrets.CPAMP_RELEASE_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.CPAMP_RELEASE_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.CPAMP_RELEASE_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.CPAMP_RELEASE_KEY_PASSWORD }}
-        run: |
-          for value in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [[ -z "${!value}" ]]; then
-              echo "Missing required release signing secret: $value" >&2
-              exit 1
-            fi
-          done
-          echo "::add-mask::$KEYSTORE_PASSWORD"
-          echo "::add-mask::$KEY_ALIAS"
-          echo "::add-mask::$KEY_PASSWORD"
-          key_path="$RUNNER_TEMP/cpamp-release.keystore"
-          if ! printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$key_path"; then
-            echo "CPAMP_RELEASE_KEYSTORE_BASE64 is not valid base64" >&2
-            exit 1
-          fi
-          chmod 600 "$key_path"
-          if [[ ! -s "$key_path" ]]; then
-            echo "Decoded release keystore is empty" >&2
-            exit 1
-          fi
-          if ! keytool -list \
-            -keystore "$key_path" \
-            -storepass "$KEYSTORE_PASSWORD" > /dev/null; then
-            echo "Unable to open decoded release keystore; check CPAMP_RELEASE_KEYSTORE_BASE64 and CPAMP_RELEASE_KEYSTORE_PASSWORD" >&2
-            exit 1
-          fi
-          if ! keytool -list \
-            -keystore "$key_path" \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -alias "$KEY_ALIAS" > /dev/null; then
-            echo "Release signing alias was not found; check CPAMP_RELEASE_KEY_ALIAS" >&2
-            exit 1
-          fi
-          echo "CPAMP_RELEASE_KEYSTORE_PATH=$key_path" >> "$GITHUB_ENV"
-          echo "CPAMP_RELEASE_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
-          echo "CPAMP_RELEASE_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
-          echo "CPAMP_RELEASE_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
-
       - name: Run debug checks
         run: ./gradlew testDebugUnitTest lintDebug --stacktrace
 
-      - name: Build release-signed debug APK
+      - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload debug APK
@@ -138,6 +93,6 @@ jobs:
             echo "## PR validation"
             echo "- Pull request: #${{ github.event.number }}"
             echo "- Commit: \`$GITHUB_SHA\`"
-            echo "- Tasks: unit tests, Debug lint, Release-signed Debug APK"
+            echo "- Tasks: unit tests, Debug lint, Debug APK"
             echo "- APK build: enabled"
           } >> "$GITHUB_STEP_SUMMARY"
