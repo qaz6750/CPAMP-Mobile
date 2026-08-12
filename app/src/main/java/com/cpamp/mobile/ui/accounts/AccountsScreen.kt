@@ -673,7 +673,6 @@ private fun AccountIdentityCard(account: AccountHealth, observedAtMs: Long?) {
                 overflow = TextOverflow.Ellipsis,
             )
             AccountStatusBadge(account)
-            AccountDetailValue(R.string.accounts_provider, providerLabel(account.provider))
             AccountDetailValue(R.string.accounts_plan, account.planType.ifBlank { stringResource(R.string.accounts_no_plan) })
             AccountDetailValue(R.string.accounts_source, stringResource(account.source.labelResource()))
             observedAtMs?.let {
