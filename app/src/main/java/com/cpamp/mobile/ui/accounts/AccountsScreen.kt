@@ -534,22 +534,12 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val columns = if (maxWidth >= 560.dp) 3 else 2
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        metrics.chunked(columns).forEach { rowMetrics ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                rowMetrics.forEach { metric ->
-                                    AccountHealthMetricCard(metric, Modifier.weight(1f))
-                                }
-                                repeat(columns - rowMetrics.size) {
-                                    Spacer(Modifier.weight(1f))
-                                }
-                            }
-                        }
+                Icon(
+                    Icons.Outlined.ChevronRight,
+                    contentDescription = stringResource(R.string.accounts_open_details),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
