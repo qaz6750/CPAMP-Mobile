@@ -7,23 +7,30 @@ import com.cpamp.mobile.data.monitoring.resolvedAuthIndex
 import com.cpamp.mobile.data.monitoring.stableAccountId
 import com.cpamp.mobile.data.monitoring.supportsDirectQuota
 import com.cpamp.mobile.data.monitoring.toBaseAccountHealth
+import com.cpamp.mobile.data.remote.CPAMPApi
 import com.cpamp.mobile.data.remote.SessionApiClientFactory
 import com.cpamp.mobile.data.remote.model.CredentialStatDto
 import com.cpamp.mobile.data.remote.model.MonitoringIncludeDto
 import com.cpamp.mobile.data.remote.model.MonitoringRequestDto
 import com.cpamp.mobile.data.remote.remoteCall
 import com.cpamp.mobile.domain.model.AuthenticatedSession
-import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+
+private const val USAGE_REQUEST_CONCURRENCY = 4
 
 @Serializable
 enum class AccountStatus { Active, Disabled }
@@ -71,6 +78,9 @@ data class AccountHealth(
     val failure: AccountHealthFailure? = null,
     val source: AccountHealthSource = AccountHealthSource.AuthFile,
     val usage: AccountUsage? = null,
+    val usageState: AccountUsageState = AccountUsageState.Unavailable,
+    val usageFromMs: Long = 0,
+    val usageToMs: Long = 0,
 )
 
 @Serializable
@@ -78,9 +88,6 @@ data class AccountHealthSnapshot(
     val inspectionRunId: Long? = null,
     val observedAtMs: Long,
     val accounts: List<AccountHealth>,
-    val usageState: AccountUsageState = AccountUsageState.Unavailable,
-    val usageFromMs: Long = 0,
-    val usageToMs: Long = 0,
     val cachedAtMs: Long = 0,
     val fromCache: Boolean = false,
 )
@@ -109,29 +116,6 @@ class AccountHealthRepository @Inject constructor(
         val observedAtMs = System.currentTimeMillis()
         val files = remoteCall { api.authFiles() }.files
         val zoneId = ZoneId.systemDefault()
-        val usageFromMs = Instant.ofEpochMilli(observedAtMs)
-            .atZone(zoneId)
-            .toLocalDate()
-            .withDayOfMonth(1)
-            .atStartOfDay(zoneId)
-            .toInstant()
-            .toEpochMilli()
-        val credentialStatsResult = try {
-            remoteCall {
-                api.monitoring(
-                    MonitoringRequestDto(
-                        fromMs = usageFromMs,
-                        toMs = observedAtMs,
-                        nowMs = observedAtMs,
-                        timeZone = zoneId.id,
-                        include = MonitoringIncludeDto(credentialStats = true),
-                    ),
-                )
-            }.credentialStats.let { stats -> AccountUsageResult(stats, AccountUsageState.Available) }
-        } catch (error: Exception) {
-            if (error is CancellationException) throw error
-            AccountUsageResult(emptyList(), AccountUsageState.Unavailable)
-        }
         val credentialAuthIndexCounts = files
             .map { file -> file.resolvedAuthIndex.trim() }
             .filter(String::isNotEmpty)
@@ -149,8 +133,8 @@ class AccountHealthRepository @Inject constructor(
             api.loadDirectCredentialQuotas(json, observedAtMs, directTargets)
                 .associateBy(AccountHealth::stableId)
         }
-        val accounts = files.map { file ->
-            val health = directAccounts[file.stableAccountId]
+        val baseAccounts = files.map { file ->
+            directAccounts[file.stableAccountId]
                 ?: file.toBaseAccountHealth(
                     quotaState = if (file.disabled) {
                         AccountQuotaState.NotRequested
@@ -160,8 +144,16 @@ class AccountHealthRepository @Inject constructor(
                         AccountQuotaState.Unsupported
                     },
                 )
-            health.copy(
-                usage = credentialStatsResult.stats.accountUsage(
+        }
+        val usageResults = loadUsageByQuotaCycle(api, baseAccounts, observedAtMs, zoneId)
+        val accounts = files.mapIndexed { index, file ->
+            val health = baseAccounts[index]
+            val usageFromMs = health.currentQuotaCycleStart(observedAtMs)
+            val usageResult = usageFromMs?.let(usageResults::get)
+            val usage = usageResult
+                ?.takeIf { it.state == AccountUsageState.Available }
+                ?.stats
+                ?.accountUsage(
                     authIndex = file.resolvedAuthIndex,
                     authIndexIsUnique = credentialAuthIndexCounts[
                         file.resolvedAuthIndex.trim()
@@ -170,15 +162,24 @@ class AccountHealthRepository @Inject constructor(
                     fileNameIsUnique = credentialFileNameCounts[
                         file.name.normalizedCredentialFileName()
                     ] == 1,
-                ),
+                )
+            val usageState = if (usage != null) {
+                AccountUsageState.Available
+            } else {
+                AccountUsageState.Unavailable
+            }
+            health.copy(
+                usage = usage,
+                usageState = usageState,
+                usageFromMs = usageFromMs ?: 0,
+                usageToMs = observedAtMs.takeIf {
+                    usageState == AccountUsageState.Available
+                } ?: 0,
             )
         }
         val snapshot = AccountHealthSnapshot(
             observedAtMs = observedAtMs,
             accounts = accounts,
-            usageState = credentialStatsResult.state,
-            usageFromMs = usageFromMs,
-            usageToMs = observedAtMs,
             cachedAtMs = observedAtMs,
         )
         cacheDao.upsert(
@@ -198,9 +199,58 @@ class AccountHealthRepository @Inject constructor(
     }
 
     private companion object {
-        const val CACHE_KIND = "account-health.v3"
+        const val CACHE_KIND = "account-health.v4"
     }
 }
+
+private suspend fun loadUsageByQuotaCycle(
+    api: CPAMPApi,
+    accounts: List<AccountHealth>,
+    observedAtMs: Long,
+    zoneId: ZoneId,
+): Map<Long, AccountUsageResult> {
+    val periodStarts = accounts.mapNotNull { it.currentQuotaCycleStart(observedAtMs) }.distinct()
+    if (periodStarts.isEmpty()) return emptyMap()
+    val semaphore = Semaphore(USAGE_REQUEST_CONCURRENCY)
+    return coroutineScope {
+        periodStarts.map { usageFromMs ->
+            async {
+                usageFromMs to semaphore.withPermit {
+                    try {
+                        remoteCall {
+                            api.monitoring(
+                                MonitoringRequestDto(
+                                    fromMs = usageFromMs,
+                                    toMs = observedAtMs,
+                                    nowMs = observedAtMs,
+                                    timeZone = zoneId.id,
+                                    include = MonitoringIncludeDto(credentialStats = true),
+                                ),
+                            )
+                        }.credentialStats.let { stats ->
+                            AccountUsageResult(stats, AccountUsageState.Available)
+                        }
+                    } catch (error: Exception) {
+                        if (error is CancellationException) throw error
+                        AccountUsageResult(emptyList(), AccountUsageState.Unavailable)
+                    }
+                }
+            }
+        }.awaitAll().toMap()
+    }
+}
+
+internal fun AccountHealth.currentQuotaCycleStart(observedAtMs: Long): Long? = windows
+    .asSequence()
+    .mapNotNull { window ->
+        val durationSeconds = window.durationSeconds
+        val resetAtMs = window.resetAtMs ?: return@mapNotNull null
+        if (durationSeconds <= 0 || durationSeconds > Long.MAX_VALUE / 1_000) return@mapNotNull null
+        if (resetAtMs < observedAtMs) return@mapNotNull null
+        val startedAtMs = resetAtMs - durationSeconds * 1_000
+        startedAtMs.takeIf { it > 0 && it <= observedAtMs }
+    }
+    .maxOrNull()
 
 internal fun AccountHealthSnapshot.toCacheSafeSnapshot(): AccountHealthSnapshot = copy(
     accounts = accounts.mapIndexed { index, account ->
@@ -228,6 +278,7 @@ internal fun List<CredentialStatDto>.accountUsage(
     fileName: String,
     fileNameIsUnique: Boolean = true,
 ): AccountUsage? {
+    if (isEmpty()) return AccountUsage()
     val normalizedAuthIndex = authIndex.trim()
     val normalizedFileName = fileName.normalizedCredentialFileName()
     if (authIndexIsUnique && normalizedAuthIndex.isNotEmpty()) {

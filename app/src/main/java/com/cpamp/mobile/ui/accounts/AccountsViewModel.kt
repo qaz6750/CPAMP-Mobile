@@ -76,12 +76,13 @@ class AccountsViewModel @Inject constructor(
         repository.snapshots,
     ) { session, snapshots ->
         val snapshot = session?.profile?.id?.let(snapshots::get)
+        val account = snapshot?.accountForDetail(accountId)
         AccountDetailUiState(
-            account = snapshot?.accountForDetail(accountId),
+            account = account,
             observedAtMs = snapshot?.observedAtMs,
-            usageState = snapshot?.usageState ?: AccountUsageState.Unavailable,
-            usageFromMs = snapshot?.usageFromMs?.takeIf { it > 0 },
-            usageToMs = snapshot?.usageToMs?.takeIf { it > 0 },
+            usageState = account?.usageState ?: AccountUsageState.Unavailable,
+            usageFromMs = account?.usageFromMs?.takeIf { it > 0 },
+            usageToMs = account?.usageToMs?.takeIf { it > 0 },
             fromCache = snapshot?.fromCache == true,
         )
     }.scan(AccountDetailUiState()) { previous, current ->

@@ -19,6 +19,7 @@ class CacheCleanupRepository @Inject constructor(
     suspend fun clearLegacyResponseCaches() {
         cacheDao.deleteKind(LEGACY_MONITORING_CACHE_KIND)
         cacheDao.deleteKind(LEGACY_ACCOUNT_HEALTH_CACHE_KIND)
+        cacheDao.deleteKind(LEGACY_MONTHLY_ACCOUNT_HEALTH_CACHE_KIND)
     }
 
     suspend fun clearRegenerableCache() {
@@ -40,6 +41,7 @@ class CacheCleanupRepository @Inject constructor(
         const val SHARED_REPORTS_DIRECTORY = "shared-reports"
         const val LEGACY_MONITORING_CACHE_KIND = "monitoring.v1"
         const val LEGACY_ACCOUNT_HEALTH_CACHE_KIND = "account-health.v2"
+        const val LEGACY_MONTHLY_ACCOUNT_HEALTH_CACHE_KIND = "account-health.v3"
     }
 }
 

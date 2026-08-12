@@ -92,6 +92,19 @@ fun AccountsScreen(
     var selectedProvider by rememberSaveable { mutableStateOf<String?>(null) }
     val effectiveProvider = selectedProvider?.takeIf(providers::contains)
     val visibleAccounts = accounts.filter { effectiveProvider == null || it.provider.normalizedProvider() == effectiveProvider }
+    val error = state.error
+    val notice = when {
+        error != null && state.snapshot?.fromCache == true -> stringResource(
+            R.string.accounts_error_cached,
+            stringResource(error.messageResource()),
+        ) to true
+        error != null -> stringResource(error.messageResource()) to true
+        state.snapshot?.fromCache == true -> stringResource(R.string.accounts_cached) to false
+        accounts.isNotEmpty() && accounts.none { it.usageState == AccountUsageState.Available } -> {
+            stringResource(R.string.accounts_usage_unavailable) to false
+        }
+        else -> null
+    }
 
     AppBackground {
         LazyColumn(
@@ -132,14 +145,8 @@ fun AccountsScreen(
                     )
                 }
             }
-            if (state.snapshot?.fromCache == true) {
-                item { AccountsNotice(stringResource(R.string.accounts_cached), false) }
-            }
-            if (state.snapshot?.usageState == AccountUsageState.Unavailable) {
-                item { AccountsNotice(stringResource(R.string.accounts_usage_unavailable), false) }
-            }
-            state.error?.let { error ->
-                item { AccountsNotice(stringResource(error.messageResource()), true) }
+            notice?.let { (message, isError) ->
+                item { AccountsNotice(message, isError) }
             }
             if (accounts.isNotEmpty()) {
                 item {
@@ -183,6 +190,7 @@ fun AccountDetailScreen(
 ) {
     val detailFlow = remember(viewModel, accountId) { viewModel.detail(accountId) }
     val state by detailFlow.collectAsStateWithLifecycle(initialValue = AccountDetailUiState())
+    val account = state.account
 
     AppBackground {
         LazyColumn(
@@ -212,11 +220,9 @@ fun AccountDetailScreen(
             }
             if (state.fromCache) {
                 item { AccountsNotice(stringResource(R.string.accounts_detail_cached), false) }
-            }
-            if (state.account != null && state.usageState == AccountUsageState.Unavailable) {
+            } else if (account != null && state.usageState == AccountUsageState.Unavailable) {
                 item { AccountsNotice(stringResource(R.string.accounts_usage_unavailable), false) }
             }
-            val account = state.account
             if (account == null) {
                 item { ContentStateCard(stringResource(R.string.accounts_detail_unavailable), isError = true) }
             } else {

@@ -9,14 +9,14 @@ import org.junit.Test
 
 class AccountHealthCacheTest {
     @Test
-    fun `legacy cache defaults usage fields`() {
-        val snapshot = Json.decodeFromString<AccountHealthSnapshot>(
-            """{"observedAtMs":1,"accounts":[]}""",
+    fun `legacy account cache defaults quota-cycle usage fields`() {
+        val account = Json.decodeFromString<AccountHealth>(
+            """{"stableId":"id","authIndex":"1","name":"credential.json","account":"","provider":"codex","status":"Active","planType":"","windows":[],"quotaState":"NotRequested"}""",
         )
 
-        assertEquals(AccountUsageState.Unavailable, snapshot.usageState)
-        assertEquals(0L, snapshot.usageFromMs)
-        assertEquals(0L, snapshot.usageToMs)
+        assertEquals(AccountUsageState.Unavailable, account.usageState)
+        assertEquals(0L, account.usageFromMs)
+        assertEquals(0L, account.usageToMs)
     }
 
     @Test
@@ -51,11 +51,11 @@ class AccountHealthCacheTest {
                         cost = 181.475,
                         successRate = 0.992,
                     ),
+                    usageState = AccountUsageState.Available,
+                    usageFromMs = 1_785_482_100_000,
+                    usageToMs = 1_785_500_000_000,
                 ),
             ),
-            usageState = AccountUsageState.Available,
-            usageFromMs = 1_785_000_000_000,
-            usageToMs = 1_785_500_000_000,
         )
 
         val cached = snapshot.toCacheSafeSnapshot()
@@ -68,11 +68,11 @@ class AccountHealthCacheTest {
         assertEquals(null, account.failure)
         assertEquals("codex", account.provider)
         assertEquals(AccountQuotaState.Available, account.quotaState)
-        assertEquals(AccountUsageState.Available, cached.usageState)
         assertEquals(1_000L, account.usage?.calls)
         assertEquals(97_300_000L, account.usage?.totalTokens)
-        assertEquals(1_785_000_000_000, cached.usageFromMs)
-        assertEquals(1_785_500_000_000, cached.usageToMs)
+        assertEquals(AccountUsageState.Available, account.usageState)
+        assertEquals(1_785_482_100_000, account.usageFromMs)
+        assertEquals(1_785_500_000_000, account.usageToMs)
         assertEquals(80.0, account.windows.single().remainingPercent ?: -1.0, 0.001)
         assertEquals("", account.windows.single().resetLabel)
         assertEquals("", account.windows.single().label)

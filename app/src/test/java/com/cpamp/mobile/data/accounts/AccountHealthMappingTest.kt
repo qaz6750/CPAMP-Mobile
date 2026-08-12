@@ -43,6 +43,16 @@ class AccountHealthMappingTest {
     }
 
     @Test
+    fun `empty credential statistics mean zero usage`() {
+        val usage = emptyList<CredentialStatDto>().accountUsage(
+            authIndex = "42",
+            fileName = "credential.json",
+        )
+
+        assertEquals(AccountUsage(), usage)
+    }
+
+    @Test
     fun `credential usage stays absent when management returns no match`() {
         val usage = listOf(
             CredentialStatDto(authIndex = "other", calls = 12),
@@ -94,6 +104,30 @@ class AccountHealthMappingTest {
         )
 
         assertEquals(null, usage)
+    }
+
+    @Test
+    fun `usage cycle starts at the most recent quota reset`() {
+        val account = accountHealth(
+            windows = listOf(
+                AccountQuotaWindow(durationSeconds = 100, remainingPercent = 50.0, resetAtMs = 2_050_000),
+                AccountQuotaWindow(durationSeconds = 10, remainingPercent = 80.0, resetAtMs = 2_005_000),
+            ),
+        )
+
+        assertEquals(1_995_000L, account.currentQuotaCycleStart(observedAtMs = 2_000_000))
+    }
+
+    @Test
+    fun `usage cycle ignores windows without a current reset boundary`() {
+        val account = accountHealth(
+            windows = listOf(
+                AccountQuotaWindow(durationSeconds = 0, remainingPercent = 50.0, resetAtMs = 2_050_000),
+                AccountQuotaWindow(durationSeconds = 10, remainingPercent = 80.0, resetAtMs = 1_999_000),
+            ),
+        )
+
+        assertEquals(null, account.currentQuotaCycleStart(observedAtMs = 2_000_000))
     }
 
     private fun accountHealth(
