@@ -13,11 +13,13 @@ import com.cpamp.mobile.data.settings.AppLanguage
 import com.cpamp.mobile.data.settings.AppTheme
 import com.cpamp.mobile.ui.accounts.AccountDetailScreen
 import com.cpamp.mobile.ui.accounts.AccountsScreen
+import com.cpamp.mobile.ui.accounts.AccountsViewModel
 import com.cpamp.mobile.ui.auth.LoginScreen
 import com.cpamp.mobile.ui.auth.SessionLoadingScreen
 import com.cpamp.mobile.ui.auth.SessionUiState
 import com.cpamp.mobile.ui.auth.SessionViewModel
 import com.cpamp.mobile.ui.dashboard.DashboardScreen
+import com.cpamp.mobile.ui.dashboard.DashboardViewModel
 import com.cpamp.mobile.ui.navigation.ACCOUNT_DETAIL_ROUTE
 import com.cpamp.mobile.ui.navigation.AppDestination
 import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
@@ -26,6 +28,7 @@ import com.cpamp.mobile.ui.settings.AppearanceUiState
 import com.cpamp.mobile.ui.settings.AppUpdateScreen
 import com.cpamp.mobile.ui.settings.SettingsScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
+import com.cpamp.mobile.ui.usage.UsageAnalyticsViewModel
 import java.util.Base64
 
 @Composable
@@ -91,6 +94,9 @@ private fun ConnectedApp(
     onSetHideAddresses: (Boolean) -> Unit,
 ) {
     val session = requireNotNull(sessionState.session)
+    val dashboardViewModel: DashboardViewModel = hiltViewModel()
+    val accountsViewModel: AccountsViewModel = hiltViewModel()
+    val usageAnalyticsViewModel: UsageAnalyticsViewModel = hiltViewModel()
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val current = AppDestination.fromRoute(backStackEntry?.destination?.route)
@@ -111,8 +117,9 @@ private fun ConnectedApp(
         ) {
             composable(AppDestination.Overview.route) {
                 DashboardScreen(
-                    contentPadding,
+                    contentPadding = contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
+                    viewModel = dashboardViewModel,
                 )
             }
             composable(AppDestination.Accounts.route) {
@@ -120,6 +127,7 @@ private fun ConnectedApp(
                     contentPadding = contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
                     onOpenAccount = { accountId -> navController.navigate(accountDetailRoute(accountId)) },
+                    viewModel = accountsViewModel,
                 )
             }
             composable(ACCOUNT_DETAIL_ROUTE) { entry ->
@@ -127,10 +135,14 @@ private fun ConnectedApp(
                     contentPadding = contentPadding,
                     accountId = entry.arguments?.getString("accountId").orEmpty().decodeAccountId(),
                     onBack = navController::popBackStack,
+                    viewModel = accountsViewModel,
                 )
             }
             composable(AppDestination.Usage.route) {
-                UsageAnalyticsScreen(contentPadding)
+                UsageAnalyticsScreen(
+                    contentPadding = contentPadding,
+                    viewModel = usageAnalyticsViewModel,
+                )
             }
             composable(AppDestination.Settings.route) {
                 SettingsScreen(
