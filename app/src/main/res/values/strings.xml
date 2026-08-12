@@ -53,6 +53,8 @@
     <string name="accounts_quota">Quota windows</string>
     <string name="accounts_usage">Current quota-cycle usage</string>
     <string name="accounts_usage_range">Reporting range: %1$s — %2$s</string>
+    <string name="accounts_usage_projected_cost">Projected cost at quota limit</string>
+    <string name="accounts_usage_projected_cost_hint">Estimated from current-cycle cost and remaining quota</string>
     <string name="accounts_usage_unavailable">The current quota cycle could not be determined, or its usage statistics are unavailable.</string>
     <string name="accounts_quota_not_refreshed">Provider quota has not been requested. Return to Accounts and use refresh to query it explicitly.</string>
     <string name="accounts_quota_unsupported">This provider does not expose a supported quota query. Basic account health remains available.</string>

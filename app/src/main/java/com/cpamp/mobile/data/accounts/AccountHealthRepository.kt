@@ -241,16 +241,34 @@ private suspend fun loadUsageByQuotaCycle(
 }
 
 internal fun AccountHealth.currentQuotaCycleStart(observedAtMs: Long): Long? = windows
-    .asSequence()
-    .mapNotNull { window ->
-        val durationSeconds = window.durationSeconds
-        val resetAtMs = window.resetAtMs ?: return@mapNotNull null
-        if (durationSeconds <= 0 || durationSeconds > Long.MAX_VALUE / 1_000) return@mapNotNull null
-        if (resetAtMs < observedAtMs) return@mapNotNull null
-        val startedAtMs = resetAtMs - durationSeconds * 1_000
-        startedAtMs.takeIf { it > 0 && it <= observedAtMs }
-    }
+    .mapNotNull { window -> window.currentQuotaCycleStart(observedAtMs) }
     .maxOrNull()
+
+internal fun AccountHealth.estimatedQuotaCycleCost(): Double? {
+    val currentUsage = usage ?: return null
+    val usageCost = currentUsage.cost.takeIf { it.isFinite() && it > 0.0 } ?: return null
+    val cycleStartMs = usageFromMs.takeIf { it > 0 } ?: return null
+    val observedAtMs = usageToMs.takeIf { it >= cycleStartMs } ?: return null
+    val remainingPercent = windows
+        .asSequence()
+        .filter { window -> window.currentQuotaCycleStart(observedAtMs) == cycleStartMs }
+        .mapNotNull { window ->
+            window.remainingPercent?.takeIf(Double::isFinite)?.coerceIn(0.0, 100.0)
+        }
+        .minOrNull()
+        ?: return null
+    val usedFraction = (100.0 - remainingPercent) / 100.0
+    if (usedFraction <= 0.0) return null
+    return (usageCost / usedFraction).takeIf(Double::isFinite)
+}
+
+private fun AccountQuotaWindow.currentQuotaCycleStart(observedAtMs: Long): Long? {
+    val resetAtMs = resetAtMs ?: return null
+    if (durationSeconds <= 0 || durationSeconds > Long.MAX_VALUE / 1_000) return null
+    if (resetAtMs < observedAtMs) return null
+    val startedAtMs = resetAtMs - durationSeconds * 1_000
+    return startedAtMs.takeIf { it > 0 && it <= observedAtMs }
+}
 
 internal fun AccountHealthSnapshot.toCacheSafeSnapshot(): AccountHealthSnapshot = copy(
     accounts = accounts.mapIndexed { index, account ->

@@ -53,6 +53,8 @@
     <string name="accounts_quota">额度周期</string>
     <string name="accounts_usage">本轮凭证用量</string>
     <string name="accounts_usage_range">统计时间范围：%1$s — %2$s</string>
+    <string name="accounts_usage_projected_cost">预计可用到的成本</string>
+    <string name="accounts_usage_projected_cost_hint">按本轮已用成本与剩余额度推算</string>
     <string name="accounts_usage_unavailable">无法确定当前额度周期，或暂时无法获取本轮用量统计。</string>
     <string name="accounts_quota_not_refreshed">尚未请求提供商额度。请返回账号页并点击刷新以显式查询。</string>
     <string name="accounts_quota_unsupported">此提供商暂不支持额度查询，仍可查看基础账号健康。</string>

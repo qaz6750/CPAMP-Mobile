@@ -130,6 +130,38 @@ class AccountHealthMappingTest {
         assertEquals(null, account.currentQuotaCycleStart(observedAtMs = 2_000_000))
     }
 
+    @Test
+    fun `projected cost uses remaining quota from the matching usage cycle`() {
+        val account = accountHealth(
+            windows = listOf(
+                AccountQuotaWindow(durationSeconds = 100, remainingPercent = 50.0, resetAtMs = 2_050_000),
+                AccountQuotaWindow(durationSeconds = 10, remainingPercent = 80.0, resetAtMs = 2_005_000),
+            ),
+        ).copy(
+            usage = AccountUsage(cost = 2.5),
+            usageFromMs = 1_995_000,
+            usageToMs = 2_000_000,
+        )
+
+        assertEquals(12.5, account.estimatedQuotaCycleCost() ?: -1.0, 0.001)
+    }
+
+    @Test
+    fun `projected cost requires priced usage and consumed quota`() {
+        val account = accountHealth(
+            windows = listOf(
+                AccountQuotaWindow(durationSeconds = 10, remainingPercent = 100.0, resetAtMs = 2_005_000),
+            ),
+        ).copy(
+            usage = AccountUsage(cost = 2.5),
+            usageFromMs = 1_995_000,
+            usageToMs = 2_000_000,
+        )
+
+        assertEquals(null, account.estimatedQuotaCycleCost())
+        assertEquals(null, account.copy(usage = AccountUsage(cost = 0.0)).estimatedQuotaCycleCost())
+    }
+
     private fun accountHealth(
         stableId: String = "codex\u00001",
         windows: List<AccountQuotaWindow> = emptyList(),

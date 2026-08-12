@@ -66,6 +66,7 @@ import com.cpamp.mobile.data.accounts.AccountQuotaState
 import com.cpamp.mobile.data.accounts.AccountQuotaWindow
 import com.cpamp.mobile.data.accounts.AccountStatus
 import com.cpamp.mobile.data.accounts.AccountUsageState
+import com.cpamp.mobile.data.accounts.estimatedQuotaCycleCost
 import com.cpamp.mobile.ui.common.asDateTime
 import com.cpamp.mobile.ui.common.asCost
 import com.cpamp.mobile.ui.common.asPercent
@@ -677,6 +678,7 @@ private fun AccountDetailValue(@StringRes label: Int, value: String) {
 @Composable
 private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?) {
     val usage = account.usage ?: return
+    val projectedCost = account.estimatedQuotaCycleCost()
     AccountPanel {
         Column(
             modifier = Modifier.fillMaxWidth().padding(18.dp),
@@ -725,6 +727,32 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
                     usage.successRate.asPercent(),
                     Modifier.weight(1f),
                 )
+            }
+            projectedCost?.let { cost ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            stringResource(R.string.accounts_usage_projected_cost),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            stringResource(R.string.accounts_usage_projected_cost_hint),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        cost.asCost(),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.End,
+                    )
+                }
             }
             Text(
                 stringResource(R.string.usage_estimated),
