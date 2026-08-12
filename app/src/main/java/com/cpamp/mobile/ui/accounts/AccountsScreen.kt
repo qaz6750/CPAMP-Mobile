@@ -395,7 +395,7 @@ private fun AccountHealthMetricCard(metric: AccountHealthMetric, modifier: Modif
                 contentColor = metric.color,
                 shape = MaterialTheme.shapes.medium,
             ) {
-                Icon(metric.icon, contentDescription = null, modifier = Modifier.padding(8.dp).height(20.dp))
+                Icon(metric.icon, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(metric.count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
