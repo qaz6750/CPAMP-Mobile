@@ -62,6 +62,7 @@ fun UsageAnalyticsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val shareTitle = stringResource(R.string.share_usage)
     var expandedChart by rememberSaveable { mutableStateOf<ExpandedChart?>(null) }
     LaunchedEffect(state.shareUri) {
         state.shareUri?.let { uri ->
@@ -70,7 +71,7 @@ fun UsageAnalyticsScreen(
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_usage)))
+            context.startActivity(Intent.createChooser(intent, shareTitle))
             viewModel.consumeShare()
         }
     }
