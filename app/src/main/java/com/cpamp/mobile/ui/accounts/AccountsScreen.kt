@@ -4,12 +4,13 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -245,35 +243,32 @@ private fun AccountProviderFilters(
     totalCount: Int,
     onProviderSelected: (String?) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-    ) {
-        Surface(
-            shape = AccountCardShape,
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                AccountProviderTab(
-                    label = stringResource(R.string.accounts_filter_all),
-                    count = totalCount,
-                    selected = selectedProvider == null,
-                    onClick = { onProviderSelected(null) },
-                )
-                providers.forEach { provider ->
-                    VerticalDivider(
-                        modifier = Modifier.height(18.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                    )
-                    AccountProviderTab(
-                        label = stringResource(R.string.accounts_filter_provider, providerLabel(provider)),
-                        count = accountCounts[provider] ?: 0,
-                        selected = selectedProvider == provider,
-                        onClick = { onProviderSelected(provider) },
-                        leadingIcon = {
-                            CredentialProviderIcon(provider, modifier = Modifier.size(18.dp))
-                        },
-                    )
+    val filters = listOf<String?>(null) + providers
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 560.dp) 3 else 2
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            filters.chunked(columns).forEach { rowFilters ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    rowFilters.forEach { provider ->
+                        AccountProviderTab(
+                            label = provider?.let {
+                                stringResource(R.string.accounts_filter_provider, providerLabel(it))
+                            } ?: stringResource(R.string.accounts_filter_all),
+                            count = provider?.let { accountCounts[it] } ?: totalCount,
+                            selected = selectedProvider == provider,
+                            onClick = { onProviderSelected(provider) },
+                            modifier = Modifier.weight(1f),
+                            leadingIcon = provider?.let {
+                                { CredentialProviderIcon(it, modifier = Modifier.size(18.dp)) }
+                            },
+                        )
+                    }
+                    repeat(columns - rowFilters.size) {
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -286,23 +281,36 @@ private fun AccountProviderTab(
     count: Int,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     Surface(
         onClick = onClick,
-        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+        modifier = modifier.heightIn(min = 42.dp),
+        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
         contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = RoundedCornerShape(10.dp),
+        shape = AccountCardShape,
+        border = BorderStroke(
+            1.dp,
+            if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
+            else MaterialTheme.colorScheme.outlineVariant,
+        ),
     ) {
         Row(
-            modifier = Modifier
-                .heightIn(min = 36.dp)
-                .padding(horizontal = 10.dp, vertical = 5.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 7.dp),
             horizontalArrangement = Arrangement.spacedBy(7.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             leadingIcon?.invoke()
-            Text(label, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                label,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Surface(
                 color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f),
@@ -354,12 +362,22 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
         AccountHealthMetric(R.string.accounts_overview_disabled, states.count { it == AccountOverviewState.Disabled }, Icons.Outlined.Block, MaterialTheme.colorScheme.onSurfaceVariant),
         AccountHealthMetric(R.string.accounts_overview_pending, states.count { it == AccountOverviewState.Pending }, Icons.Outlined.HelpOutline, MaterialTheme.colorScheme.secondary),
     )
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        metrics.forEach { metric ->
-            AccountHealthMetricCard(metric, Modifier.width(136.dp))
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 560.dp) 3 else 2
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            metrics.chunked(columns).forEach { rowMetrics ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    rowMetrics.forEach { metric ->
+                        AccountHealthMetricCard(metric, Modifier.weight(1f))
+                    }
+                    repeat(columns - rowMetrics.size) {
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
         }
     }
 }
@@ -486,12 +504,22 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Icon(
-                    Icons.Outlined.ChevronRight,
-                    contentDescription = stringResource(R.string.accounts_open_details),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val columns = if (maxWidth >= 560.dp) 3 else 2
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        metrics.chunked(columns).forEach { rowMetrics ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                rowMetrics.forEach { metric ->
+                                    AccountHealthMetricCard(metric, Modifier.weight(1f))
+                                }
+                                repeat(columns - rowMetrics.size) {
+                                    Spacer(Modifier.weight(1f))
+                                }
+                            }
+                        }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
