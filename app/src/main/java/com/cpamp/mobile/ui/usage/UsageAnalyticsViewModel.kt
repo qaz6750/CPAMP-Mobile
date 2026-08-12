@@ -48,7 +48,7 @@ enum class UsageRanking { Models, ApiKeys, Credentials }
 
 data class UsageAnalyticsUiState(
     val response: MonitoringResponseDto? = null,
-    val window: UsageWindow = UsageWindow.Week,
+    val window: UsageWindow = UsageWindow.Day,
     val ranking: UsageRanking = UsageRanking.Models,
     val loadedWindow: UsageWindow? = null,
     val loadedRange: UsageRange? = null,
@@ -91,7 +91,7 @@ class UsageAnalyticsViewModel @Inject constructor(
                     mutableState.value = UsageAnalyticsUiState()
                     return@collectLatest
                 }
-                val window = UsageWindow.Week
+                val window = UsageWindow.Day
                 val ranking = UsageRanking.Models
                 mutableState.value = UsageAnalyticsUiState(
                     window = window,
