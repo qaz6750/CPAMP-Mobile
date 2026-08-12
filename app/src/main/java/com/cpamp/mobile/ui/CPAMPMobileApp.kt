@@ -1,10 +1,16 @@
 package com.cpamp.mobile.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -115,14 +121,26 @@ private fun ConnectedApp(
             navController = navController,
             startDestination = AppDestination.Overview.route,
         ) {
-            composable(AppDestination.Overview.route) {
+            composable(
+                route = AppDestination.Overview.route,
+                enterTransition = { topLevelEnterTransition() },
+                exitTransition = { topLevelExitTransition() },
+                popEnterTransition = { topLevelEnterTransition() },
+                popExitTransition = { topLevelExitTransition() },
+            ) {
                 DashboardScreen(
                     contentPadding = contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
                     viewModel = dashboardViewModel,
                 )
             }
-            composable(AppDestination.Accounts.route) {
+            composable(
+                route = AppDestination.Accounts.route,
+                enterTransition = { topLevelEnterTransition() },
+                exitTransition = { topLevelExitTransition() },
+                popEnterTransition = { topLevelEnterTransition() },
+                popExitTransition = { topLevelExitTransition() },
+            ) {
                 AccountsScreen(
                     contentPadding = contentPadding,
                     hideAddresses = appearanceState.settings.hideAddresses,
@@ -138,13 +156,25 @@ private fun ConnectedApp(
                     viewModel = accountsViewModel,
                 )
             }
-            composable(AppDestination.Usage.route) {
+            composable(
+                route = AppDestination.Usage.route,
+                enterTransition = { topLevelEnterTransition() },
+                exitTransition = { topLevelExitTransition() },
+                popEnterTransition = { topLevelEnterTransition() },
+                popExitTransition = { topLevelExitTransition() },
+            ) {
                 UsageAnalyticsScreen(
                     contentPadding = contentPadding,
                     viewModel = usageAnalyticsViewModel,
                 )
             }
-            composable(AppDestination.Settings.route) {
+            composable(
+                route = AppDestination.Settings.route,
+                enterTransition = { topLevelEnterTransition() },
+                exitTransition = { topLevelExitTransition() },
+                popEnterTransition = { topLevelEnterTransition() },
+                popExitTransition = { topLevelExitTransition() },
+            ) {
                 SettingsScreen(
                     contentPadding = contentPadding,
                     session = session,
@@ -174,6 +204,49 @@ private fun ConnectedApp(
 }
 
 private const val APP_UPDATE_ROUTE = "app-update"
+private const val TOP_LEVEL_TRANSITION_DURATION_MILLIS = 320
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelEnterTransition(): EnterTransition? =
+    topLevelSlideDirection()?.let { direction ->
+        slideIntoContainer(
+            towards = direction,
+            animationSpec = tween(
+                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+    }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelExitTransition(): ExitTransition? =
+    topLevelSlideDirection()?.let { direction ->
+        slideOutOfContainer(
+            towards = direction,
+            animationSpec = tween(
+                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+    }
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelSlideDirection():
+    AnimatedContentTransitionScope.SlideDirection? {
+    val initialIndex = topLevelDestinationIndex(initialState.destination.route) ?: return null
+    val targetIndex = topLevelDestinationIndex(targetState.destination.route) ?: return null
+    return when {
+        targetIndex > initialIndex -> AnimatedContentTransitionScope.SlideDirection.Left
+        targetIndex < initialIndex -> AnimatedContentTransitionScope.SlideDirection.Right
+        else -> null
+    }
+}
+
+private fun topLevelDestinationIndex(route: String?): Int? {
+    val destination = when (route) {
+        ACCOUNT_DETAIL_ROUTE -> AppDestination.Accounts
+        APP_UPDATE_ROUTE -> AppDestination.Settings
+        else -> AppDestination.entries.firstOrNull { it.route == route }
+    } ?: return null
+    return destination.ordinal
+}
 
 private fun accountDetailRoute(accountId: String): String {
     val encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(accountId.toByteArray(Charsets.UTF_8))

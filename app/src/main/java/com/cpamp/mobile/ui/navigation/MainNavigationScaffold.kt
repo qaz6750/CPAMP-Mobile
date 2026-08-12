@@ -8,11 +8,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -22,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -100,18 +110,41 @@ private fun FloatingNavigationBar(
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
-                AppDestination.entries.forEach { destination ->
-                    FloatingNavigationItem(
-                        destination = destination,
-                        selected = destination == currentDestination,
-                        onClick = { onNavigate(destination) },
-                        modifier = Modifier.weight(1f),
-                    )
+                val destinations = AppDestination.entries
+                val itemWidth = maxWidth / destinations.size.toFloat()
+                val selectedIndex = destinations.indexOf(currentDestination).coerceAtLeast(0)
+                val indicatorOffset by animateDpAsState(
+                    targetValue = itemWidth * selectedIndex.toFloat(),
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                    label = "navigationIndicatorOffset",
+                )
+                Surface(
+                    modifier = Modifier
+                        .offset(x = indicatorOffset + 2.dp)
+                        .width(itemWidth - 4.dp)
+                        .fillMaxHeight(),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.medium,
+                ) {}
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    destinations.forEach { destination ->
+                        FloatingNavigationItem(
+                            destination = destination,
+                            selected = destination == currentDestination,
+                            onClick = { onNavigate(destination) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
         }
@@ -125,12 +158,20 @@ private fun FloatingNavigationItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "${destination.route}NavigationItemColor",
+    )
     Surface(
         onClick = onClick,
         modifier = modifier.heightIn(min = 48.dp).padding(horizontal = 2.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-        contentColor = if (selected) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Color.Transparent,
+        contentColor = contentColor,
         shape = MaterialTheme.shapes.medium,
     ) {
         Column(
