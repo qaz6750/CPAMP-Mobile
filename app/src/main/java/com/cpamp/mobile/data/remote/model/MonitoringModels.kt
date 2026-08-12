@@ -1,7 +1,16 @@
 package com.cpamp.mobile.data.remote.model
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 @Serializable
 data class MonitoringRequestDto(
@@ -71,7 +80,9 @@ data class ApiKeyStatDto(
 data class CredentialStatDto(
     val id: String = "",
     @SerialName("auth_file_snapshot") val authFileSnapshot: String = "",
-    @SerialName("auth_index") val authIndex: String = "",
+    @SerialName("auth_index")
+    @Serializable(with = StringOrNumberSerializer::class)
+    val authIndex: String = "",
     @SerialName("account_snapshot") val accountSnapshot: String = "",
     @SerialName("auth_label_snapshot") val authLabelSnapshot: String = "",
     val calls: Long = 0,
@@ -79,6 +90,22 @@ data class CredentialStatDto(
     @SerialName("total_tokens") val totalTokens: Long = 0,
     val cost: Double = 0.0,
 )
+
+internal object StringOrNumberSerializer : KSerializer<String> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+        serialName = "StringOrNumber",
+        kind = PrimitiveKind.STRING,
+    )
+
+    override fun deserialize(decoder: Decoder): String {
+        if (decoder !is JsonDecoder) return decoder.decodeString()
+        return (decoder.decodeJsonElement() as? JsonPrimitive)?.contentOrNull.orEmpty()
+    }
+
+    override fun serialize(encoder: Encoder, value: String) {
+        encoder.encodeString(value)
+    }
+}
 
 @Serializable
 data class MonitoringSummaryDto(
@@ -128,8 +155,6 @@ data class ModelShareDto(
     val cost: Double = 0.0,
     val share: Double = 0.0,
 )
-
-
 
 
 

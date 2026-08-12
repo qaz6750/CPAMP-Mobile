@@ -6,6 +6,7 @@ import com.cpamp.mobile.common.runSuspendCatching
 import com.cpamp.mobile.data.accounts.AccountHealth
 import com.cpamp.mobile.data.accounts.AccountHealthRepository
 import com.cpamp.mobile.data.accounts.AccountHealthSnapshot
+import com.cpamp.mobile.data.accounts.AccountUsageState
 import com.cpamp.mobile.data.accounts.accountForDetail
 import com.cpamp.mobile.data.auth.SessionRepository
 import com.cpamp.mobile.data.remote.RemoteFailure
@@ -33,6 +34,9 @@ data class AccountsUiState(
 data class AccountDetailUiState(
     val account: AccountHealth? = null,
     val observedAtMs: Long? = null,
+    val usageState: AccountUsageState = AccountUsageState.Unavailable,
+    val usageFromMs: Long? = null,
+    val usageToMs: Long? = null,
     val fromCache: Boolean = false,
 )
 
@@ -75,6 +79,9 @@ class AccountsViewModel @Inject constructor(
         AccountDetailUiState(
             account = snapshot?.accountForDetail(accountId),
             observedAtMs = snapshot?.observedAtMs,
+            usageState = snapshot?.usageState ?: AccountUsageState.Unavailable,
+            usageFromMs = snapshot?.usageFromMs?.takeIf { it > 0 },
+            usageToMs = snapshot?.usageToMs?.takeIf { it > 0 },
             fromCache = snapshot?.fromCache == true,
         )
     }.scan(AccountDetailUiState()) { previous, current ->

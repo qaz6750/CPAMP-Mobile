@@ -46,7 +46,7 @@ Each HTTP server requires an explicit warning confirmation before first use. The
 | Servers | Add, validate, delete, and quickly switch full-mode Manager Servers |
 | Overview | Health, daily requests, success rate, tokens, estimated cost, interactive token/request trends, and real provider marks |
 | Usage | Interactive usage buckets, on-demand rankings, and privacy-safe Today/7-day/30-day share images |
-| Accounts | Read-only credential inventory, status, completed-inspection results, and explicitly refreshed provider quota windows |
+| Accounts | Read-only credential inventory, monthly usage statistics, status, and provider quota windows |
 | Settings | Saved-server management, app lock, screenshot/address privacy, appearance, language, open-source notices, and signed in-app updates |
 | Security | Keystore AES-GCM, optional biometric/device-credential app lock, configurable screenshot protection, no backup |
 | Appearance | Blue-and-white light theme, charcoal dark theme, Simplified Chinese and English |
@@ -55,7 +55,7 @@ Destructive changes show the affected object and require confirmation. Switching
 
 Overview and Usage request aggregate analytics only and never download request-event pages or request details. Usage computes only the selected ranking, and a share image makes at most one explicit analytics request when the selected range cannot reuse loaded aggregate data.
 
-Accounts reads the Manager Server credential inventory and the latest completed CPAMP inspection from `/v0/management/codex-inspection/runs` and `/v0/management/codex-inspection/runs/{id}`. It never starts an inspection. An explicit refresh can use the Manager Server's authenticated API-call proxy to request quota windows from supported providers; unsupported providers still expose basic read-only account health. Individual provider failures degrade only the affected account. The per-profile fallback cache stores only ordered placeholders and aggregate status/quota data, never account labels, file names, authentication indexes, or raw responses. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
+Accounts reads the Manager Server credential inventory from `/v0/management/auth-files`, requests per-credential aggregate usage from `/v0/management/monitoring/analytics`, and uses the authenticated `/v0/management/api-call` proxy to request quota windows from supported providers. It does not depend on or start a CPAMP inspection. A usage-statistics failure is non-blocking, unsupported providers still expose basic read-only account health, and individual provider failures degrade only the affected account. The per-profile fallback cache stores only ordered placeholders and aggregate usage/status/quota data, never account labels, file names, authentication indexes, or raw responses. The app does not create, edit, refresh, disable, or delete providers, authentication files, quota cooldowns, or gateway client API keys. Use the CPA-Manager-Plus web interface for those administrative operations.
 
 ## 🧭 Architecture
 
@@ -80,9 +80,9 @@ flowchart LR
 	HTTP -->|Admin Key over HTTPS| Manager[CPA-Manager-Plus Manager Server]
 	Manager --> Gateway[CPA / CLIProxyAPI gateway data]
 	Manager --> Inventory[Credential inventory]
-	Manager --> Inspection[Codex inspection runs]
+	Manager --> Analytics[Credential usage analytics]
 	Inventory -->|read-only account status| HTTP
-	Inspection -->|latest completed result| HTTP
+	Analytics -->|aggregate usage| HTTP
 	Manager -->|explicit supported quota query| Providers[Provider quota APIs]
 ```
 
@@ -175,7 +175,7 @@ Tags matching `v*` create a GitHub Release only when all signing secrets are pre
 - Enabling app lock migrates ciphertext to a user-authenticated Keystore key; disabling it migrates back and removes the obsolete key.
 - Admin Keys are not written to Room, DataStore, saved-state Bundles, logs, crash uploads, or backups.
 - Monitoring cache is isolated by server profile and stores aggregate summaries only; request-event rows and details are never cached.
-- Accounts keeps live account identity only in memory. Its per-profile fallback cache stores placeholder identities and aggregate health/quota values without labels, file names, authentication indexes, or raw provider responses.
+- Accounts keeps live account identity only in memory. Its per-profile fallback cache stores placeholder identities and aggregate usage/health/quota values without labels, file names, authentication indexes, or raw provider responses.
 - Screenshots and recent-task previews are allowed by default and can be disabled from Settings.
 - Shared usage images contain aggregate requests, success rate, tokens, cost, timeline and top-model data only. They exclude server names, addresses, keys, credentials and account labels.
 - In-app updates accept only HTTPS assets with fixed release names, a matching SHA-256, and the installed application's signing identity. Android still requires explicit installer confirmation.

@@ -12,10 +12,10 @@
     <string name="metric_cost">预估成本</string>
     <string name="preview_trend">用量趋势</string>
     <string name="accounts_title">账号健康</string>
-    <string name="accounts_subtitle">只读查看凭据状态与提供商额度</string>
-    <string name="accounts_refresh_quotas">刷新提供商额度</string>
+    <string name="accounts_subtitle">显示 Management 账号用量与提供商额度</string>
+    <string name="accounts_refresh_quotas">刷新账号数据</string>
     <string name="accounts_source_inspection">服务器巡检 #%1$d · %2$s</string>
-    <string name="accounts_source_inventory">凭据清单 · %1$s</string>
+    <string name="accounts_source_inventory">Management 账号数据 · %1$s</string>
     <string name="accounts_cached">实时数据不可用，当前显示已脱敏的缓存汇总。</string>
     <string name="accounts_loading">正在加载账号健康…</string>
     <string name="accounts_empty">此服务器中未找到凭据。</string>
@@ -50,6 +50,9 @@
     <string name="accounts_source">数据来源</string>
     <string name="accounts_observed_at">观测时间</string>
     <string name="accounts_quota">额度周期</string>
+    <string name="accounts_usage">本月凭证总体用量</string>
+    <string name="accounts_usage_range">统计时间范围：%1$s — %2$s</string>
+    <string name="accounts_usage_unavailable">账号与提供商额度已加载，但暂时无法获取用量统计。</string>
     <string name="accounts_quota_not_refreshed">尚未请求提供商额度。请返回账号页并点击刷新以显式查询。</string>
     <string name="accounts_quota_unsupported">此提供商暂不支持额度查询，仍可查看基础账号健康。</string>
     <string name="accounts_source_auth_file">凭据清单</string>

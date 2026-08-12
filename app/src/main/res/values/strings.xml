@@ -12,10 +12,10 @@
     <string name="metric_cost">Estimated cost</string>
     <string name="preview_trend">Usage trend</string>
     <string name="accounts_title">Account health</string>
-    <string name="accounts_subtitle">Read-only credential status and provider quota visibility</string>
-    <string name="accounts_refresh_quotas">Refresh provider quotas</string>
+    <string name="accounts_subtitle">Management account usage and provider quotas</string>
+    <string name="accounts_refresh_quotas">Refresh account data</string>
     <string name="accounts_source_inspection">Server inspection #%1$d · %2$s</string>
-    <string name="accounts_source_inventory">Credential inventory · %1$s</string>
+    <string name="accounts_source_inventory">Management account data · %1$s</string>
     <string name="accounts_cached">Live data is unavailable. Showing a privacy-safe cached summary.</string>
     <string name="accounts_loading">Loading account health…</string>
     <string name="accounts_empty">No credentials were found on this server.</string>
@@ -50,6 +50,9 @@
     <string name="accounts_source">Source</string>
     <string name="accounts_observed_at">Observed</string>
     <string name="accounts_quota">Quota windows</string>
+    <string name="accounts_usage">Credential usage this month</string>
+    <string name="accounts_usage_range">Reporting range: %1$s — %2$s</string>
+    <string name="accounts_usage_unavailable">Accounts and provider quotas are available, but usage statistics could not be loaded.</string>
     <string name="accounts_quota_not_refreshed">Provider quota has not been requested. Return to Accounts and use refresh to query it explicitly.</string>
     <string name="accounts_quota_unsupported">This provider does not expose a supported quota query. Basic account health remains available.</string>
     <string name="accounts_source_auth_file">Credential inventory</string>

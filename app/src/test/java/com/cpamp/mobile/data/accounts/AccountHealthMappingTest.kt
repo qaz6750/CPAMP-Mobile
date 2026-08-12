@@ -1,5 +1,6 @@
 package com.cpamp.mobile.data.accounts
 
+import com.cpamp.mobile.data.remote.model.CredentialStatDto
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -12,6 +13,89 @@ class AccountHealthMappingTest {
 
         assertEquals(null, snapshot.accountForDetail("cached:2"))
     }
+
+    @Test
+    fun `credential usage matches management stats by auth index`() {
+        val usage = listOf(
+            CredentialStatDto(
+                authIndex = "42",
+                authFileSnapshot = "other.json",
+                calls = 1_000,
+                totalTokens = 97_300_000,
+                cost = 181.475,
+                successRate = 0.992,
+            ),
+        ).accountUsage(authIndex = "42", fileName = "credential.json")
+
+        assertEquals(1_000L, usage?.calls)
+        assertEquals(97_300_000L, usage?.totalTokens)
+        assertEquals(181.475, usage?.cost ?: -1.0, 0.001)
+        assertEquals(0.992, usage?.successRate ?: -1.0, 0.0001)
+    }
+
+    @Test
+    fun `credential usage falls back to a unique file snapshot`() {
+        val usage = listOf(
+            CredentialStatDto(authFileSnapshot = "/masked/Credential.JSON", calls = 12),
+        ).accountUsage(authIndex = "", fileName = "credential.json")
+
+        assertEquals(12L, usage?.calls)
+    }
+
+    @Test
+    fun `credential usage stays absent when management returns no match`() {
+        val usage = listOf(
+            CredentialStatDto(authIndex = "other", calls = 12),
+        ).accountUsage(authIndex = "42", fileName = "credential.json")
+
+        assertEquals(null, usage)
+    }
+
+    @Test
+    fun `credential usage does not match an empty file name`() {
+        val usage = listOf(
+            CredentialStatDto(calls = 12),
+        ).accountUsage(authIndex = "", fileName = "")
+
+        assertEquals(null, usage)
+    }
+
+    @Test
+    fun `credential usage stays absent when auth index is ambiguous`() {
+        val usage = listOf(
+            CredentialStatDto(authIndex = "42", calls = 12),
+            CredentialStatDto(authIndex = "42", calls = 24),
+        ).accountUsage(authIndex = "42", fileName = "credential.json")
+
+        assertEquals(null, usage)
+    }
+
+    @Test
+    fun `credential usage skips auth index when credential index is ambiguous`() {
+        val usage = listOf(
+            CredentialStatDto(authIndex = "42", calls = 12),
+        ).accountUsage(
+            authIndex = "42",
+            authIndexIsUnique = false,
+            fileName = "credential.json",
+        )
+
+        assertEquals(null, usage)
+    }
+
+    @Test
+    fun `credential usage skips file fallback when credential name is ambiguous`() {
+        val usage = listOf(
+            CredentialStatDto(authFileSnapshot = "credential.json", calls = 12),
+        ).accountUsage(
+            authIndex = "",
+            fileName = "credential.json",
+            fileNameIsUnique = false,
+        )
+
+        assertEquals(null, usage)
+    }
+
     private fun accountHealth(
         stableId: String = "codex\u00001",
         windows: List<AccountQuotaWindow> = emptyList(),

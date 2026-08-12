@@ -65,7 +65,12 @@ import com.cpamp.mobile.data.accounts.AccountHealthSource
 import com.cpamp.mobile.data.accounts.AccountQuotaState
 import com.cpamp.mobile.data.accounts.AccountQuotaWindow
 import com.cpamp.mobile.data.accounts.AccountStatus
+import com.cpamp.mobile.data.accounts.AccountUsageState
 import com.cpamp.mobile.ui.common.asDateTime
+import com.cpamp.mobile.ui.common.asCost
+import com.cpamp.mobile.ui.common.asPercent
+import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AppCard
@@ -129,6 +134,9 @@ fun AccountsScreen(
             }
             if (state.snapshot?.fromCache == true) {
                 item { AccountsNotice(stringResource(R.string.accounts_cached), false) }
+            }
+            if (state.snapshot?.usageState == AccountUsageState.Unavailable) {
+                item { AccountsNotice(stringResource(R.string.accounts_usage_unavailable), false) }
             }
             state.error?.let { error ->
                 item { AccountsNotice(stringResource(error.messageResource()), true) }
@@ -205,11 +213,17 @@ fun AccountDetailScreen(
             if (state.fromCache) {
                 item { AccountsNotice(stringResource(R.string.accounts_detail_cached), false) }
             }
+            if (state.account != null && state.usageState == AccountUsageState.Unavailable) {
+                item { AccountsNotice(stringResource(R.string.accounts_usage_unavailable), false) }
+            }
             val account = state.account
             if (account == null) {
                 item { ContentStateCard(stringResource(R.string.accounts_detail_unavailable), isError = true) }
             } else {
                 item { AccountIdentityCard(account, state.observedAtMs) }
+                if (account.usage != null) {
+                    item { AccountUsageCard(account, state.usageFromMs, state.usageToMs) }
+                }
                 item { AccountQuotaCard(account) }
             }
         }
@@ -489,7 +503,69 @@ private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
             if (remaining != null) {
                 QuotaProgressBar(remaining, modifier = Modifier.fillMaxWidth().height(7.dp))
             }
+            account.usage?.let { usage ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    AccountCompactUsageMetric(
+                        R.string.usage_requests,
+                        usage.calls.compactNumber(),
+                        Modifier.weight(1f),
+                    )
+                    AccountCompactUsageMetric(
+                        R.string.usage_tokens,
+                        usage.totalTokens.compactTokens(),
+                        Modifier.weight(1f),
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    AccountCompactUsageMetric(
+                        R.string.usage_cost,
+                        usage.cost.asCost(),
+                        Modifier.weight(1f),
+                    )
+                    AccountCompactUsageMetric(
+                        R.string.health_success_rate,
+                        usage.successRate.asPercent(),
+                        Modifier.weight(1f),
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun AccountCompactUsageMetric(
+    @StringRes label: Int,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            stringResource(label),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            value,
+            modifier = Modifier.padding(start = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -588,6 +664,88 @@ private fun AccountDetailValue(@StringRes label: Int, value: String) {
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.End,
+        )
+    }
+}
+
+@Composable
+private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?) {
+    val usage = account.usage ?: return
+    AccountPanel {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    stringResource(R.string.accounts_usage),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (fromMs != null && toMs != null) {
+                    Text(
+                        stringResource(
+                            R.string.accounts_usage_range,
+                            fromMs.asDateTime(),
+                            toMs.asDateTime(),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AccountUsageMetric(
+                    R.string.usage_requests,
+                    usage.calls.compactNumber(),
+                    Modifier.weight(1f),
+                )
+                AccountUsageMetric(
+                    R.string.usage_tokens,
+                    usage.totalTokens.compactTokens(),
+                    Modifier.weight(1f),
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AccountUsageMetric(R.string.usage_cost, usage.cost.asCost(), Modifier.weight(1f))
+                AccountUsageMetric(
+                    R.string.health_success_rate,
+                    usage.successRate.asPercent(),
+                    Modifier.weight(1f),
+                )
+            }
+            Text(
+                stringResource(R.string.usage_estimated),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccountUsageMetric(@StringRes label: Int, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Text(
+            stringResource(label),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
