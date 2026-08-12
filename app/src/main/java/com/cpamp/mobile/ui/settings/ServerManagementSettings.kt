@@ -1,5 +1,6 @@
 package com.cpamp.mobile.ui.settings
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -130,6 +131,11 @@ private fun ServerSettingsCard(
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.34f)
         } else {
             MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)
+        },
+        border = if (active) {
+            BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         },
     ) {
         Column(

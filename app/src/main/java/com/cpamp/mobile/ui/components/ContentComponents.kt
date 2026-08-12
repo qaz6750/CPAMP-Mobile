@@ -107,6 +107,7 @@ fun AppCard(
     containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     shape: Shape = MaterialTheme.shapes.large,
+    border: BorderStroke = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     content: @Composable () -> Unit,
 ) {
     Card(
@@ -114,7 +115,7 @@ fun AppCard(
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = border,
     ) {
         content()
     }
