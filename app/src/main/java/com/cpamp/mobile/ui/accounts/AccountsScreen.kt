@@ -520,16 +520,7 @@ private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val accent = providerAccentColor(account.provider)
-        Surface(
-            color = accent.copy(alpha = 0.10f),
-            contentColor = accent,
-            shape = RoundedCornerShape(8.dp),
-        ) {
-            Box(Modifier.size(42.dp), contentAlignment = Alignment.Center) {
-                CredentialProviderIcon(account.provider, modifier = Modifier.size(23.dp))
-            }
-        }
+        CredentialProviderIcon(account.provider, modifier = Modifier.size(42.dp))
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
