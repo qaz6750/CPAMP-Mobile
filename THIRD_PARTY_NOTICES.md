@@ -10,6 +10,7 @@ CPAMP Mobile uses open-source Android and JVM libraries. Dependency versions are
 | Kotlin and kotlinx.coroutines / serialization | JetBrains | Apache License 2.0 |
 | Retrofit | Square | Apache License 2.0 |
 | OkHttp and MockWebServer | Square | Apache License 2.0 |
+| [Backdrop](https://github.com/Kyant0/AndroidLiquidGlass) and Shapes | Kyant | Apache License 2.0 |
 | JUnit 4 | JUnit contributors | Eclipse Public License 1.0 |
 | [CPA-Manager-Plus](https://github.com/seakee/CPA-Manager-Plus) | Seakee | MIT License |
 | [Simple Icons](https://github.com/simple-icons/simple-icons) | Simple Icons contributors | CC0-1.0 project; individual icon and trademark terms still apply |
