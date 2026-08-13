@@ -68,7 +68,7 @@ fun AnalyticsTrendCard(
     var metric by rememberSaveable { mutableStateOf(TrendMetric.Tokens) }
     var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
     LaunchedEffect(points) {
-        selectedIndex = selectedIndex?.takeIf(points.indices::contains)
+        selectedIndex = if (points.isEmpty()) null else selectedIndex?.coerceIn(points.indices) ?: points.lastIndex
     }
     val values = points.map { if (metric == TrendMetric.Tokens) it.tokens else it.requests }
     val maximum = values.maxOrNull().orEmptyMaximum()
@@ -141,7 +141,7 @@ fun AnalyticsTrendCard(
                             if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                         }
                         drawPath(path, lineColor, style = Stroke(width = 5f, cap = StrokeCap.Round))
-                        selectedIndex?.let { index ->
+                        selectedIndex?.takeIf(values.indices::contains)?.let { index ->
                             val value = values[index]
                             val x = if (values.size == 1) 0f else size.width * index / (values.size - 1f)
                             val y = size.height - size.height * value / maximum.toFloat()
@@ -156,7 +156,7 @@ fun AnalyticsTrendCard(
                         Text(point.timestampMs.asChartTime(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                selectedIndex?.let { index ->
+                selectedIndex?.takeIf(points.indices::contains)?.let { index ->
                     TrendPointDetails(
                         point = points[index],
                         endMs = trendBucketEnd(points, index),

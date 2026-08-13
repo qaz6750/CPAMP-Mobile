@@ -7,9 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -46,10 +47,12 @@ import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.compactTokens
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.AppCard
+import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.DashboardTrafficChart
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.PageHeader
+import com.cpamp.mobile.ui.components.ResponsiveMetricGrid
 import com.cpamp.mobile.ui.components.RequestHealthChart
 import com.cpamp.mobile.ui.components.TokenStructureChart
 import java.time.YearMonth
@@ -77,7 +80,8 @@ fun UsageAnalyticsScreen(
     }
     AppBackground {
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxHeight()
+                .widthIn(max = 1200.dp).fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
@@ -153,7 +157,14 @@ fun UsageAnalyticsScreen(
                 item { UsageRangeNotice(stringResource(R.string.usage_partial_range, range.actualDays)) }
             }
             val response = state.response
-            if (response == null && !state.loading) {
+            if (response == null && state.loading) {
+                item {
+                    ContentStateCard(
+                        message = stringResource(R.string.content_loading),
+                        loading = true,
+                    )
+                }
+            } else if (response == null) {
                 item {
                     AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)) {
                         Column(
@@ -172,45 +183,54 @@ fun UsageAnalyticsScreen(
             } else if (response != null) {
                 response.summary?.let { summary ->
                     item {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            MetricCard(
-                                label = stringResource(R.string.usage_requests),
-                                value = summary.totalCalls.compactNumber(),
-                                supporting = summary.successRate.asPercent(),
-                                icon = Icons.Outlined.DataUsage,
-                                modifier = Modifier.weight(1f),
-                                compact = true,
-                            )
-                            MetricCard(
-                                label = stringResource(R.string.usage_tokens),
-                                value = summary.totalTokens.compactTokens(),
-                                supporting = stringResource(R.string.usage_success_rate),
-                                icon = Icons.Outlined.Token,
-                                modifier = Modifier.weight(1f),
-                                compact = true,
-                            )
-                        }
-                    }
-                    item {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            MetricCard(
-                                label = stringResource(R.string.usage_cost),
-                                value = summary.totalCost.asCost(),
-                                supporting = stringResource(R.string.usage_estimated),
-                                icon = Icons.Outlined.Payments,
-                                modifier = Modifier.weight(1f),
-                                compact = true,
-                            )
-                            MetricCard(
-                                label = stringResource(R.string.usage_success),
-                                value = summary.successCalls.compactNumber(),
-                                supporting = stringResource(R.string.usage_failures_value, summary.failureCalls),
-                                icon = Icons.Outlined.CheckCircle,
-                                modifier = Modifier.weight(1f),
-                                accent = MaterialTheme.colorScheme.tertiary,
-                                compact = true,
-                            )
-                        }
+                        ResponsiveMetricGrid(
+                            listOf(
+                                { modifier ->
+                                    MetricCard(
+                                        label = stringResource(R.string.usage_requests),
+                                        value = summary.totalCalls.compactNumber(),
+                                        supporting = summary.successRate.asPercent(),
+                                        icon = Icons.Outlined.DataUsage,
+                                        modifier = modifier,
+                                        compact = true,
+                                    )
+                                },
+                                { modifier ->
+                                    MetricCard(
+                                        label = stringResource(R.string.usage_tokens),
+                                        value = summary.totalTokens.compactTokens(),
+                                        supporting = stringResource(R.string.usage_success_rate),
+                                        icon = Icons.Outlined.Token,
+                                        modifier = modifier,
+                                        compact = true,
+                                    )
+                                },
+                                { modifier ->
+                                    MetricCard(
+                                        label = stringResource(R.string.usage_cost),
+                                        value = summary.totalCost.asCost(),
+                                        supporting = stringResource(R.string.usage_estimated),
+                                        icon = Icons.Outlined.Payments,
+                                        modifier = modifier,
+                                        compact = true,
+                                    )
+                                },
+                                { modifier ->
+                                    MetricCard(
+                                        label = stringResource(R.string.usage_success),
+                                        value = summary.successCalls.compactNumber(),
+                                        supporting = stringResource(
+                                            R.string.usage_failures_value,
+                                            summary.failureCalls,
+                                        ),
+                                        icon = Icons.Outlined.CheckCircle,
+                                        modifier = modifier,
+                                        accent = MaterialTheme.colorScheme.tertiary,
+                                        compact = true,
+                                    )
+                                },
+                            ),
+                        )
                     }
                 }
                 item {

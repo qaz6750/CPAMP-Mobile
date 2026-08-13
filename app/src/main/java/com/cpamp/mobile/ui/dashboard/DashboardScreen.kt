@@ -4,10 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -52,6 +53,7 @@ import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.MetricCard
 import com.cpamp.mobile.ui.components.ModelProviderIcon
 import com.cpamp.mobile.ui.components.PageHeader
+import com.cpamp.mobile.ui.components.ResponsiveMetricGrid
 import com.cpamp.mobile.ui.theme.Warning
 
 @Composable
@@ -65,7 +67,8 @@ fun DashboardScreen(
     AppBackground {
         val summary = state.summary
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxHeight()
+                .widthIn(max = 1200.dp).fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
@@ -216,13 +219,7 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
             )
         },
     )
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        cards.chunked(2).forEach { rowCards ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                rowCards.forEach { card -> card(Modifier.weight(1f)) }
-            }
-        }
-    }
+    ResponsiveMetricGrid(cards)
 }
 
 @Composable

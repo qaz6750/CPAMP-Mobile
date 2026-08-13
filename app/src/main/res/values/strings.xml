@@ -88,8 +88,8 @@
     <string name="token_reasoning">Reasoning tokens</string>
     <string name="no_range_traffic">No request health data in the selected range</string>
     <string name="no_token_structure">No token structure data in the selected range</string>
-    <string name="expand_chart">View chart in landscape</string>
-    <string name="close_expanded_chart">Close landscape chart</string>
+    <string name="expand_chart">View chart full screen</string>
+    <string name="close_expanded_chart">Close full-screen chart</string>
     <string name="usage_models">Models</string>
     <string name="usage_api_keys">API keys</string>
     <string name="usage_credentials">Credentials</string>
@@ -241,6 +241,9 @@
     <string name="request_trend_description">Request trend with %1$d total requests</string>
     <string name="previous_time_point">Previous time point</string>
     <string name="next_time_point">Next time point</string>
+    <string name="chart_success_rate_value">Success rate %1$s</string>
+    <string name="chart_latency_value">Average latency %1$s</string>
+    <string name="chart_token_breakdown">Input %1$s · Output %2$s · Cached %3$s · Reasoning %4$s</string>
     <string name="trend_time_range">%1$s – %2$s</string>
     <string name="trend_requests_value">%1$s requests</string>
     <string name="trend_tokens_value">%1$s tokens</string>

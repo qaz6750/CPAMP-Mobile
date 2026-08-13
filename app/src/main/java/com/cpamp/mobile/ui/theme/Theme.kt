@@ -19,7 +19,7 @@ private val AppShapes = Shapes(
 )
 
 private val LightColors = lightColorScheme(
-    primary = BrandBlue,
+    primary = BrandBlueActive,
     onPrimary = White,
     primaryContainer = BrandBlueLight,
     onPrimaryContainer = BrandBlueActive,

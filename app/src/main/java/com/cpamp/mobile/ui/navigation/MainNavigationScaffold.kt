@@ -12,14 +12,15 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,33 +53,42 @@ fun MainNavigationScaffold(
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val expanded = maxWidth >= 720.dp
         if (expanded) {
-            NavigationRail {
-                BrandMark(modifier = Modifier.padding(vertical = 20.dp))
-                AppDestination.entries.forEach { destination ->
-                    NavigationRailItem(
-                        selected = destination == currentDestination,
-                        onClick = { onNavigate(destination) },
-                        colors = NavigationRailItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                        icon = {
-                            Icon(
-                                imageVector = destination.icon,
-                                contentDescription = stringResource(destination.label),
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = MaterialTheme.colorScheme.background,
+                contentWindowInsets = WindowInsets.safeDrawing,
+            ) { padding ->
+                Row(modifier = Modifier.fillMaxSize().padding(padding)) {
+                    NavigationRail(modifier = Modifier.fillMaxHeight()) {
+                        BrandMark(modifier = Modifier.padding(vertical = 20.dp))
+                        AppDestination.entries.forEach { destination ->
+                            NavigationRailItem(
+                                selected = destination == currentDestination,
+                                onClick = { onNavigate(destination) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
+                                icon = {
+                                    Icon(
+                                        imageVector = destination.icon,
+                                        contentDescription = null,
+                                    )
+                                },
+                                label = { Text(stringResource(destination.label)) },
                             )
-                        },
-                        label = { Text(stringResource(destination.label)) },
-                    )
+                        }
+                    }
+                    Box(modifier = Modifier.weight(1f)) { content(PaddingValues()) }
                 }
             }
-            Box(modifier = Modifier.padding(start = 80.dp)) { content(PaddingValues()) }
         } else {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
+                contentWindowInsets = WindowInsets.safeDrawing,
                 bottomBar = {
                     FloatingNavigationBar(
                         currentDestination = currentDestination,
@@ -94,6 +105,7 @@ private fun FloatingNavigationBar(
     currentDestination: AppDestination,
     onNavigate: (AppDestination) -> Unit,
 ) {
+    val navigationBarHeight = 64.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)
     Box(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding()
             .padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 10.dp),
@@ -111,7 +123,8 @@ private fun FloatingNavigationBar(
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             BoxWithConstraints(
-                modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 8.dp, vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().height(navigationBarHeight)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 val destinations = AppDestination.entries
                 val itemWidth = maxWidth / destinations.size.toFloat()
@@ -169,7 +182,7 @@ private fun FloatingNavigationItem(
     )
     Surface(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 48.dp).padding(horizontal = 2.dp),
+        modifier = modifier.fillMaxHeight().padding(horizontal = 2.dp),
         color = Color.Transparent,
         contentColor = contentColor,
         shape = MaterialTheme.shapes.medium,
@@ -181,7 +194,7 @@ private fun FloatingNavigationItem(
         ) {
             Icon(
                 imageVector = destination.icon,
-                contentDescription = stringResource(destination.label),
+                contentDescription = null,
                 modifier = Modifier.size(24.dp),
             )
             Text(

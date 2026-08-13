@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import com.cpamp.mobile.ui.theme.BrandBlue
 
 @Composable
 fun BrandMark(modifier: Modifier = Modifier) {
@@ -23,7 +24,7 @@ fun BrandMark(modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(14.dp))
             .background(
                 Brush.linearGradient(
-                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer),
+                    listOf(MaterialTheme.colorScheme.primary, BrandBlue),
                 ),
             ),
         contentAlignment = Alignment.Center,

@@ -100,7 +100,7 @@ internal fun ServerManagementSettings(
                         onDeleteServer(profile.id)
                     },
                 ) {
-                    Text(stringResource(R.string.confirm_change))
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {

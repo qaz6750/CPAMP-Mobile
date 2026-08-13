@@ -88,8 +88,8 @@
     <string name="token_reasoning">推理 Token</string>
     <string name="no_range_traffic">所选时段暂无请求健康数据</string>
     <string name="no_token_structure">所选时段暂无 Token 结构数据</string>
-    <string name="expand_chart">横屏查看图表</string>
-    <string name="close_expanded_chart">关闭横屏图表</string>
+    <string name="expand_chart">全屏查看图表</string>
+    <string name="close_expanded_chart">关闭全屏图表</string>
     <string name="usage_models">模型</string>
     <string name="usage_api_keys">API Key</string>
     <string name="usage_credentials">凭据</string>
@@ -241,6 +241,9 @@
     <string name="request_trend_description">请求趋势，共 %1$d 个请求</string>
     <string name="previous_time_point">上一个时间点</string>
     <string name="next_time_point">下一个时间点</string>
+    <string name="chart_success_rate_value">成功率 %1$s</string>
+    <string name="chart_latency_value">平均延迟 %1$s</string>
+    <string name="chart_token_breakdown">输入 %1$s · 输出 %2$s · 缓存 %3$s · 推理 %4$s</string>
     <string name="trend_time_range">%1$s – %2$s</string>
     <string name="trend_requests_value">%1$s 次请求</string>
     <string name="trend_tokens_value">%1$s Token</string>

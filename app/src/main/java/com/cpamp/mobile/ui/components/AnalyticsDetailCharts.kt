@@ -14,11 +14,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronLeft
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -31,15 +41,20 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.cpamp.mobile.R
 import com.cpamp.mobile.common.MILLIS_PER_DAY
+import com.cpamp.mobile.common.MILLIS_PER_HOUR
 import com.cpamp.mobile.common.MILLIS_PER_WEEK
 import com.cpamp.mobile.data.remote.model.MonitoringTimelineDto
 import com.cpamp.mobile.ui.common.asLatency
+import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
+import com.cpamp.mobile.ui.common.compactTokens
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -54,10 +69,15 @@ fun RequestHealthChart(
     failureLabel: String,
     latencyLabel: String,
     modifier: Modifier = Modifier,
+    chartHeight: Dp = 220.dp,
     titleAction: (@Composable () -> Unit)? = null,
 ) {
     val colors = analyticsDetailChartColors()
     val surfaceColor = MaterialTheme.colorScheme.surface
+    var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+    LaunchedEffect(points) {
+        selectedIndex = if (points.isEmpty()) null else selectedIndex?.coerceIn(points.indices) ?: points.lastIndex
+    }
     AnalyticsChartContainer(title, subtitle, modifier, titleAction) {
         ChartLegendRow(
             listOf(
@@ -68,13 +88,13 @@ fun RequestHealthChart(
         )
         val hasData = points.any { it.calls > 0 || it.success > 0 || it.failure > 0 || it.averageLatencyMs != null }
         if (!hasData) {
-            EmptyChart(emptyText)
+            EmptyChart(emptyText, chartHeight)
             return@AnalyticsChartContainer
         }
         val maxLatency = points.maxOf { it.averageLatencyMs ?: 0.0 }.coerceAtLeast(1.0)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            PercentAxis()
-            Canvas(Modifier.weight(1f).height(220.dp).padding(horizontal = 3.dp)) {
+            PercentAxis(chartHeight)
+            Canvas(Modifier.weight(1f).height(chartHeight).padding(horizontal = 3.dp)) {
                 drawChartGrid(colors.grid)
                 val groupWidth = size.width / points.size.coerceAtLeast(1)
                 val latencyBarWidth = (groupWidth * 0.48f).coerceAtMost(16.dp.toPx()).coerceAtLeast(1.dp.toPx())
@@ -104,9 +124,35 @@ fun RequestHealthChart(
                 drawSmoothLine(successOffsets, colors.healthSuccess, surfaceColor, showPoints = points.size <= 36)
                 drawSmoothLine(failureOffsets, colors.healthFailure, surfaceColor, showPoints = points.size <= 36)
             }
-            LatencyAxis(maxLatency, colors.healthLatency)
+            LatencyAxis(maxLatency, colors.healthLatency, chartHeight)
         }
         TimeTicks(points.map(MonitoringTimelineDto::bucketMs))
+        selectedIndex?.takeIf(points.indices::contains)?.let { index ->
+            val point = points[index]
+            TimelinePointDetails(
+                point = point,
+                endMs = timelineBucketEnd(points, index),
+                index = index,
+                pointCount = points.size,
+                onPrevious = { selectedIndex = (index - 1).coerceAtLeast(0) },
+                onNext = { selectedIndex = (index + 1).coerceAtMost(points.lastIndex) },
+            ) {
+                Text(
+                    stringResource(R.string.chart_success_rate_value, point.successRate().toDouble().asPercent()),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Text(
+                    stringResource(R.string.trend_success_failure, point.success, point.failure),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                point.averageLatencyMs?.let { latency ->
+                    Text(
+                        stringResource(R.string.chart_latency_value, latency.asLatency()),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -121,9 +167,14 @@ fun TokenStructureChart(
     cachedLabel: String,
     reasoningLabel: String,
     modifier: Modifier = Modifier,
+    chartHeight: Dp = 220.dp,
     titleAction: (@Composable () -> Unit)? = null,
 ) {
     val colors = analyticsDetailChartColors()
+    var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+    LaunchedEffect(points) {
+        selectedIndex = if (points.isEmpty()) null else selectedIndex?.coerceIn(points.indices) ?: points.lastIndex
+    }
     AnalyticsChartContainer(title, subtitle, modifier, titleAction) {
         ChartLegendRow(
             listOf(
@@ -137,15 +188,15 @@ fun TokenStructureChart(
             it.inputTokens > 0 || it.outputTokens > 0 || it.allCachedTokens > 0 || it.reasoningTokens > 0
         }
         if (!hasData) {
-            EmptyChart(emptyText)
+            EmptyChart(emptyText, chartHeight)
             return@AnalyticsChartContainer
         }
         val maximum = points.maxOf {
             it.inputTokens + it.outputTokens + it.allCachedTokens + it.reasoningTokens
         }.coerceAtLeast(1)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            NumberAxis(maximum)
-            Canvas(Modifier.weight(1f).height(220.dp).padding(horizontal = 3.dp)) {
+            NumberAxis(maximum, chartHeight)
+            Canvas(Modifier.weight(1f).height(chartHeight).padding(horizontal = 3.dp)) {
                 drawChartGrid(colors.grid)
                 val groupWidth = size.width / points.size.coerceAtLeast(1)
                 val barWidth = (groupWidth * 0.64f).coerceAtMost(22.dp.toPx()).coerceAtLeast(2.dp.toPx())
@@ -170,6 +221,62 @@ fun TokenStructureChart(
             }
         }
         TimeTicks(points.map(MonitoringTimelineDto::bucketMs), endPadding = 4.dp)
+        selectedIndex?.takeIf(points.indices::contains)?.let { index ->
+            val point = points[index]
+            TimelinePointDetails(
+                point = point,
+                endMs = timelineBucketEnd(points, index),
+                index = index,
+                pointCount = points.size,
+                onPrevious = { selectedIndex = (index - 1).coerceAtLeast(0) },
+                onNext = { selectedIndex = (index + 1).coerceAtMost(points.lastIndex) },
+            ) {
+                Text(
+                    stringResource(
+                        R.string.chart_token_breakdown,
+                        point.inputTokens.compactTokens(),
+                        point.outputTokens.compactTokens(),
+                        point.allCachedTokens.compactTokens(),
+                        point.reasoningTokens.compactTokens(),
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelinePointDetails(
+    point: MonitoringTimelineDto,
+    endMs: Long,
+    index: Int,
+    pointCount: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    details: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onPrevious, enabled = index > 0) {
+                Icon(Icons.Outlined.ChevronLeft, contentDescription = stringResource(R.string.previous_time_point))
+            }
+            Text(
+                stringResource(
+                    R.string.trend_time_range,
+                    point.bucketMs.asChartDateTime(),
+                    endMs.asChartDateTime(),
+                ),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            IconButton(onClick = onNext, enabled = index < pointCount - 1) {
+                Icon(Icons.Outlined.ChevronRight, contentDescription = stringResource(R.string.next_time_point))
+            }
+        }
+        details()
     }
 }
 
@@ -225,16 +332,16 @@ private fun ChartLegendRow(items: List<Pair<Color, String>>) {
 }
 
 @Composable
-private fun EmptyChart(text: String) {
-    Box(Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
+private fun EmptyChart(text: String, height: Dp) {
+    Box(Modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {
         Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun PercentAxis() {
+private fun PercentAxis(height: Dp) {
     Column(
-        modifier = Modifier.width(38.dp).height(220.dp),
+        modifier = Modifier.width(38.dp).height(height),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.End,
     ) {
@@ -245,9 +352,9 @@ private fun PercentAxis() {
 }
 
 @Composable
-private fun LatencyAxis(maximum: Double, color: Color) {
+private fun LatencyAxis(maximum: Double, color: Color, height: Dp) {
     Column(
-        modifier = Modifier.width(48.dp).height(220.dp),
+        modifier = Modifier.width(48.dp).height(height),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         listOf(maximum, maximum / 2, 0.0).forEach {
@@ -257,9 +364,9 @@ private fun LatencyAxis(maximum: Double, color: Color) {
 }
 
 @Composable
-private fun NumberAxis(maximum: Long) {
+private fun NumberAxis(maximum: Long, height: Dp) {
     Column(
-        modifier = Modifier.width(48.dp).height(220.dp),
+        modifier = Modifier.width(48.dp).height(height),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.End,
     ) {
@@ -346,6 +453,19 @@ private fun Long.chartDate(timestamps: List<Long>): String {
         else -> "MM/dd"
     }
     return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern(pattern))
+}
+
+private fun Long.asChartDateTime(): String = Instant.ofEpochMilli(this)
+    .atZone(ZoneId.systemDefault())
+    .format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))
+
+private fun timelineBucketEnd(points: List<MonitoringTimelineDto>, index: Int): Long {
+    val point = points[index]
+    point.bucketEndMs?.takeIf { it > point.bucketMs }?.let { return it }
+    points.getOrNull(index + 1)?.bucketMs?.takeIf { it > point.bucketMs }?.let { return it }
+    val interval = points.getOrNull(index - 1)?.let { point.bucketMs - it.bucketMs }
+        ?.takeIf { it > 0 } ?: MILLIS_PER_HOUR
+    return point.bucketMs + interval
 }
 
 private fun chartTickIndices(count: Int): List<Int> {

@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -85,17 +89,20 @@ fun SettingsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     AppBackground {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 380.dp),
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxHeight()
+                .widthIn(max = 1100.dp).fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
                 top = contentPadding.calculateTopPadding() + 18.dp,
                 bottom = contentPadding.calculateBottomPadding() + 28.dp,
             ),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 PageHeader(
                     eyebrow = stringResource(R.string.nav_settings),
                     title = stringResource(R.string.settings_title),
@@ -103,7 +110,7 @@ fun SettingsScreen(
                 )
             }
             if (appearanceState.error) {
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     AppCard(containerColor = MaterialTheme.colorScheme.errorContainer) {
                         Text(
                             stringResource(R.string.settings_change_failed),
@@ -114,7 +121,7 @@ fun SettingsScreen(
                     }
                 }
             }
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 ServerManagementSettings(
                     session = session,
                     profiles = profiles,
@@ -247,7 +254,7 @@ fun SettingsScreen(
                     onOpenSourceLicenses = { showUpstreamLicense = true },
                 )
             }
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 AppCard(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                     Text(
                         stringResource(R.string.security_privacy_summary),

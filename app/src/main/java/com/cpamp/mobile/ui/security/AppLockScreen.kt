@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
@@ -29,7 +30,10 @@ fun AppLockScreen(
     onUnlock: () -> Unit,
 ) {
     AppBackground {
-        Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+        Box(
+            Modifier.fillMaxSize().safeDrawingPadding().padding(32.dp),
+            contentAlignment = Alignment.Center,
+        ) {
             if (loading) {
                 CircularProgressIndicator()
             } else {

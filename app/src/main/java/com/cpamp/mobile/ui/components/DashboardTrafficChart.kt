@@ -15,8 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronLeft
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,7 +83,11 @@ fun DashboardTrafficChart(
     )
     var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
     LaunchedEffect(visiblePoints) {
-        selectedIndex = selectedIndex?.takeIf(visiblePoints.indices::contains)
+        selectedIndex = if (visiblePoints.isEmpty()) {
+            null
+        } else {
+            selectedIndex?.coerceIn(visiblePoints.indices) ?: visiblePoints.lastIndex
+        }
     }
 
     Card(
@@ -190,7 +199,7 @@ fun DashboardTrafficChart(
                             style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
                         )
                     }
-                    selectedIndex?.let { index ->
+                    selectedIndex?.takeIf(requestOffsets.indices::contains)?.let { index ->
                         val x = requestOffsets[index].x
                         drawLine(labelColor, Offset(x, 0f), Offset(x, size.height), 1.dp.toPx())
                         listOf(
@@ -235,10 +244,14 @@ fun DashboardTrafficChart(
                     )
                 }
             }
-            selectedIndex?.let { index ->
+            selectedIndex?.takeIf(visiblePoints.indices::contains)?.let { index ->
                 DashboardPointDetails(
                     point = visiblePoints[index],
                     endMs = trendBucketEnd(visiblePoints, index),
+                    index = index,
+                    pointCount = visiblePoints.size,
+                    onPrevious = { selectedIndex = (index - 1).coerceAtLeast(0) },
+                    onNext = { selectedIndex = (index + 1).coerceAtMost(visiblePoints.lastIndex) },
                 )
             }
         }
@@ -302,25 +315,38 @@ private fun CombinedAxisLabels(
 }
 
 @Composable
-private fun DashboardPointDetails(point: AnalyticsTrendPoint, endMs: Long) {
+private fun DashboardPointDetails(
+    point: AnalyticsTrendPoint,
+    endMs: Long,
+    index: Int,
+    pointCount: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Text(
-            stringResource(
-                R.string.trend_time_range,
-                point.timestampMs.asDashboardDateTime(),
-                endMs.asDashboardDateTime(),
-            ),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.trend_requests_value, point.requests.compactNumber()), style = MaterialTheme.typography.bodySmall)
-            Text(stringResource(R.string.trend_tokens_value, point.tokens.compactNumber()), style = MaterialTheme.typography.bodySmall)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onPrevious, enabled = index > 0) {
+                Icon(Icons.Outlined.ChevronLeft, contentDescription = stringResource(R.string.previous_time_point))
+            }
+            Text(
+                stringResource(
+                    R.string.trend_time_range,
+                    point.timestampMs.asDashboardDateTime(),
+                    endMs.asDashboardDateTime(),
+                ),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            IconButton(onClick = onNext, enabled = index < pointCount - 1) {
+                Icon(Icons.Outlined.ChevronRight, contentDescription = stringResource(R.string.next_time_point))
+            }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(stringResource(R.string.trend_success_failure, point.success, point.failure), style = MaterialTheme.typography.bodySmall)
-            point.cost?.let { Text(stringResource(R.string.trend_cost_value, it.asCost()), style = MaterialTheme.typography.bodySmall) }
-        }
+        Text(stringResource(R.string.trend_requests_value, point.requests.compactNumber()), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.trend_tokens_value, point.tokens.compactNumber()), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.trend_success_failure, point.success, point.failure), style = MaterialTheme.typography.bodySmall)
+        point.cost?.let { Text(stringResource(R.string.trend_cost_value, it.asCost()), style = MaterialTheme.typography.bodySmall) }
     }
 }
 

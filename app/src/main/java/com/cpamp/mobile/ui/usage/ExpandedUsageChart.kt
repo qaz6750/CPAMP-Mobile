@@ -1,13 +1,14 @@
 package com.cpamp.mobile.ui.usage
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
@@ -16,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -42,15 +42,13 @@ internal fun ExpandedUsageChartDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         BoxWithConstraints(
-            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
+                .safeDrawingPadding().padding(16.dp),
             contentAlignment = Alignment.Center,
         ) {
+            val chartHeight = (maxHeight - 164.dp).coerceIn(120.dp, 440.dp)
             Box(
-                modifier = Modifier
-                    .requiredWidth(maxHeight)
-                    .requiredHeight(maxWidth)
-                    .graphicsLayer(rotationZ = 90f)
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                 contentAlignment = Alignment.Center,
             ) {
                 val closeAction: @Composable () -> Unit = {
@@ -69,7 +67,7 @@ internal fun ExpandedUsageChartDialog(
                         emptyText = stringResource(R.string.no_traffic),
                         modifier = Modifier.fillMaxWidth(),
                         compactToData = false,
-                        chartHeight = 220.dp,
+                        chartHeight = chartHeight,
                         titleAction = closeAction,
                     )
                     ExpandedChart.RequestHealth -> RequestHealthChart(
@@ -81,6 +79,7 @@ internal fun ExpandedUsageChartDialog(
                         failureLabel = stringResource(R.string.health_failure_rate),
                         latencyLabel = stringResource(R.string.health_average_latency),
                         modifier = Modifier.fillMaxWidth(),
+                        chartHeight = chartHeight,
                         titleAction = closeAction,
                     )
                     ExpandedChart.TokenStructure -> TokenStructureChart(
@@ -93,6 +92,7 @@ internal fun ExpandedUsageChartDialog(
                         cachedLabel = stringResource(R.string.token_cached),
                         reasoningLabel = stringResource(R.string.token_reasoning),
                         modifier = Modifier.fillMaxWidth(),
+                        chartHeight = chartHeight,
                         titleAction = closeAction,
                     )
                 }

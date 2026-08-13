@@ -2,11 +2,12 @@ package com.cpamp.mobile.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -171,8 +173,9 @@ fun MetricCard(
     accent: Color = MaterialTheme.colorScheme.primary,
     compact: Boolean = false,
 ) {
+    val compactMinHeight = 128.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.6f)
     Card(
-        modifier = modifier.then(if (compact) Modifier.height(128.dp) else Modifier),
+        modifier = modifier.then(if (compact) Modifier.heightIn(min = compactMinHeight) else Modifier),
         shape = if (compact) MaterialTheme.shapes.medium else MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
@@ -209,36 +212,26 @@ fun MetricCard(
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
             if (compact) {
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.fillMaxWidth().height(29.dp),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    Text(
-                        text = value,
-                        style = if (value.length <= 8) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.fillMaxWidth().height(18.dp),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    Text(
-                        text = supporting.orEmpty(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                Text(
+                    text = value,
+                    style = if (value.length <= 8) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = supporting.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
             } else {
                 Text(
                     text = value,
@@ -258,6 +251,28 @@ fun MetricCard(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ResponsiveMetricGrid(
+    cards: List<@Composable (Modifier) -> Unit>,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val fontScale = LocalDensity.current.fontScale
+        val columns = when {
+            fontScale >= 1.3f || maxWidth < 420.dp -> 1
+            maxWidth >= 900.dp -> 4
+            else -> 2
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            cards.chunked(columns).forEach { rowCards ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    rowCards.forEach { card -> card(Modifier.weight(1f)) }
                 }
             }
         }
