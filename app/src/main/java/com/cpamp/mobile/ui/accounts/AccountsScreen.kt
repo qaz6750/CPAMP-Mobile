@@ -777,31 +777,25 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
     }
     AccountDetailSection(R.string.accounts_usage, range) {
         Column(Modifier.fillMaxWidth()) {
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val dividerColor = MaterialTheme.colorScheme.outlineVariant
-                val fontScale = LocalDensity.current.fontScale
-                val columns = when {
-                    fontScale >= 1.3f || maxWidth < 420.dp -> 1
-                    maxWidth >= 720.dp -> 4
-                    else -> 2
-                }
-                val rows = metrics.chunked(columns)
-                Column {
-                    rows.forEachIndexed { rowIndex, rowMetrics ->
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            rowMetrics.forEachIndexed { columnIndex, metric ->
-                                AccountUsageMetricCell(metric, Modifier.weight(1f))
-                                if (columnIndex < rowMetrics.lastIndex) {
-                                    Box(Modifier.width(1.dp).heightIn(min = 90.dp).background(dividerColor))
-                                }
-                            }
-                            repeat(columns - rowMetrics.size) {
-                                Spacer(Modifier.weight(1f))
+            val rows = metrics.chunked(2)
+            Column {
+                rows.forEachIndexed { rowIndex, rowMetrics ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        rowMetrics.forEachIndexed { columnIndex, metric ->
+                            AccountUsageMetricCell(metric, Modifier.weight(1f))
+                            if (columnIndex < rowMetrics.lastIndex) {
+                                Box(
+                                    Modifier.width(1.dp).heightIn(min = 90.dp)
+                                        .background(MaterialTheme.colorScheme.outlineVariant),
+                                )
                             }
                         }
-                        if (rowIndex < rows.lastIndex) {
-                            AccountDetailDivider()
+                        if (rowMetrics.size == 1) {
+                            Spacer(Modifier.weight(1f))
                         }
+                    }
+                    if (rowIndex < rows.lastIndex) {
+                        AccountDetailDivider()
                     }
                 }
             }
