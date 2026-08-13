@@ -231,7 +231,7 @@
     <string name="requests_today_breakdown">成功 %1$s · 失败 %2$s</string>
     <string name="latency_value">平均延迟 %1$s</string>
     <string name="no_latency">暂无延迟样本</string>
-    <string name="top_models">今日热门模型</string>
+    <string name="top_models">今日模型用量</string>
     <string name="recent_failures">近期失败</string>
     <string name="unknown_model">未知模型</string>
     <string name="request_failed">请求失败</string>

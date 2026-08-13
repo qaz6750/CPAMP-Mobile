@@ -231,7 +231,7 @@
     <string name="requests_today_breakdown">%1$s succeeded · %2$s failed</string>
     <string name="latency_value">%1$s average latency</string>
     <string name="no_latency">No latency sample</string>
-    <string name="top_models">Top models today</string>
+    <string name="top_models">Model usage today</string>
     <string name="recent_failures">Recent failures</string>
     <string name="unknown_model">Unknown model</string>
     <string name="request_failed">Request failed</string>
