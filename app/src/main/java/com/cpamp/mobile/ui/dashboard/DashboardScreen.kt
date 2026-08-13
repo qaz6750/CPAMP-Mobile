@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DataUsage
@@ -129,10 +129,24 @@ fun DashboardScreen(
                     )
                 }
                 if (data.topModelsToday.isNotEmpty()) {
-                    item { Text(stringResource(R.string.top_models), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
-                    items(data.topModelsToday, key = TopModelDto::model) { TopModelRow(it) }
+                    topModelsSection(data.topModelsToday)
                 }
             }
+        }
+    }
+}
+
+private fun LazyListScope.topModelsSection(models: List<TopModelDto>) {
+    item {
+        Text(
+            stringResource(R.string.top_models),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+    item {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            models.forEach { model -> TopModelRow(model) }
         }
     }
 }
@@ -254,9 +268,9 @@ private fun DashboardNotice(state: DashboardUiState) {
 private fun TopModelRow(model: TopModelDto) {
     AppCard {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(17.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ModelProviderIcon(model.model)
             Column(modifier = Modifier.weight(1f)) {

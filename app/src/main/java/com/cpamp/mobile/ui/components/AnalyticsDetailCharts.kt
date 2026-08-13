@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
@@ -137,20 +138,22 @@ fun RequestHealthChart(
                 onPrevious = { selectedIndex = (index - 1).coerceAtLeast(0) },
                 onNext = { selectedIndex = (index + 1).coerceAtMost(points.lastIndex) },
             ) {
-                Text(
-                    stringResource(R.string.chart_success_rate_value, point.successRate().toDouble().asPercent()),
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        stringResource(R.string.chart_success_rate_value, point.successRate().toDouble().asPercent()),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    point.averageLatencyMs?.let { latency ->
+                        Text(
+                            stringResource(R.string.chart_latency_value, latency.asLatency()),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
                 Text(
                     stringResource(R.string.trend_success_failure, point.success, point.failure),
                     style = MaterialTheme.typography.bodySmall,
                 )
-                point.averageLatencyMs?.let { latency ->
-                    Text(
-                        stringResource(R.string.chart_latency_value, latency.asLatency()),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
             }
         }
     }
@@ -256,8 +259,11 @@ private fun TimelinePointDetails(
     onNext: () -> Unit,
     details: @Composable () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            Modifier.fillMaxWidth().height(48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             IconButton(onClick = onPrevious, enabled = index > 0) {
                 Icon(Icons.Outlined.ChevronLeft, contentDescription = stringResource(R.string.previous_time_point))
             }
@@ -271,6 +277,8 @@ private fun TimelinePointDetails(
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             IconButton(onClick = onNext, enabled = index < pointCount - 1) {
                 Icon(Icons.Outlined.ChevronRight, contentDescription = stringResource(R.string.next_time_point))

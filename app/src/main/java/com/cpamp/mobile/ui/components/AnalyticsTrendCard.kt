@@ -37,6 +37,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
 import com.cpamp.mobile.common.MILLIS_PER_HOUR
@@ -180,8 +182,11 @@ private fun TrendPointDetails(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            Modifier.fillMaxWidth().height(48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             IconButton(onClick = onPrevious, enabled = hasPrevious) {
                 Icon(Icons.Outlined.ChevronLeft, contentDescription = stringResource(R.string.previous_time_point))
             }
@@ -190,6 +195,9 @@ private fun TrendPointDetails(
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             IconButton(onClick = onNext, enabled = hasNext) {
                 Icon(Icons.Outlined.ChevronRight, contentDescription = stringResource(R.string.next_time_point))

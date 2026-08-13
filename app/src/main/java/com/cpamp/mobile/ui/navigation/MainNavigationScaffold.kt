@@ -106,10 +106,10 @@ private fun FloatingNavigationBar(
     currentDestination: AppDestination,
     onNavigate: (AppDestination) -> Unit,
 ) {
-    val navigationBarHeight = 64.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)
+    val navigationBarHeight = 58.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.2f)
     Box(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 10.dp),
+            .padding(start = 28.dp, end = 28.dp, top = 6.dp, bottom = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Surface(
@@ -125,7 +125,7 @@ private fun FloatingNavigationBar(
         ) {
             BoxWithConstraints(
                 modifier = Modifier.fillMaxWidth().height(navigationBarHeight)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
                 val destinations = AppDestination.entries
                 val itemWidth = maxWidth / destinations.size.toFloat()

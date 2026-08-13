@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,17 +31,22 @@ internal fun LazyListScope.usageRankingItems(
     ranking: UsageRanking,
     response: MonitoringResponseDto,
 ) {
-    when (ranking) {
-        UsageRanking.Models -> items(response.modelStats.sortedByDescending(ModelStatDto::calls).take(10)) {
-            RankingRow(it.model, it.calls, it.totalTokens, it.cost, it.successRate, model = it.model)
-        }
-        UsageRanking.ApiKeys -> items(response.apiKeyStats.sortedByDescending(ApiKeyStatDto::calls).take(10)) {
-            RankingRow(it.displayName, it.calls, it.totalTokens, it.cost, it.successRate)
-        }
-        UsageRanking.Credentials -> items(
-            response.credentialStats.sortedByDescending(CredentialStatDto::calls).take(10),
-        ) {
-            RankingRow(it.displayName, it.calls, it.totalTokens, it.cost, it.successRate)
+    item {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            when (ranking) {
+                UsageRanking.Models -> response.modelStats.sortedByDescending(ModelStatDto::calls).take(10).forEach {
+                    RankingRow(it.model, it.calls, it.totalTokens, it.cost, it.successRate, model = it.model)
+                }
+                UsageRanking.ApiKeys -> response.apiKeyStats.sortedByDescending(ApiKeyStatDto::calls).take(10).forEach {
+                    RankingRow(it.displayName, it.calls, it.totalTokens, it.cost, it.successRate)
+                }
+                UsageRanking.Credentials -> response.credentialStats
+                    .sortedByDescending(CredentialStatDto::calls)
+                    .take(10)
+                    .forEach {
+                        RankingRow(it.displayName, it.calls, it.totalTokens, it.cost, it.successRate)
+                    }
+            }
         }
     }
 }
@@ -58,12 +62,12 @@ private fun RankingRow(
 ) {
     AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             model?.let { ModelProviderIcon(it) }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     name.ifBlank { stringResource(R.string.unknown_value) },
                     fontWeight = FontWeight.SemiBold,
