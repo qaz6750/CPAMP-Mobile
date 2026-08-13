@@ -103,7 +103,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Test and build signed release
-        run: ./gradlew testReleaseUnitTest lintRelease assembleRelease --stacktrace
+        run: ./gradlew testDebugUnitTest lintRelease assembleRelease --stacktrace
 
       - name: Prepare versioned release assets
         shell: bash
@@ -140,7 +140,7 @@ jobs:
             printf -- '- Commit: `%s`\n' "$GITHUB_SHA"
             printf -- '- Workflow run: [#%s](https://github.com/%s/actions/runs/%s)\n' \
               "$GITHUB_RUN_NUMBER" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            printf -- '- Gradle tasks: `testReleaseUnitTest lintRelease assembleRelease`\n'
+            printf -- '- Gradle tasks: `testDebugUnitTest lintRelease assembleRelease`\n'
             printf '\n</details>\n'
           } >> release-body.md
 
@@ -151,8 +151,8 @@ jobs:
           name: release-reports-${{ github.ref_name }}-${{ github.run_number }}
           path: |
             app/build/reports/lint-results-release.html
-            app/build/reports/tests/testReleaseUnitTest/
-            app/build/test-results/testReleaseUnitTest/
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/test-results/testDebugUnitTest/
           if-no-files-found: warn
           retention-days: 30
 
@@ -177,6 +177,6 @@ jobs:
             echo "- Tag: \`$GITHUB_REF_NAME\`"
             echo "- Version: \`${RELEASE_VERSION:-unresolved}\`"
             echo "- Commit: \`$GITHUB_SHA\`"
-            echo "- Tasks: Release unit tests, Release lint, signed Release APK"
+            echo "- Tasks: Debug unit tests, Release lint, signed Release APK"
             echo "- Assets: APK and SHA-256"
           } >> "$GITHUB_STEP_SUMMARY"
