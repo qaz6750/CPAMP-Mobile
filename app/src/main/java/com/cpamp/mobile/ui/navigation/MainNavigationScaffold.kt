@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -108,11 +109,11 @@ private fun FloatingNavigationBar(
     val navigationBarHeight = 64.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)
     Box(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding()
-            .padding(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 10.dp),
+            .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth().shadow(
+            modifier = Modifier.widthIn(max = 520.dp).fillMaxWidth().shadow(
                 elevation = 6.dp,
                 shape = MaterialTheme.shapes.extraLarge,
                 ambientColor = Color.Black.copy(alpha = 0.08f),
