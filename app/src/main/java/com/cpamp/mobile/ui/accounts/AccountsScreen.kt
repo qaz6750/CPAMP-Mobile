@@ -384,6 +384,11 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
     val states = accounts.map(AccountHealth::overviewState)
     val metrics = listOf(
         AccountHealthMetric(
+            label = R.string.accounts_overview_total,
+            count = accounts.size,
+            color = MaterialTheme.colorScheme.primary,
+        ),
+        AccountHealthMetric(
             label = R.string.accounts_overview_healthy,
             count = states.count { it == AccountOverviewState.Healthy },
             color = MaterialTheme.colorScheme.tertiary,
@@ -406,14 +411,21 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
         ),
     )
     AccountListPanel {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            metrics.forEachIndexed { index, metric ->
-                AccountHealthMetricItem(metric, Modifier.weight(1f))
-                if (index < metrics.lastIndex) {
-                    Box(
-                        Modifier.width(1.dp).heightIn(min = 58.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant),
-                    )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            metrics.chunked(2).forEachIndexed { rowIndex, rowMetrics ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    rowMetrics.forEachIndexed { columnIndex, metric ->
+                        AccountHealthMetricItem(metric, Modifier.weight(1f))
+                        if (columnIndex < rowMetrics.lastIndex) {
+                            Box(
+                                Modifier.width(1.dp).heightIn(min = 68.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant),
+                            )
+                        }
+                    }
+                }
+                if (rowIndex < metrics.lastIndex / 2) {
+                    AccountDetailDivider()
                 }
             }
         }
@@ -423,7 +435,7 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
 @Composable
 private fun AccountHealthMetricItem(metric: AccountHealthMetric, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.heightIn(min = 58.dp).padding(horizontal = 8.dp, vertical = 9.dp),
+        modifier = modifier.heightIn(min = 68.dp).padding(horizontal = 10.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
