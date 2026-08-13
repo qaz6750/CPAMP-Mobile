@@ -44,6 +44,7 @@
     <string name="accounts_unavailable">Account health is temporarily unavailable.</string>
     <string name="accounts_detail_title">Account details</string>
     <string name="accounts_detail_subtitle">Read-only identity, status and quota information</string>
+    <string name="accounts_data_details">Data details</string>
     <string name="accounts_detail_cached">This privacy-safe cache does not retain the original account identity.</string>
     <string name="accounts_detail_unavailable">This account is no longer available in the current in-memory snapshot.</string>
     <string name="accounts_provider">Provider</string>
@@ -51,6 +52,8 @@
     <string name="accounts_source">Source</string>
     <string name="accounts_observed_at">Observed</string>
     <string name="accounts_quota">Quota windows</string>
+    <string name="accounts_quota_remaining_value">%1$.0f%%</string>
+    <string name="accounts_quota_remaining_label">remaining</string>
     <string name="accounts_usage">Current quota-cycle usage</string>
     <string name="accounts_usage_range">Reporting range: %1$s — %2$s</string>
     <string name="accounts_usage_projected_cost">Projected cost at quota limit</string>

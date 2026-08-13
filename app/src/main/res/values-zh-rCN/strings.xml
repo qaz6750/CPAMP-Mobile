@@ -44,6 +44,7 @@
     <string name="accounts_unavailable">暂时无法获取账号健康。</string>
     <string name="accounts_detail_title">账号详情</string>
     <string name="accounts_detail_subtitle">只读查看身份、状态与额度信息</string>
+    <string name="accounts_data_details">数据详情</string>
     <string name="accounts_detail_cached">脱敏缓存不会保留原始账号身份。</string>
     <string name="accounts_detail_unavailable">当前内存快照中已找不到此账号。</string>
     <string name="accounts_provider">提供商</string>
@@ -51,6 +52,8 @@
     <string name="accounts_source">数据来源</string>
     <string name="accounts_observed_at">观测时间</string>
     <string name="accounts_quota">额度周期</string>
+    <string name="accounts_quota_remaining_value">%1$.0f%%</string>
+    <string name="accounts_quota_remaining_label">剩余</string>
     <string name="accounts_usage">本轮凭证用量</string>
     <string name="accounts_usage_range">统计时间范围：%1$s — %2$s</string>
     <string name="accounts_usage_projected_cost">预计可用到的成本</string>

@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -27,10 +29,15 @@ import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.DataUsage
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.HelpOutline
+import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.Token
+import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -202,25 +209,13 @@ fun AccountDetailScreen(
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
-                top = contentPadding.calculateTopPadding() + 24.dp,
+                top = contentPadding.calculateTopPadding() + 18.dp,
                 bottom = contentPadding.calculateBottomPadding() + 28.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                PageHeader(
-                    eyebrow = stringResource(R.string.nav_accounts),
-                    title = stringResource(R.string.accounts_detail_title),
-                    subtitle = stringResource(R.string.accounts_detail_subtitle),
-                    leading = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Outlined.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
-                            )
-                        }
-                    },
-                )
+                AccountDetailHeader(onBack)
             }
             if (state.fromCache) {
                 item { AccountsNotice(stringResource(R.string.accounts_detail_cached), false) }
@@ -240,14 +235,38 @@ fun AccountDetailScreen(
                     item { ContentStateCard(stringResource(R.string.accounts_detail_unavailable), isError = true) }
                 }
                 else -> {
+                    item { AccountIdentitySummary(account) }
                     item { AccountQuotaCard(account) }
-                    item { AccountIdentityCard(account, state.observedAtMs) }
                     if (account.usage != null) {
                         item { AccountUsageCard(account, state.usageFromMs, state.usageToMs) }
                     }
+                    item { AccountDataDetailsCard(account, state.observedAtMs) }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun AccountDetailHeader(onBack: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowBack,
+                contentDescription = stringResource(R.string.back),
+            )
+        }
+        Text(
+            stringResource(R.string.accounts_detail_title),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -685,33 +704,64 @@ private fun AccountPlanBadge(plan: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AccountIdentityCard(account: AccountHealth, observedAtMs: Long?) {
+private fun AccountIdentitySummary(account: AccountHealth) {
     AccountPanel {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val compact = maxWidth < 380.dp || LocalDensity.current.fontScale >= 1.3f
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                AccountProviderBadge(account.provider)
-                account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
-                    AccountPlanBadge(plan, Modifier.weight(1f, fill = false))
+                val accent = providerAccentColor(account.provider)
+                Surface(
+                    color = accent.copy(alpha = 0.12f),
+                    contentColor = accent,
+                    shape = RoundedCornerShape(8.dp),
+                ) {
+                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        CredentialProviderIcon(account.provider, modifier = Modifier.size(26.dp))
+                    }
+                }
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        account.displayTitle(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AccountProviderBadge(account.provider)
+                        account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
+                            AccountPlanBadge(plan, Modifier.weight(1f, fill = false))
+                        }
+                    }
+                    if (compact) {
+                        AccountStatusBadge(account)
+                    }
+                }
+                if (!compact) {
+                    AccountStatusBadge(account)
                 }
             }
-            Text(
-                account.displayTitle(),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            AccountStatusBadge(account)
-            AccountDetailValue(R.string.accounts_plan, account.planType.ifBlank { stringResource(R.string.accounts_no_plan) })
+        }
+    }
+}
+
+@Composable
+private fun AccountDataDetailsCard(account: AccountHealth, observedAtMs: Long?) {
+    AccountDetailSection(R.string.accounts_data_details) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 2.dp)) {
             AccountDetailValue(R.string.accounts_source, stringResource(account.source.labelResource()))
             observedAtMs?.let {
+                AccountDetailDivider()
                 AccountDetailValue(R.string.accounts_observed_at, it.asDateTime())
             }
         }
@@ -719,8 +769,50 @@ private fun AccountIdentityCard(account: AccountHealth, observedAtMs: Long?) {
 }
 
 @Composable
+private fun AccountDetailSection(
+    @StringRes title: Int,
+    subtitle: String? = null,
+    content: @Composable () -> Unit,
+) {
+    AccountPanel {
+        Column(Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    stringResource(title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                subtitle?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            AccountDetailDivider()
+            content()
+        }
+    }
+}
+
+@Composable
+private fun AccountDetailDivider() {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+}
+
+@Composable
 private fun AccountDetailValue(@StringRes label: Int, value: String) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
             stringResource(label),
             style = MaterialTheme.typography.bodySmall,
@@ -743,110 +835,129 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
     val usage = account.usage ?: return
     val projectedCost = account.estimatedQuotaCycleCost()
     val metrics = listOf(
-        R.string.usage_requests to usage.calls.compactNumber(),
-        R.string.usage_tokens to usage.totalTokens.compactTokens(),
-        R.string.usage_cost to usage.cost.asCost(),
-        R.string.health_success_rate to usage.successRate.asPercent(),
+        AccountUsageMetric(
+            R.string.usage_requests,
+            usage.calls.compactNumber(),
+            Icons.Outlined.DataUsage,
+            MaterialTheme.colorScheme.primary,
+        ),
+        AccountUsageMetric(
+            R.string.usage_tokens,
+            usage.totalTokens.compactTokens(),
+            Icons.Outlined.Token,
+            MaterialTheme.colorScheme.primary,
+        ),
+        AccountUsageMetric(
+            R.string.usage_cost,
+            usage.cost.asCost(),
+            Icons.Outlined.Payments,
+            QuotaOrange,
+        ),
+        AccountUsageMetric(
+            R.string.health_success_rate,
+            usage.successRate.asPercent(),
+            Icons.Outlined.CheckCircle,
+            MaterialTheme.colorScheme.tertiary,
+        ),
     )
-    AccountPanel {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    stringResource(R.string.accounts_usage),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                if (fromMs != null && toMs != null) {
-                    Text(
-                        stringResource(
-                            R.string.accounts_usage_range,
-                            fromMs.asDateTime(),
-                            toMs.asDateTime(),
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+    val range = if (fromMs != null && toMs != null) {
+        stringResource(R.string.accounts_usage_range, fromMs.asDateTime(), toMs.asDateTime())
+    } else {
+        null
+    }
+    AccountDetailSection(R.string.accounts_usage, range) {
+        Column(Modifier.fillMaxWidth()) {
             BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val dividerColor = MaterialTheme.colorScheme.outlineVariant
                 val fontScale = LocalDensity.current.fontScale
                 val columns = when {
                     fontScale >= 1.3f || maxWidth < 420.dp -> 1
                     maxWidth >= 720.dp -> 4
                     else -> 2
                 }
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    metrics.chunked(columns).forEach { rowMetrics ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            rowMetrics.forEach { (label, value) ->
-                                AccountUsageMetric(label, value, Modifier.weight(1f))
+                val rows = metrics.chunked(columns)
+                Column {
+                    rows.forEachIndexed { rowIndex, rowMetrics ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            rowMetrics.forEachIndexed { columnIndex, metric ->
+                                AccountUsageMetricCell(metric, Modifier.weight(1f))
+                                if (columnIndex < rowMetrics.lastIndex) {
+                                    Box(Modifier.width(1.dp).heightIn(min = 90.dp).background(dividerColor))
+                                }
                             }
                             repeat(columns - rowMetrics.size) {
                                 Spacer(Modifier.weight(1f))
                             }
                         }
+                        if (rowIndex < rows.lastIndex) {
+                            AccountDetailDivider()
+                        }
                     }
                 }
             }
             projectedCost?.let { cost ->
+                AccountDetailDivider()
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.04f))
+                        .padding(horizontal = 14.dp, vertical = 11.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(
-                            stringResource(R.string.accounts_usage_projected_cost),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            stringResource(R.string.accounts_usage_projected_cost_hint),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    AccountMetricIcon(Icons.Outlined.TrendingUp, MaterialTheme.colorScheme.primary)
+                    Text(
+                        stringResource(R.string.accounts_usage_projected_cost),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     Text(
                         cost.asCost(),
                         style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.End,
                     )
                 }
             }
-            Text(
-                stringResource(R.string.usage_estimated),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
 
+private data class AccountUsageMetric(
+    @param:StringRes val label: Int,
+    val value: String,
+    val icon: ImageVector,
+    val color: Color,
+)
+
 @Composable
-private fun AccountUsageMetric(@StringRes label: Int, value: String, modifier: Modifier = Modifier) {
+private fun AccountUsageMetricCell(metric: AccountUsageMetric, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+        modifier = modifier.heightIn(min = 90.dp).padding(horizontal = 14.dp, vertical = 11.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AccountMetricIcon(metric.icon, metric.color)
+            Text(
+                stringResource(metric.label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         Text(
-            stringResource(label),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            value,
+            metric.value,
+            modifier = Modifier.padding(start = 38.dp),
             style = when {
-                value.length <= 10 -> MaterialTheme.typography.titleLarge
-                value.length <= 14 -> MaterialTheme.typography.titleMedium
+                metric.value.length <= 10 -> MaterialTheme.typography.titleLarge
+                metric.value.length <= 14 -> MaterialTheme.typography.titleMedium
                 else -> MaterialTheme.typography.bodyLarge
             },
             fontWeight = FontWeight.Bold,
@@ -857,54 +968,79 @@ private fun AccountUsageMetric(@StringRes label: Int, value: String, modifier: M
 }
 
 @Composable
+private fun AccountMetricIcon(icon: ImageVector, color: Color) {
+    Surface(
+        color = color.copy(alpha = 0.10f),
+        contentColor = color,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+@Composable
 private fun AccountQuotaCard(account: AccountHealth) {
-    AccountPanel {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(stringResource(R.string.accounts_quota), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    AccountDetailSection(R.string.accounts_quota) {
+        Column(Modifier.fillMaxWidth()) {
             when {
                 account.windows.isNotEmpty() -> {
                     account.failure?.let { failure ->
                         Text(
                             stringResource(failure.messageResource()),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )
+                        AccountDetailDivider()
                     }
                     if (account.status == AccountStatus.Disabled) {
                         Text(
                             stringResource(R.string.credential_quota_disabled_with_windows_hint),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                        AccountDetailDivider()
                     }
-                    account.windows.forEach { window -> AccountQuotaWindowRow(window) }
+                    account.windows.forEachIndexed { index, window ->
+                        AccountQuotaWindowRow(window)
+                        if (index < account.windows.lastIndex) {
+                            AccountDetailDivider()
+                        }
+                    }
                 }
-                account.quotaState == AccountQuotaState.Failed -> Text(
+                account.quotaState == AccountQuotaState.Failed -> AccountQuotaEmptyState(
                     stringResource(account.failure.messageResource()),
-                    color = MaterialTheme.colorScheme.error,
+                    MaterialTheme.colorScheme.error,
                 )
-                account.status == AccountStatus.Disabled -> Text(
+                account.status == AccountStatus.Disabled -> AccountQuotaEmptyState(
                     stringResource(R.string.credential_quota_disabled_hint),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                account.quotaState == AccountQuotaState.NotRequested -> Text(
+                account.quotaState == AccountQuotaState.NotRequested -> AccountQuotaEmptyState(
                     stringResource(R.string.accounts_quota_not_refreshed),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                account.quotaState == AccountQuotaState.Unsupported -> Text(
+                account.quotaState == AccountQuotaState.Unsupported -> AccountQuotaEmptyState(
                     stringResource(R.string.accounts_quota_unsupported),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                else -> Text(
-                    stringResource(R.string.credential_quota_no_windows),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                else -> AccountQuotaEmptyState(stringResource(R.string.credential_quota_no_windows))
             }
         }
     }
+}
+
+@Composable
+private fun AccountQuotaEmptyState(
+    message: String,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
+    Text(
+        message,
+        modifier = Modifier.fillMaxWidth().padding(14.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        color = color,
+    )
 }
 
 @Composable
@@ -912,35 +1048,60 @@ private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
     val remaining = normalizedRemainingPercent(window.remainingPercent)
     val reset = window.resetAtMs?.takeIf { it > 0 }?.asDateTime()
         ?: window.resetLabel.trim().takeIf { it.isNotEmpty() && it != "-" }
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    val levelColor = quotaLevelColor(quotaLevel(remaining))
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column(Modifier.fillMaxWidth().padding(13.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(levelColor))
                 Text(
                     window.durationLabel(),
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+            Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    remaining?.let { stringResource(R.string.credential_quota_remaining, it) }
+                    remaining?.let { stringResource(R.string.accounts_quota_remaining_value, it) }
                         ?: stringResource(R.string.credential_quota_remaining_unknown),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = quotaLevelColor(quotaLevel(remaining)),
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = levelColor,
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.End,
                 )
+                if (remaining != null) {
+                    Text(
+                        stringResource(R.string.accounts_quota_remaining_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-            QuotaProgressBar(remaining, modifier = Modifier.fillMaxWidth().height(8.dp))
-            reset?.let {
+        }
+        QuotaProgressBar(remaining, modifier = Modifier.fillMaxWidth().height(8.dp))
+        reset?.let {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Outlined.Schedule,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Text(
                     stringResource(R.string.credential_quota_reset, it),
                     style = MaterialTheme.typography.labelSmall,
