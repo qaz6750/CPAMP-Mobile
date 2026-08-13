@@ -102,8 +102,11 @@ jobs:
       - name: Ensure Gradle wrapper is executable
         run: chmod +x ./gradlew
 
-      - name: Test and build signed release
-        run: ./gradlew testDebugUnitTest lintRelease assembleRelease --stacktrace
+      - name: Run debug unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace --no-parallel --max-workers=1 -Pksp.incremental=false
+
+      - name: Lint and build signed release
+        run: ./gradlew lintRelease assembleRelease --stacktrace --no-parallel --max-workers=1 -Pksp.incremental=false
 
       - name: Prepare versioned release assets
         shell: bash
