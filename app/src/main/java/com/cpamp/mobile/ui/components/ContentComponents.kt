@@ -262,17 +262,15 @@ fun ResponsiveMetricGrid(
     cards: List<@Composable (Modifier) -> Unit>,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val fontScale = LocalDensity.current.fontScale
-        val columns = when {
-            fontScale >= 1.3f || maxWidth < 420.dp -> 1
-            maxWidth >= 900.dp -> 4
-            else -> 2
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            cards.chunked(columns).forEach { rowCards ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    rowCards.forEach { card -> card(Modifier.weight(1f)) }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        cards.chunked(2).forEach { rowCards ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowCards.forEach { card -> card(Modifier.weight(1f)) }
+                if (rowCards.size == 1) {
+                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
                 }
             }
         }
