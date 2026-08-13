@@ -180,7 +180,7 @@ fun UsageAnalyticsScreen(
                         }
                     }
                 }
-            } else if (response != null) {
+            } else {
                 response.summary?.let { summary ->
                     item {
                         ResponsiveMetricGrid(

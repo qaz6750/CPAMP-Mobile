@@ -71,7 +71,7 @@ class ConnectionTester @Inject constructor(
                         "SERVER_ERROR_${response.code}",
                     )
                     else -> {
-                        val body = response.body?.string().orEmpty()
+                        val body = response.body.string().orEmpty()
                         val root = runCatching { json.parseToJsonElement(body).jsonObject }.getOrElse {
                             throw ConnectionException(
                                 ConnectionException.Reason.InvalidResponse,

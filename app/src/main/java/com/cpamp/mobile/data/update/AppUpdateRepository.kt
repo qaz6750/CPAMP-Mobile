@@ -91,7 +91,7 @@ class AppUpdateRepository @Inject constructor(
                 client.newCall(request).execute().use { response ->
                     when (response.code) {
                         200 -> {
-                            val body = response.body?.string().orEmpty()
+                            val body = response.body.string().orEmpty()
                             val release = json.decodeFromString<GitHubReleaseDto>(body)
                             context.updateDataStore.edit { stored ->
                                 response.header("ETag")?.let { stored[RELEASE_ETAG] = it }
@@ -234,8 +234,7 @@ class AppUpdateRepository @Inject constructor(
             .build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw UpdateException(UpdateError.Download)
-            val body = response.body?.readLimitedUtf8(MAX_CHECKSUM_BYTES)
-                ?: throw UpdateException(UpdateError.Checksum)
+            val body = response.body.readLimitedUtf8(MAX_CHECKSUM_BYTES)
             parseSha256(body, assets.apk.name) ?: throw UpdateException(UpdateError.Checksum)
         }
     }

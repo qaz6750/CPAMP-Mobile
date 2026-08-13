@@ -66,10 +66,10 @@ fun GitHubReleaseDto.displayBody(language: String): String? {
             .joinToString("\n\n")
     }
     return localizedContent.lineSequence()
-    ?.map { line -> line.replaceFirst(MARKDOWN_HEADING, "") }
-    ?.joinToString("\n")
-    ?.trim()
-    ?.takeIf(String::isNotEmpty)
+        .map { line -> line.replaceFirst(MARKDOWN_HEADING, "") }
+        .joinToString("\n")
+        .trim()
+        .takeIf(String::isNotEmpty)
 }
 
 data class SemanticVersion(

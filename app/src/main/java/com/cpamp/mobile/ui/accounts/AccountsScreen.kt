@@ -34,7 +34,7 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Token
-import androidx.compose.material.icons.outlined.TrendingUp
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -808,7 +808,7 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    AccountMetricIcon(Icons.Outlined.TrendingUp, MaterialTheme.colorScheme.primary)
+                    AccountMetricIcon(Icons.AutoMirrored.Outlined.TrendingUp, MaterialTheme.colorScheme.primary)
                     Text(
                         stringResource(R.string.accounts_usage_projected_cost),
                         modifier = Modifier.weight(1f),
