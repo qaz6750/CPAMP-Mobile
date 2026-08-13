@@ -129,7 +129,6 @@ fun AccountsScreen(
                         safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)
                     } ?: fallback,
                     title = stringResource(R.string.accounts_title),
-                    subtitle = stringResource(R.string.accounts_subtitle),
                     trailing = {
                         LoadingIconButton(
                             icon = Icons.Outlined.Refresh,
