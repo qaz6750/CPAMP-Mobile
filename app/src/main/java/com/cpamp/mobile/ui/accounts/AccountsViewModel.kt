@@ -38,6 +38,7 @@ data class AccountDetailUiState(
     val usageFromMs: Long? = null,
     val usageToMs: Long? = null,
     val fromCache: Boolean = false,
+    val loading: Boolean = false,
 )
 
 enum class AccountsError { Unauthorized, RateLimited, Network, Server }
@@ -74,7 +75,8 @@ class AccountsViewModel @Inject constructor(
     fun detail(accountId: String): Flow<AccountDetailUiState> = combine(
         sessionRepository.session,
         repository.snapshots,
-    ) { session, snapshots ->
+        state,
+    ) { session, snapshots, accountsState ->
         val snapshot = session?.profile?.id?.let(snapshots::get)
         val account = snapshot?.accountForDetail(accountId)
         AccountDetailUiState(
@@ -84,8 +86,9 @@ class AccountsViewModel @Inject constructor(
             usageFromMs = account?.usageFromMs?.takeIf { it > 0 },
             usageToMs = account?.usageToMs?.takeIf { it > 0 },
             fromCache = snapshot?.fromCache == true,
+            loading = accountsState.loading && snapshot == null,
         )
-    }.scan(AccountDetailUiState()) { previous, current ->
+    }.scan(AccountDetailUiState(loading = true)) { previous, current ->
         retainCachedAccountDetail(previous, current, accountId)
     }
 

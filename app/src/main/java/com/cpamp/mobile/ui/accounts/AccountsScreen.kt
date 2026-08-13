@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -189,7 +190,9 @@ fun AccountDetailScreen(
     viewModel: AccountsViewModel = hiltViewModel(),
 ) {
     val detailFlow = remember(viewModel, accountId) { viewModel.detail(accountId) }
-    val state by detailFlow.collectAsStateWithLifecycle(initialValue = AccountDetailUiState())
+    val state by detailFlow.collectAsStateWithLifecycle(
+        initialValue = AccountDetailUiState(loading = true),
+    )
     val account = state.account
 
     AppBackground {
@@ -221,17 +224,28 @@ fun AccountDetailScreen(
             }
             if (state.fromCache) {
                 item { AccountsNotice(stringResource(R.string.accounts_detail_cached), false) }
-            } else if (account != null && state.usageState == AccountUsageState.Unavailable) {
+            } else if (account != null && account.usage == null) {
                 item { AccountsNotice(stringResource(R.string.accounts_usage_unavailable), false) }
             }
-            if (account == null) {
-                item { ContentStateCard(stringResource(R.string.accounts_detail_unavailable), isError = true) }
-            } else {
-                item { AccountIdentityCard(account, state.observedAtMs) }
-                if (account.usage != null) {
-                    item { AccountUsageCard(account, state.usageFromMs, state.usageToMs) }
+            when {
+                state.loading -> {
+                    item {
+                        ContentStateCard(
+                            message = stringResource(R.string.content_loading),
+                            loading = true,
+                        )
+                    }
                 }
-                item { AccountQuotaCard(account) }
+                account == null -> {
+                    item { ContentStateCard(stringResource(R.string.accounts_detail_unavailable), isError = true) }
+                }
+                else -> {
+                    item { AccountIdentityCard(account, state.observedAtMs) }
+                    if (account.usage != null) {
+                        item { AccountUsageCard(account, state.usageFromMs, state.usageToMs) }
+                    }
+                    item { AccountQuotaCard(account) }
+                }
             }
         }
     }
@@ -728,6 +742,12 @@ private fun AccountDetailValue(@StringRes label: Int, value: String) {
 private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?) {
     val usage = account.usage ?: return
     val projectedCost = account.estimatedQuotaCycleCost()
+    val metrics = listOf(
+        R.string.usage_requests to usage.calls.compactNumber(),
+        R.string.usage_tokens to usage.totalTokens.compactTokens(),
+        R.string.usage_cost to usage.cost.asCost(),
+        R.string.health_success_rate to usage.successRate.asPercent(),
+    )
     AccountPanel {
         Column(
             modifier = Modifier.fillMaxWidth().padding(18.dp),
@@ -751,31 +771,28 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
                     )
                 }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                AccountUsageMetric(
-                    R.string.usage_requests,
-                    usage.calls.compactNumber(),
-                    Modifier.weight(1f),
-                )
-                AccountUsageMetric(
-                    R.string.usage_tokens,
-                    usage.totalTokens.compactTokens(),
-                    Modifier.weight(1f),
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                AccountUsageMetric(R.string.usage_cost, usage.cost.asCost(), Modifier.weight(1f))
-                AccountUsageMetric(
-                    R.string.health_success_rate,
-                    usage.successRate.asPercent(),
-                    Modifier.weight(1f),
-                )
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val fontScale = LocalDensity.current.fontScale
+                val columns = when {
+                    fontScale >= 1.3f || maxWidth < 420.dp -> 1
+                    maxWidth >= 720.dp -> 4
+                    else -> 2
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    metrics.chunked(columns).forEach { rowMetrics ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            rowMetrics.forEach { (label, value) ->
+                                AccountUsageMetric(label, value, Modifier.weight(1f))
+                            }
+                            repeat(columns - rowMetrics.size) {
+                                Spacer(Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
             }
             projectedCost?.let { cost ->
                 Row(
@@ -822,12 +839,18 @@ private fun AccountUsageMetric(@StringRes label: Int, value: String, modifier: M
             stringResource(label),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
         Text(
             value,
-            style = MaterialTheme.typography.titleLarge,
+            style = when {
+                value.length <= 10 -> MaterialTheme.typography.titleLarge
+                value.length <= 14 -> MaterialTheme.typography.titleMedium
+                else -> MaterialTheme.typography.bodyLarge
+            },
             fontWeight = FontWeight.Bold,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
     }
@@ -887,6 +910,8 @@ private fun AccountQuotaCard(account: AccountHealth) {
 @Composable
 private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
     val remaining = normalizedRemainingPercent(window.remainingPercent)
+    val reset = window.resetAtMs?.takeIf { it > 0 }?.asDateTime()
+        ?: window.resetLabel.trim().takeIf { it.isNotEmpty() && it != "-" }
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(8.dp),
@@ -915,16 +940,9 @@ private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
                 )
             }
             QuotaProgressBar(remaining, modifier = Modifier.fillMaxWidth().height(8.dp))
-            window.resetAtMs?.let {
+            reset?.let {
                 Text(
-                    stringResource(R.string.credential_quota_reset, it.asDateTime()),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            window.resetLabel.takeIf { it.isNotBlank() && it != "-" }?.let { label ->
-                Text(
-                    stringResource(R.string.credential_quota_reset, label),
+                    stringResource(R.string.credential_quota_reset, it),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
