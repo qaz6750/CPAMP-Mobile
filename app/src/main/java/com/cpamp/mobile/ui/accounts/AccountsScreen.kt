@@ -240,11 +240,11 @@ fun AccountDetailScreen(
                     item { ContentStateCard(stringResource(R.string.accounts_detail_unavailable), isError = true) }
                 }
                 else -> {
+                    item { AccountQuotaCard(account) }
                     item { AccountIdentityCard(account, state.observedAtMs) }
                     if (account.usage != null) {
                         item { AccountUsageCard(account, state.usageFromMs, state.usageToMs) }
                     }
-                    item { AccountQuotaCard(account) }
                 }
             }
         }
