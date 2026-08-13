@@ -17,7 +17,6 @@ import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -35,8 +34,6 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.data.update.AppUpdateState
 import com.cpamp.mobile.data.update.UpdateError
 import com.cpamp.mobile.data.update.UpdateStatus
-import com.cpamp.mobile.ui.components.AppCard
-import com.cpamp.mobile.ui.components.BrandMark
 
 @Composable
 internal fun UpdateSettingsCard(
@@ -47,43 +44,29 @@ internal fun UpdateSettingsCard(
     onOpenSourceLicenses: () -> Unit,
 ) {
     val context = LocalContext.current
-    AppCard {
+    SettingsGroupCard(
+        title = stringResource(R.string.about_updates),
+        subtitle = stringResource(R.string.current_version, BuildConfig.VERSION_NAME),
+    ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                BrandMark()
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+            state.release?.let { release ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        stringResource(R.string.about_updates),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        stringResource(R.string.current_version, BuildConfig.VERSION_NAME),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            state.release?.let { release ->
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
                         stringResource(R.string.latest_version, release.tagName.removePrefix("v")),
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
                     release.publishedAt?.let {
                         Text(
                             it,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -108,16 +91,17 @@ internal fun UpdateSettingsCard(
                     onClick = onCheckForUpdates,
                 )
             }
-            HorizontalDivider()
-            UpdateLinkButton(
-                label = stringResource(R.string.view_update_details),
-                onClick = onShowUpdate,
-            )
-            UpdateLinkButton(
-                label = stringResource(R.string.open_source_licenses),
-                onClick = onOpenSourceLicenses,
-            )
         }
+        SettingsDivider()
+        UpdateLinkButton(
+            label = stringResource(R.string.view_update_details),
+            onClick = onShowUpdate,
+        )
+        SettingsDivider()
+        UpdateLinkButton(
+            label = stringResource(R.string.open_source_licenses),
+            onClick = onOpenSourceLicenses,
+        )
     }
 }
 
@@ -171,7 +155,7 @@ private fun UpdateLinkButton(
     TextButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
     ) {
         Text(label, modifier = Modifier.weight(1f))
         Icon(Icons.Outlined.ChevronRight, contentDescription = null)

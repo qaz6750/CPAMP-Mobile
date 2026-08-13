@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -42,6 +44,43 @@ internal fun SettingsCard(
 }
 
 @Composable
+internal fun SettingsGroupCard(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                subtitle?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            SettingsDivider()
+            content()
+        }
+    }
+}
+
+@Composable
+internal fun SettingsDivider(modifier: Modifier = Modifier) {
+    HorizontalDivider(modifier = modifier, color = MaterialTheme.colorScheme.outlineVariant)
+}
+
+@Composable
 internal fun SettingSwitchRow(
     title: String,
     help: String,
@@ -60,7 +99,11 @@ internal fun SettingSwitchRow(
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.42f)
     }
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 14.dp, vertical = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, color = contentColor, fontWeight = FontWeight.SemiBold)
             Text(help, style = MaterialTheme.typography.bodySmall, color = supportingColor)

@@ -132,7 +132,7 @@ fun SettingsScreen(
                 )
             }
             item {
-                SettingsCard(stringResource(R.string.system_security)) {
+                SettingsGroupCard(stringResource(R.string.system_security)) {
                     SettingSwitchRow(
                         title = stringResource(R.string.app_lock),
                         help = stringResource(R.string.app_lock_help),
@@ -142,31 +142,39 @@ fun SettingsScreen(
                         onCheckedChange = onSetAppLockEnabled,
                     )
                     if (appLockState.enabled) {
-                        Text(stringResource(R.string.lock_after), style = MaterialTheme.typography.labelLarge)
-                        Row(
-                            modifier = Modifier.horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        SettingsDivider()
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            listOf(1, 5, 15, 60).forEach { minutes ->
-                                FilterChip(
-                                    selected = appLockState.timeoutMinutes == minutes,
-                                    onClick = { onSetAppLockTimeout(minutes) },
-                                    label = {
-                                        Text(
-                                            if (minutes == 60) stringResource(R.string.one_hour)
-                                            else stringResource(R.string.minutes_value, minutes),
-                                        )
-                                    },
-                                )
+                            Text(stringResource(R.string.lock_after), style = MaterialTheme.typography.labelLarge)
+                            Row(
+                                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                listOf(1, 5, 15, 60).forEach { minutes ->
+                                    FilterChip(
+                                        selected = appLockState.timeoutMinutes == minutes,
+                                        onClick = { onSetAppLockTimeout(minutes) },
+                                        label = {
+                                            Text(
+                                                if (minutes == 60) stringResource(R.string.one_hour)
+                                                else stringResource(R.string.minutes_value, minutes),
+                                            )
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
+                    SettingsDivider()
                     SettingSwitchRow(
                         title = stringResource(R.string.allow_screenshots),
                         help = stringResource(R.string.allow_screenshots_help),
                         checked = appearanceState.settings.allowScreenshots,
                         onCheckedChange = onSetAllowScreenshots,
                     )
+                    SettingsDivider()
                     SettingSwitchRow(
                         title = stringResource(R.string.hide_addresses),
                         help = stringResource(R.string.hide_addresses_help),
@@ -174,74 +182,96 @@ fun SettingsScreen(
                         onCheckedChange = onSetHideAddresses,
                     )
                     if (appLockState.error) {
-                        Text(stringResource(R.string.security_change_failed), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-            item {
-                SettingsCard(stringResource(R.string.system_appearance)) {
-                    Text(stringResource(R.string.language), fontWeight = FontWeight.Bold)
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        AppLanguage.entries.forEach { language ->
-                            FilterChip(
-                                selected = appearanceState.settings.language == language,
-                                onClick = { onSetLanguage(language) },
-                                label = { Text(stringResource(language.labelResource)) },
-                            )
-                        }
-                    }
-                    Text(stringResource(R.string.theme), fontWeight = FontWeight.Bold)
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        AppTheme.entries.forEach { theme ->
-                            FilterChip(
-                                selected = appearanceState.settings.theme == theme,
-                                onClick = { onSetTheme(theme) },
-                                label = { Text(stringResource(theme.labelResource)) },
-                            )
-                        }
-                    }
-                }
-            }
-            item {
-                SettingsCard(stringResource(R.string.storage_cache)) {
-                    Text(
-                        stringResource(R.string.cache_description),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    OutlinedButton(
-                        onClick = { confirmClearCache = true },
-                        enabled = !cacheState.clearing,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        if (cacheState.clearing) {
-                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Outlined.DeleteSweep, contentDescription = null)
-                        }
+                        SettingsDivider()
                         Text(
-                            stringResource(
-                                if (cacheState.clearing) R.string.clearing_cache else R.string.clear_cache,
-                            ),
-                            modifier = Modifier.padding(start = 8.dp),
-                        )
-                    }
-                    cacheState.result?.let { result ->
-                        Text(
-                            stringResource(
-                                if (result == CacheCleanupResult.Success) R.string.cache_cleared
-                                else R.string.cache_clear_failed,
-                            ),
-                            color = if (result == CacheCleanupResult.Success) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.error,
+                            stringResource(R.string.security_change_failed),
+                            modifier = Modifier.fillMaxWidth().padding(14.dp),
+                            color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                         )
+                    }
+                }
+            }
+            item {
+                SettingsGroupCard(stringResource(R.string.system_appearance)) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(stringResource(R.string.language), fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            AppLanguage.entries.forEach { language ->
+                                FilterChip(
+                                    selected = appearanceState.settings.language == language,
+                                    onClick = { onSetLanguage(language) },
+                                    label = { Text(stringResource(language.labelResource)) },
+                                )
+                            }
+                        }
+                    }
+                    SettingsDivider()
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(stringResource(R.string.theme), fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            AppTheme.entries.forEach { theme ->
+                                FilterChip(
+                                    selected = appearanceState.settings.theme == theme,
+                                    onClick = { onSetTheme(theme) },
+                                    label = { Text(stringResource(theme.labelResource)) },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            item {
+                SettingsGroupCard(stringResource(R.string.storage_cache)) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.cache_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedButton(
+                            onClick = { confirmClearCache = true },
+                            enabled = !cacheState.clearing,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (cacheState.clearing) {
+                                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Outlined.DeleteSweep, contentDescription = null)
+                            }
+                            Text(
+                                stringResource(
+                                    if (cacheState.clearing) R.string.clearing_cache else R.string.clear_cache,
+                                ),
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
+                        }
+                        cacheState.result?.let { result ->
+                            Text(
+                                stringResource(
+                                    if (result == CacheCleanupResult.Success) R.string.cache_cleared
+                                    else R.string.cache_clear_failed,
+                                ),
+                                color = if (result == CacheCleanupResult.Success) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }

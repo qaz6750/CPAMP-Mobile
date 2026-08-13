@@ -1,10 +1,11 @@
 package com.cpamp.mobile.ui.settings
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -35,7 +36,6 @@ import com.cpamp.mobile.R
 import com.cpamp.mobile.domain.model.AuthenticatedSession
 import com.cpamp.mobile.domain.model.ServerProfile
 import com.cpamp.mobile.ui.common.safeServerName
-import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.components.ConnectionPill
 
 @Composable
@@ -49,34 +49,30 @@ internal fun ServerManagementSettings(
 ) {
     var deleteProfile by remember { mutableStateOf<ServerProfile?>(null) }
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    SettingsGroupCard(
+        title = stringResource(R.string.system_servers),
+        subtitle = stringResource(R.string.saved_servers_help),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                stringResource(R.string.system_servers),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                stringResource(R.string.saved_servers_help),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        profiles.forEach { profile ->
-            ServerSettingsCard(
+        profiles.forEachIndexed { index, profile ->
+            ServerSettingsRow(
                 profile = profile,
                 active = profile.id == session.profile.id,
                 hideAddress = hideAddresses,
                 onSwitch = { onSwitchServer(profile.id) },
                 onDelete = { deleteProfile = profile },
             )
+            if (index < profiles.lastIndex) {
+                SettingsDivider()
+            }
         }
-        OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
-            Text(stringResource(R.string.disconnect), modifier = Modifier.padding(start = 8.dp))
+        if (profiles.isNotEmpty()) {
+            SettingsDivider()
+        }
+        Box(Modifier.fillMaxWidth().padding(12.dp)) {
+            OutlinedButton(onClick = onDisconnect, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
+                Text(stringResource(R.string.disconnect), modifier = Modifier.padding(start = 8.dp))
+            }
         }
     }
 
@@ -113,7 +109,7 @@ internal fun ServerManagementSettings(
 }
 
 @Composable
-private fun ServerSettingsCard(
+private fun ServerSettingsRow(
     profile: ServerProfile,
     active: Boolean,
     hideAddress: Boolean,
@@ -126,69 +122,42 @@ private fun ServerSettingsCard(
         hideAddress,
         stringResource(R.string.system_servers),
     )
-    AppCard(
-        containerColor = if (active) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.34f)
-        } else {
-            MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)
-        },
-        border = if (active) {
-            BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
-        } else {
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        },
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 68.dp).padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(11.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        Surface(
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+            contentColor = MaterialTheme.colorScheme.primary,
+            shape = MaterialTheme.shapes.medium,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    shape = MaterialTheme.shapes.medium,
-                ) {
-                    Icon(
-                        Icons.Outlined.Dns,
-                        contentDescription = null,
-                        modifier = Modifier.padding(9.dp).size(20.dp),
-                    )
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
-                    Text(
-                        displayName,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (!hideAddress) {
-                        Text(
-                            profile.baseUrl,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-                if (active) {
-                    ConnectionPill(
-                        label = stringResource(R.string.active_server),
-                        secure = true,
-                    )
-                }
+            Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.Dns, contentDescription = null, modifier = Modifier.size(21.dp))
+            }
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                displayName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (!hideAddress) {
+                Text(
+                    profile.baseUrl,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 ConnectionPill(
@@ -197,24 +166,27 @@ private fun ServerSettingsCard(
                     ),
                     secure = !profile.usesCleartext,
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (!active) {
-                        TextButton(onClick = onSwitch) {
-                            Icon(Icons.Outlined.SwapHoriz, contentDescription = null)
-                            Text(
-                                stringResource(R.string.switch_server),
-                                modifier = Modifier.padding(start = 6.dp),
-                            )
-                        }
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            Icons.Outlined.DeleteOutline,
-                            contentDescription = stringResource(R.string.delete),
-                        )
-                    }
+                if (active) {
+                    ConnectionPill(
+                        label = stringResource(R.string.active_server),
+                        secure = true,
+                    )
                 }
             }
+        }
+        if (!active) {
+            IconButton(onClick = onSwitch) {
+                Icon(
+                    Icons.Outlined.SwapHoriz,
+                    contentDescription = stringResource(R.string.switch_server),
+                )
+            }
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                Icons.Outlined.DeleteOutline,
+                contentDescription = stringResource(R.string.delete),
+            )
         }
     }
 }
