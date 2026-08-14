@@ -199,6 +199,7 @@ private fun FloatingNavigationBar(
             val indicatorSurface = MaterialTheme.colorScheme.primaryContainer.copy(
                 alpha = if (isRenderEffectSupported()) 0.34f else 0.82f,
             )
+            val indicatorShape = MaterialTheme.shapes.medium
             LaunchedEffect(selectedIndex) {
                 indicatorStretch.snapTo(1f)
                 indicatorStretch.animateTo(
@@ -220,7 +221,7 @@ private fun FloatingNavigationBar(
                     }
                     .drawBackdrop(
                         backdrop = backdrop,
-                        shape = { MaterialTheme.shapes.medium },
+                        shape = { indicatorShape },
                         effects = {
                             vibrancy()
                             blur(6.dp.toPx())
