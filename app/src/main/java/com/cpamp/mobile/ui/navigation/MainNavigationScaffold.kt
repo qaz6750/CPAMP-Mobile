@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -41,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -128,10 +130,21 @@ private fun FloatingNavigationBar(
     onNavigate: (AppDestination) -> Unit,
     backdrop: Backdrop,
 ) {
+    val renderEffectsSupported = isRenderEffectSupported()
     val navigationBarHeight = 58.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.2f)
-    val navigationBarShape = MaterialTheme.shapes.extraLarge
-    val glassSurface = MaterialTheme.colorScheme.surface.copy(
-        alpha = if (isRenderEffectSupported()) 0.42f else 0.92f,
+    val navigationBarShape = CircleShape
+    val glassSurface = Brush.verticalGradient(
+        colors = if (renderEffectsSupported) {
+            listOf(
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.30f),
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.18f),
+            )
+        } else {
+            listOf(
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            )
+        },
     )
     Box(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding()
@@ -147,19 +160,19 @@ private fun FloatingNavigationBar(
                     shape = { navigationBarShape },
                     effects = {
                         vibrancy()
-                        blur(10.dp.toPx())
+                        blur(8.dp.toPx())
                         lens(
-                            refractionHeight = 10.dp.toPx(),
-                            refractionAmount = 16.dp.toPx(),
+                            refractionHeight = 8.dp.toPx(),
+                            refractionAmount = 12.dp.toPx(),
                             depthEffect = true,
-                            chromaticAberration = true,
+                            chromaticAberration = false,
                         )
                     },
-                    highlight = { Highlight.Plain.copy(alpha = 0.78f) },
+                    highlight = { Highlight.Plain.copy(alpha = 0.58f) },
                     shadow = {
                         Shadow(
-                            radius = 10.dp,
-                            color = Color.Black.copy(alpha = 0.12f),
+                            radius = 12.dp,
+                            color = Color.Black.copy(alpha = 0.10f),
                         )
                     },
                     onDrawSurface = { drawRect(glassSurface) },
@@ -182,67 +195,81 @@ private fun FloatingNavigationBar(
             val indicatorOffset by animateDpAsState(
                 targetValue = itemWidth * indicatorIndex.toFloat(),
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow,
+                    dampingRatio = 0.78f,
+                    stiffness = 380f,
                 ),
                 label = "navigationIndicatorOffset",
             )
             val indicatorStretch = remember { Animatable(0f) }
             val pressScale by animateFloatAsState(
-                targetValue = if (indicatorPressed) 0.9f else 1f,
+                targetValue = if (indicatorPressed) 0.96f else 1f,
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    dampingRatio = 0.72f,
                     stiffness = Spring.StiffnessMedium,
                 ),
                 label = "navigationIndicatorPressScale",
             )
-            val indicatorSurface = MaterialTheme.colorScheme.primaryContainer.copy(
-                alpha = if (isRenderEffectSupported()) 0.34f else 0.82f,
+            val indicatorSurface = Brush.verticalGradient(
+                colors = if (renderEffectsSupported) {
+                    listOf(
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.36f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.14f),
+                    )
+                } else {
+                    listOf(
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f),
+                    )
+                },
             )
-            val indicatorShape = MaterialTheme.shapes.medium
+            val indicatorShape = CircleShape
             LaunchedEffect(selectedIndex) {
-                indicatorStretch.snapTo(1f)
+                indicatorStretch.snapTo(0.85f)
                 indicatorStretch.animateTo(
                     targetValue = 0f,
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow,
+                        dampingRatio = 0.74f,
+                        stiffness = 300f,
                     ),
                 )
             }
+            val indicatorActivity = maxOf(
+                indicatorStretch.value,
+                if (indicatorPressed) 1f else 0f,
+            )
             Box(
                 modifier = Modifier
-                    .offset(x = indicatorOffset + 2.dp)
-                    .width(itemWidth - 4.dp)
-                    .fillMaxHeight()
+                    .align(Alignment.CenterStart)
+                    .offset(x = indicatorOffset + 4.dp)
+                    .width(itemWidth - 8.dp)
+                    .height(navigationBarHeight - 12.dp)
                     .graphicsLayer {
-                        scaleX = 1f + indicatorStretch.value * 0.18f
-                        scaleY = pressScale - indicatorStretch.value * 0.08f
+                        scaleX = 1f + indicatorStretch.value * 0.10f
+                        scaleY = pressScale - indicatorStretch.value * 0.035f
                     }
                     .drawBackdrop(
                         backdrop = backdrop,
                         shape = { indicatorShape },
                         effects = {
-                            vibrancy()
-                            blur(6.dp.toPx())
+                            blur(4.dp.toPx())
                             lens(
-                                refractionHeight = 8.dp.toPx() +
-                                    4.dp.toPx() * indicatorStretch.value,
-                                refractionAmount = 18.dp.toPx() +
-                                    10.dp.toPx() * indicatorStretch.value,
+                                refractionHeight = 7.dp.toPx() +
+                                    3.dp.toPx() * indicatorActivity,
+                                refractionAmount = 14.dp.toPx() +
+                                    8.dp.toPx() * indicatorActivity,
                                 depthEffect = true,
-                                chromaticAberration = true,
+                                chromaticAberration = indicatorActivity > 0.08f,
                             )
                         },
                         highlight = {
                             Highlight.Ambient.copy(
-                                alpha = 0.82f + indicatorStretch.value * 0.16f,
+                                alpha = 0.72f + indicatorActivity * 0.16f,
                             )
                         },
                         shadow = {
                             Shadow(
-                                radius = 7.dp,
-                                color = Color.Black.copy(alpha = 0.14f),
+                                radius = 8.dp,
+                                color = Color.Black.copy(alpha = 0.10f),
                             )
                         },
                         onDrawSurface = { drawRect(indicatorSurface) },
@@ -288,12 +315,12 @@ private fun FloatingNavigationItem(
     )
     val contentScale by animateFloatAsState(
         targetValue = when {
-            pressed -> 0.88f
-            selected -> 1.03f
+            pressed -> 0.94f
+            selected -> 1.02f
             else -> 1f
         },
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
+            dampingRatio = 0.72f,
             stiffness = Spring.StiffnessMedium,
         ),
         label = "${destination.route}NavigationItemScale",
@@ -303,7 +330,7 @@ private fun FloatingNavigationItem(
         modifier = modifier.fillMaxHeight().padding(horizontal = 2.dp),
         color = Color.Transparent,
         contentColor = contentColor,
-        shape = MaterialTheme.shapes.medium,
+        shape = CircleShape,
         interactionSource = interactionSource,
     ) {
         Column(
