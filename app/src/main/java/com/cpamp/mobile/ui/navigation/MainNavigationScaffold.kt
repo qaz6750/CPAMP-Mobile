@@ -27,7 +27,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -132,7 +132,7 @@ private fun FloatingNavigationBar(
 ) {
     val renderEffectsSupported = isRenderEffectSupported()
     val navigationBarHeight = 58.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.2f)
-    val navigationBarShape = CircleShape
+    val navigationBarShape = RoundedCornerShape(percent = 50)
     val glassSurface = Brush.verticalGradient(
         colors = if (renderEffectsSupported) {
             listOf(
@@ -222,7 +222,7 @@ private fun FloatingNavigationBar(
                     )
                 },
             )
-            val indicatorShape = CircleShape
+            val indicatorShape = RoundedCornerShape(percent = 50)
             LaunchedEffect(selectedIndex) {
                 indicatorStretch.snapTo(0.85f)
                 indicatorStretch.animateTo(
@@ -240,9 +240,9 @@ private fun FloatingNavigationBar(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = indicatorOffset + 4.dp)
-                    .width(itemWidth - 8.dp)
-                    .height(navigationBarHeight - 12.dp)
+                    .offset(x = indicatorOffset - 4.dp)
+                    .width(itemWidth + 8.dp)
+                    .height(navigationBarHeight - 18.dp)
                     .graphicsLayer {
                         scaleX = 1f + indicatorStretch.value * 0.10f
                         scaleY = pressScale - indicatorStretch.value * 0.035f
@@ -330,7 +330,7 @@ private fun FloatingNavigationItem(
         modifier = modifier.fillMaxHeight().padding(horizontal = 2.dp),
         color = Color.Transparent,
         contentColor = contentColor,
-        shape = CircleShape,
+        shape = MaterialTheme.shapes.medium,
         interactionSource = interactionSource,
     ) {
         Column(
