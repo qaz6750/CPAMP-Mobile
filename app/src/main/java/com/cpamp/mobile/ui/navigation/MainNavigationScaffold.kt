@@ -7,8 +7,11 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,7 +37,6 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,8 +59,6 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
-import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.isRenderEffectSupported
 import com.kyant.backdrop.shadow.Shadow
@@ -159,16 +160,9 @@ private fun FloatingNavigationBar(
                     backdrop = backdrop,
                     shape = { navigationBarShape },
                     effects = {
-                        vibrancy()
-                        blur(8.dp.toPx())
-                        lens(
-                            refractionHeight = 8.dp.toPx(),
-                            refractionAmount = 12.dp.toPx(),
-                            depthEffect = true,
-                            chromaticAberration = false,
-                        )
+                        blur(6.dp.toPx())
                     },
-                    highlight = { Highlight.Plain.copy(alpha = 0.58f) },
+                    highlight = { Highlight.Plain.copy(alpha = 0.52f) },
                     shadow = {
                         Shadow(
                             radius = 12.dp,
@@ -212,8 +206,8 @@ private fun FloatingNavigationBar(
             val indicatorSurface = Brush.verticalGradient(
                 colors = if (renderEffectsSupported) {
                     listOf(
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.36f),
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.14f),
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.46f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f),
                     )
                 } else {
                     listOf(
@@ -224,7 +218,7 @@ private fun FloatingNavigationBar(
             )
             val indicatorShape = RoundedCornerShape(percent = 50)
             LaunchedEffect(selectedIndex) {
-                indicatorStretch.snapTo(0.85f)
+                indicatorStretch.snapTo(0.48f)
                 indicatorStretch.animateTo(
                     targetValue = 0f,
                     animationSpec = spring(
@@ -233,10 +227,6 @@ private fun FloatingNavigationBar(
                     ),
                 )
             }
-            val indicatorActivity = maxOf(
-                indicatorStretch.value,
-                if (indicatorPressed) 1f else 0f,
-            )
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -244,35 +234,14 @@ private fun FloatingNavigationBar(
                     .width(itemWidth + 8.dp)
                     .height(navigationBarHeight - 18.dp)
                     .graphicsLayer {
-                        scaleX = 1f + indicatorStretch.value * 0.10f
-                        scaleY = pressScale - indicatorStretch.value * 0.035f
+                        scaleX = 1f + indicatorStretch.value * 0.06f
+                        scaleY = pressScale - indicatorStretch.value * 0.02f
                     }
-                    .drawBackdrop(
-                        backdrop = backdrop,
-                        shape = { indicatorShape },
-                        effects = {
-                            blur(4.dp.toPx())
-                            lens(
-                                refractionHeight = 7.dp.toPx() +
-                                    3.dp.toPx() * indicatorActivity,
-                                refractionAmount = 14.dp.toPx() +
-                                    8.dp.toPx() * indicatorActivity,
-                                depthEffect = true,
-                                chromaticAberration = indicatorActivity > 0.08f,
-                            )
-                        },
-                        highlight = {
-                            Highlight.Ambient.copy(
-                                alpha = 0.72f + indicatorActivity * 0.16f,
-                            )
-                        },
-                        shadow = {
-                            Shadow(
-                                radius = 8.dp,
-                                color = Color.Black.copy(alpha = 0.10f),
-                            )
-                        },
-                        onDrawSurface = { drawRect(indicatorSurface) },
+                    .background(indicatorSurface, indicatorShape)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                        shape = indicatorShape,
                     ),
             )
             Row(
@@ -325,13 +294,18 @@ private fun FloatingNavigationItem(
         ),
         label = "${destination.route}NavigationItemScale",
     )
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxHeight().padding(horizontal = 2.dp),
-        color = Color.Transparent,
-        contentColor = contentColor,
-        shape = MaterialTheme.shapes.medium,
-        interactionSource = interactionSource,
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .padding(horizontal = 2.dp)
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.Tab,
+                interactionSource = interactionSource,
+                indication = null,
+            ),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             modifier = Modifier
