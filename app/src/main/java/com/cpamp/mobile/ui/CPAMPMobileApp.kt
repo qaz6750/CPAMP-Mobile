@@ -5,6 +5,10 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -206,27 +210,46 @@ private fun ConnectedApp(
 }
 
 private const val APP_UPDATE_ROUTE = "app-update"
-private const val TOP_LEVEL_TRANSITION_DURATION_MILLIS = 320
+private const val TOP_LEVEL_TRANSITION_DURATION_MILLIS = 220
+private const val TOP_LEVEL_TRANSITION_OFFSET_DIVISOR = 12
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelEnterTransition(): EnterTransition? =
     topLevelSlideDirection()?.let { direction ->
-        slideIntoContainer(
-            towards = direction,
+        val fromRight = direction == AnimatedContentTransitionScope.SlideDirection.Left
+        fadeIn(
             animationSpec = tween(
                 durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
                 easing = FastOutSlowInEasing,
             ),
+        ) + slideInHorizontally(
+            animationSpec = tween(
+                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
+            initialOffsetX = { fullWidth ->
+                if (fromRight) fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
+                else -fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
+            },
         )
     }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelExitTransition(): ExitTransition? =
     topLevelSlideDirection()?.let { direction ->
-        slideOutOfContainer(
-            towards = direction,
+        val exitsLeft = direction == AnimatedContentTransitionScope.SlideDirection.Left
+        fadeOut(
             animationSpec = tween(
                 durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
                 easing = FastOutSlowInEasing,
             ),
+        ) + slideOutHorizontally(
+            animationSpec = tween(
+                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
+                easing = FastOutSlowInEasing,
+            ),
+            targetOffsetX = { fullWidth ->
+                if (exitsLeft) -fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
+                else fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
+            },
         )
     }
 
