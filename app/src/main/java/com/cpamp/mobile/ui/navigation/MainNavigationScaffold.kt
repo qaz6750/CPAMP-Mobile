@@ -160,7 +160,9 @@ private fun FloatingNavigationBar(
                     backdrop = backdrop,
                     shape = { navigationBarShape },
                     effects = {
-                        blur(6.dp.toPx())
+                        if (renderEffectsSupported) {
+                            blur(4.dp.toPx())
+                        }
                     },
                     highlight = { Highlight.Plain.copy(alpha = 0.52f) },
                     shadow = {

@@ -110,10 +110,12 @@ private fun ConnectedApp(
     MainNavigationScaffold(
         currentDestination = current,
         onNavigate = { destination ->
-            navController.navigate(destination.route) {
-                popUpTo(AppDestination.Overview.route) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
+            if (destination != current) {
+                navController.navigate(destination.route) {
+                    popUpTo(AppDestination.Overview.route) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             }
         },
     ) { contentPadding ->
