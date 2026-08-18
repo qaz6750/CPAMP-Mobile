@@ -129,10 +129,10 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
                     shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
                 ) {
                     Column(
                         modifier = Modifier.padding(22.dp),
@@ -301,9 +301,9 @@ private fun SavedProfileCard(
     Card(
         modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(18.dp),

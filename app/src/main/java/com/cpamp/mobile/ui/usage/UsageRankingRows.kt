@@ -60,7 +60,7 @@ private fun RankingRow(
     successRate: Double,
     model: String? = null,
 ) {
-    AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)) {
+    AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,

@@ -359,7 +359,7 @@ private fun AccountProviderTab(
 @Composable
 private fun AccountCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+    containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
     content: @Composable () -> Unit,
 ) {
     AppCard(

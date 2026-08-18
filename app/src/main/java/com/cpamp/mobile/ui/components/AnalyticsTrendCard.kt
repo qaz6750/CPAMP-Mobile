@@ -80,7 +80,7 @@ fun AnalyticsTrendCard(
     )
     AppCard(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
     ) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
