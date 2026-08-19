@@ -1,6 +1,5 @@
 package com.cpamp.mobile.ui.auth
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,8 +24,6 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -53,6 +50,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.cpamp.mobile.R
 import com.cpamp.mobile.domain.model.ServerProfile
+import com.cpamp.mobile.ui.components.AppCard
 import com.cpamp.mobile.ui.common.safeServerName
 import com.cpamp.mobile.ui.components.AppBackground
 import com.cpamp.mobile.ui.components.BrandMark
@@ -125,14 +123,8 @@ fun LoginScreen(
                 }
             }
             item {
-                Card(
+                AppCard(
                     modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
                 ) {
                     Column(
                         modifier = Modifier.padding(22.dp),
@@ -298,12 +290,8 @@ private fun SavedProfileCard(
         hideAddress,
         stringResource(R.string.saved_servers),
     )
-    Card(
+    AppCard(
         modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(18.dp),

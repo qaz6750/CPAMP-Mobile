@@ -166,7 +166,7 @@ fun UsageAnalyticsScreen(
                 }
             } else if (response == null) {
                 item {
-                    AppCard(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)) {
+                    AppCard {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,

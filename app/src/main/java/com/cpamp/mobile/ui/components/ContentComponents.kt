@@ -176,14 +176,9 @@ fun MetricCard(
     compact: Boolean = false,
 ) {
     val compactMinHeight = 128.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.6f)
-    Card(
+    AppCard(
         modifier = modifier.then(if (compact) Modifier.heightIn(min = compactMinHeight) else Modifier),
         shape = if (compact) MaterialTheme.shapes.medium else MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
