@@ -210,7 +210,7 @@ fun MetricCard(
             ) {
                 Surface(
                     color = accent.copy(alpha = 0.10f),
-                    shape = RoundedCornerShape(if (compact) 10.dp else 12.dp),
+                    shape = if (compact) MaterialTheme.shapes.extraSmall else MaterialTheme.shapes.small,
                 ) {
                     Icon(
                         imageVector = icon,

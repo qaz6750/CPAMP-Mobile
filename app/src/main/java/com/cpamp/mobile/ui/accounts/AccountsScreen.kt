@@ -562,7 +562,7 @@ private fun AccountProviderBadge(provider: String) {
     Surface(
         color = accent.copy(alpha = 0.10f),
         contentColor = accent,
-        shape = RoundedCornerShape(9.dp),
+        shape = MaterialTheme.shapes.extraSmall,
         border = BorderStroke(1.dp, accent.copy(alpha = 0.18f)),
     ) {
         Text(
@@ -608,7 +608,7 @@ private fun AccountIdentitySummary(account: AccountHealth) {
                 Surface(
                     color = accent.copy(alpha = 0.12f),
                     contentColor = accent,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                 ) {
                     Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                         CredentialProviderIcon(account.provider, modifier = Modifier.size(26.dp))
@@ -857,7 +857,7 @@ private fun AccountMetricIcon(icon: ImageVector, color: Color) {
     Surface(
         color = color.copy(alpha = 0.10f),
         contentColor = color,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.extraSmall,
     ) {
         Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
