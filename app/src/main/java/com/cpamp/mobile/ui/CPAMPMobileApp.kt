@@ -1,14 +1,7 @@
 package com.cpamp.mobile.ui
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -129,10 +122,10 @@ private fun ConnectedApp(
         ) {
             composable(
                 route = AppDestination.Overview.route,
-                enterTransition = { topLevelEnterTransition() },
-                exitTransition = { topLevelExitTransition() },
-                popEnterTransition = { topLevelEnterTransition() },
-                popExitTransition = { topLevelExitTransition() },
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { ExitTransition.None },
             ) {
                 DashboardScreen(
                     contentPadding = contentPadding,
@@ -142,10 +135,10 @@ private fun ConnectedApp(
             }
             composable(
                 route = AppDestination.Accounts.route,
-                enterTransition = { topLevelEnterTransition() },
-                exitTransition = { topLevelExitTransition() },
-                popEnterTransition = { topLevelEnterTransition() },
-                popExitTransition = { topLevelExitTransition() },
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { ExitTransition.None },
             ) {
                 AccountsScreen(
                     contentPadding = contentPadding,
@@ -164,10 +157,10 @@ private fun ConnectedApp(
             }
             composable(
                 route = AppDestination.Usage.route,
-                enterTransition = { topLevelEnterTransition() },
-                exitTransition = { topLevelExitTransition() },
-                popEnterTransition = { topLevelEnterTransition() },
-                popExitTransition = { topLevelExitTransition() },
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { ExitTransition.None },
             ) {
                 UsageAnalyticsScreen(
                     contentPadding = contentPadding,
@@ -176,10 +169,10 @@ private fun ConnectedApp(
             }
             composable(
                 route = AppDestination.Settings.route,
-                enterTransition = { topLevelEnterTransition() },
-                exitTransition = { topLevelExitTransition() },
-                popEnterTransition = { topLevelEnterTransition() },
-                popExitTransition = { topLevelExitTransition() },
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { ExitTransition.None },
             ) {
                 SettingsScreen(
                     contentPadding = contentPadding,
@@ -210,68 +203,6 @@ private fun ConnectedApp(
 }
 
 private const val APP_UPDATE_ROUTE = "app-update"
-private const val TOP_LEVEL_TRANSITION_DURATION_MILLIS = 220
-private const val TOP_LEVEL_TRANSITION_OFFSET_DIVISOR = 12
-
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelEnterTransition(): EnterTransition? =
-    topLevelSlideDirection()?.let { direction ->
-        val fromRight = direction == AnimatedContentTransitionScope.SlideDirection.Left
-        fadeIn(
-            animationSpec = tween(
-                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
-                easing = FastOutSlowInEasing,
-            ),
-        ) + slideInHorizontally(
-            animationSpec = tween(
-                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
-                easing = FastOutSlowInEasing,
-            ),
-            initialOffsetX = { fullWidth ->
-                if (fromRight) fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
-                else -fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
-            },
-        )
-    }
-
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelExitTransition(): ExitTransition? =
-    topLevelSlideDirection()?.let { direction ->
-        val exitsLeft = direction == AnimatedContentTransitionScope.SlideDirection.Left
-        fadeOut(
-            animationSpec = tween(
-                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
-                easing = FastOutSlowInEasing,
-            ),
-        ) + slideOutHorizontally(
-            animationSpec = tween(
-                durationMillis = TOP_LEVEL_TRANSITION_DURATION_MILLIS,
-                easing = FastOutSlowInEasing,
-            ),
-            targetOffsetX = { fullWidth ->
-                if (exitsLeft) -fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
-                else fullWidth / TOP_LEVEL_TRANSITION_OFFSET_DIVISOR
-            },
-        )
-    }
-
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.topLevelSlideDirection():
-    AnimatedContentTransitionScope.SlideDirection? {
-    val initialIndex = topLevelDestinationIndex(initialState.destination.route) ?: return null
-    val targetIndex = topLevelDestinationIndex(targetState.destination.route) ?: return null
-    return when {
-        targetIndex > initialIndex -> AnimatedContentTransitionScope.SlideDirection.Left
-        targetIndex < initialIndex -> AnimatedContentTransitionScope.SlideDirection.Right
-        else -> null
-    }
-}
-
-private fun topLevelDestinationIndex(route: String?): Int? {
-    val destination = when (route) {
-        ACCOUNT_DETAIL_ROUTE -> AppDestination.Accounts
-        APP_UPDATE_ROUTE -> AppDestination.Settings
-        else -> AppDestination.entries.firstOrNull { it.route == route }
-    } ?: return null
-    return destination.ordinal
-}
 
 private fun accountDetailRoute(accountId: String): String {
     val encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(accountId.toByteArray(Charsets.UTF_8))
