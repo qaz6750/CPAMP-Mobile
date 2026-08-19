@@ -82,6 +82,7 @@ import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.CredentialProviderIcon
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
+import com.cpamp.mobile.ui.components.ResponsiveMetricGrid
 
 @Composable
 fun AccountsScreen(
@@ -124,11 +125,15 @@ fun AccountsScreen(
         ) {
             item {
                 val fallback = stringResource(R.string.nav_accounts)
+                val source = state.snapshot?.let { snapshot ->
+                    stringResource(R.string.accounts_source_inventory, snapshot.observedAtMs.asDateTime())
+                }
                 PageHeader(
                     eyebrow = state.profile?.let { profile ->
                         safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)
                     } ?: fallback,
                     title = stringResource(R.string.accounts_title),
+                    subtitle = source,
                     trailing = {
                         LoadingIconButton(
                             icon = Icons.Outlined.Refresh,
@@ -139,15 +144,6 @@ fun AccountsScreen(
                         )
                     },
                 )
-            }
-            state.snapshot?.let { snapshot ->
-                item {
-                    Text(
-                        stringResource(R.string.accounts_source_inventory, snapshot.observedAtMs.asDateTime()),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
             notice?.let { (message, isError) ->
                 item { AccountsNotice(message, isError) }
@@ -252,25 +248,18 @@ fun AccountDetailScreen(
 
 @Composable
 private fun AccountDetailHeader(onBack: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                Icons.AutoMirrored.Outlined.ArrowBack,
-                contentDescription = stringResource(R.string.back),
-            )
-        }
-        Text(
-            stringResource(R.string.accounts_detail_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
+    PageHeader(
+        eyebrow = stringResource(R.string.nav_accounts),
+        title = stringResource(R.string.accounts_detail_title),
+        leading = {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = stringResource(R.string.back),
+                )
+            }
+        },
+    )
 }
 
 @Composable
@@ -315,13 +304,13 @@ private fun AccountProviderTab(
         onClick = onClick,
         modifier = modifier.heightIn(min = 36.dp),
         color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+        else MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
         contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         border = BorderStroke(
             1.dp,
             if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
-            else MaterialTheme.colorScheme.outlineVariant,
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
         ),
     ) {
         Row(
@@ -365,17 +354,13 @@ private fun AccountCard(
     AppCard(
         modifier = modifier,
         containerColor = containerColor,
-        shape = AccountCardShape,
         content = content,
     )
 }
 
 @Composable
 private fun AccountPanel(content: @Composable () -> Unit) {
-    AppCard(
-        shape = AccountPanelShape,
-        content = content,
-    )
+    AppCard(content = content)
 }
 
 @Composable
@@ -409,49 +394,42 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
             color = MaterialTheme.colorScheme.error,
         ),
     )
-    AccountListPanel {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            metrics.chunked(2).forEachIndexed { rowIndex, rowMetrics ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    rowMetrics.forEachIndexed { columnIndex, metric ->
-                        AccountHealthMetricItem(metric, Modifier.weight(1f))
-                        if (columnIndex < rowMetrics.lastIndex) {
-                            Box(
-                                Modifier.width(1.dp).heightIn(min = 68.dp)
-                                    .background(MaterialTheme.colorScheme.outlineVariant),
-                            )
-                        }
-                    }
-                }
-                if (rowIndex < metrics.lastIndex / 2) {
-                    AccountDetailDivider()
-                }
-            }
-        }
-    }
+    ResponsiveMetricGrid(
+        cards = metrics.map { metric ->
+            { modifier -> AccountHealthMetricItem(metric, modifier) }
+        },
+    )
 }
 
 @Composable
 private fun AccountHealthMetricItem(metric: AccountHealthMetric, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.heightIn(min = 68.dp).padding(horizontal = 10.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            metric.count.toString(),
-            style = MaterialTheme.typography.titleLarge,
-            color = metric.color,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            stringResource(metric.label),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-        )
+    val minimumHeight = 96.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.3f)
+    AccountCard(modifier = modifier) {
+        Column(
+            modifier = Modifier.fillMaxWidth().heightIn(min = minimumHeight).padding(14.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(metric.color))
+                Text(
+                    stringResource(metric.label),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                metric.count.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                color = metric.color,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 
@@ -578,18 +556,12 @@ private fun AccountProviderBadge(provider: String) {
         shape = RoundedCornerShape(9.dp),
         border = BorderStroke(1.dp, accent.copy(alpha = 0.18f)),
     ) {
-        Row(
+        Text(
+            providerBadgeLabel(provider),
             modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            CredentialProviderIcon(provider, modifier = Modifier.size(16.dp))
-            Text(
-                providerBadgeLabel(provider),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
 
@@ -1136,9 +1108,6 @@ internal fun AccountQuotaWindow.durationLabel(): String = when {
 internal val QuotaOrange = androidx.compose.ui.graphics.Color(0xFFF59E0B)
 
 private const val MinimumVisibleQuotaProgress = 0.02f
-
-private val AccountCardShape = RoundedCornerShape(12.dp)
-private val AccountPanelShape = RoundedCornerShape(14.dp)
 
 @StringRes
 private fun AccountsError.messageResource(): Int = when (this) {
