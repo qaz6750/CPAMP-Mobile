@@ -82,7 +82,6 @@ import com.cpamp.mobile.ui.components.ContentStateCard
 import com.cpamp.mobile.ui.components.CredentialProviderIcon
 import com.cpamp.mobile.ui.components.LoadingIconButton
 import com.cpamp.mobile.ui.components.PageHeader
-import com.cpamp.mobile.ui.components.ResponsiveMetricGrid
 
 @Composable
 fun AccountsScreen(
@@ -394,40 +393,50 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
             color = MaterialTheme.colorScheme.error,
         ),
     )
-    ResponsiveMetricGrid(
-        cards = metrics.map { metric ->
-            { modifier -> AccountHealthMetricItem(metric, modifier) }
-        },
-    )
+    AccountCard {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            metrics.forEachIndexed { index, metric ->
+                AccountHealthMetricItem(metric, Modifier.weight(1f))
+                if (index < metrics.lastIndex) {
+                    Box(
+                        Modifier.width(1.dp).height(44.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
 private fun AccountHealthMetricItem(metric: AccountHealthMetric, modifier: Modifier = Modifier) {
-    val minimumHeight = 96.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.3f)
-    AccountCard(modifier = modifier) {
-        Column(
-            modifier = Modifier.fillMaxWidth().heightIn(min = minimumHeight).padding(14.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+    Column(
+        modifier = modifier.padding(horizontal = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Text(
+            metric.count.toString(),
+            style = MaterialTheme.typography.titleLarge,
+            color = metric.color,
+            fontWeight = FontWeight.Bold,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(metric.color))
-                Text(
-                    stringResource(metric.label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Box(Modifier.size(6.dp).clip(CircleShape).background(metric.color))
             Text(
-                metric.count.toString(),
-                style = MaterialTheme.typography.titleLarge,
-                color = metric.color,
-                fontWeight = FontWeight.Bold,
+                stringResource(metric.label),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
