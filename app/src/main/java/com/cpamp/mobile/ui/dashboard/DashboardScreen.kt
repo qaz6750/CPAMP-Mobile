@@ -130,7 +130,7 @@ fun DashboardScreen(
                             nowMs = nowMs,
                             emptyText = stringResource(R.string.no_traffic),
                             compactToData = false,
-                            chartHeight = if (dense) 136.dp else 220.dp,
+                            chartHeight = if (dense) 168.dp else 220.dp,
                             dense = dense,
                         )
                     }
