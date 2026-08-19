@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -109,10 +110,19 @@ fun PageHeader(
 @Composable
 fun AppCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+    containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     shape: Shape = MaterialTheme.shapes.large,
-    border: BorderStroke = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
+    border: BorderStroke = BorderStroke(
+        1.dp,
+        Brush.linearGradient(
+            colors = listOf(
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f),
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.09f),
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+            ),
+        ),
+    ),
     content: @Composable () -> Unit,
 ) {
     Card(
