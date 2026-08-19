@@ -105,11 +105,11 @@ private object ColorTokens {
     val SecondaryContainerDark = Color(0xFF1E293B)
     val OnSecondaryContainerDark = Color(0xFFCBD5E1)
     val ErrorContainerLight = Color(0xFFFEF2F2)
-    val OnErrorContainerLight = Color(0xFF991B1B)
-    val ErrorDark = Color(0xFFF87171)
-    val OnErrorDark = Color(0xFF450A0A)
-    val ErrorContainerDark = Color(0xFF3F171A)
-    val OnErrorContainerDark = Color(0xFFFCA5A5)
+    val OnErrorContainerLight = Color(0xFFB00020)
+    val ErrorDark = Color(0xFFFF6961)
+    val OnErrorDark = Color(0xFF5C0011)
+    val ErrorContainerDark = Color(0xFF49151C)
+    val OnErrorContainerDark = Color(0xFFFFDAD6)
 }
 
 @Composable

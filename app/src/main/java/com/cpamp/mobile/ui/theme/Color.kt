@@ -16,7 +16,7 @@ val Navy = Color(0xFF0A0A0A)
 val NavySurface = Color(0xFF181C28)
 val Success = Color(0xFF22C55E)
 val Warning = Color(0xFFF59E0B)
-val Error = Color(0xFFB91C1C)
+val Error = Color(0xFFD70015)
 
 val AppGradientStart = Color(0xFFF0F7FF)
 val AppGradientCenter = Color(0xFFE7F2FF)
