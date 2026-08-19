@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -174,8 +175,10 @@ fun MetricCard(
     modifier: Modifier = Modifier,
     accent: Color = MaterialTheme.colorScheme.primary,
     compact: Boolean = false,
+    dense: Boolean = false,
 ) {
-    val compactMinHeight = 128.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.6f)
+    val compactMinHeight = (if (dense) 104.dp else 128.dp) *
+        LocalDensity.current.fontScale.coerceIn(1f, if (dense) 1.35f else 1.6f)
     AppCard(
         modifier = modifier.then(if (compact) Modifier.heightIn(min = compactMinHeight) else Modifier),
         shape = if (compact) MaterialTheme.shapes.medium else MaterialTheme.shapes.large,
@@ -183,8 +186,12 @@ fun MetricCard(
         Column(
             modifier = Modifier.fillMaxWidth()
                 .then(if (compact) Modifier.fillMaxHeight() else Modifier)
-                .padding(if (compact) 12.dp else 20.dp),
-            verticalArrangement = if (compact) Arrangement.spacedBy(6.dp) else Arrangement.spacedBy(12.dp),
+                .padding(if (dense) 10.dp else if (compact) 12.dp else 20.dp),
+            verticalArrangement = when {
+                dense -> Arrangement.spacedBy(4.dp)
+                compact -> Arrangement.spacedBy(6.dp)
+                else -> Arrangement.spacedBy(12.dp)
+            },
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -199,8 +206,8 @@ fun MetricCard(
                         imageVector = icon,
                         contentDescription = null,
                         tint = accent,
-                        modifier = Modifier.padding(if (compact) 6.dp else 9.dp)
-                            .then(if (compact) Modifier.size(17.dp) else Modifier),
+                        modifier = Modifier.padding(if (dense) 5.dp else if (compact) 6.dp else 9.dp)
+                            .then(if (dense) Modifier.size(16.dp) else if (compact) Modifier.size(17.dp) else Modifier),
                     )
                 }
                 if (compact) {
@@ -219,14 +226,14 @@ fun MetricCard(
                     text = value,
                     style = if (value.length <= 8) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 2,
+                    maxLines = if (dense) 1 else 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = supporting.orEmpty(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = if (dense) 1 else 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             } else {
@@ -258,13 +265,14 @@ fun MetricCard(
 fun ResponsiveMetricGrid(
     cards: List<@Composable (Modifier) -> Unit>,
     modifier: Modifier = Modifier,
+    spacing: Dp = 10.dp,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
         cards.chunked(2).forEach { rowCards ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing)) {
                 rowCards.forEach { card -> card(Modifier.weight(1f)) }
                 if (rowCards.size == 1) {
                     androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))

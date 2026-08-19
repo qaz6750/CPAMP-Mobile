@@ -1,10 +1,12 @@
 package com.cpamp.mobile.ui.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -65,71 +67,76 @@ fun DashboardScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     AppBackground {
-        val summary = state.summary
-        LazyColumn(
-            modifier = Modifier.align(Alignment.TopCenter).fillMaxHeight()
-                .widthIn(max = 1200.dp).fillMaxWidth(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = contentPadding.calculateTopPadding() + 24.dp,
-                bottom = contentPadding.calculateBottomPadding() + 28.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                val fallback = stringResource(R.string.nav_overview)
-                PageHeader(
-                    eyebrow = state.profile?.let { profile ->
-                        safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)
-                    } ?: fallback,
-                    title = stringResource(R.string.overview_title),
-                    subtitle = stringResource(R.string.overview_subtitle),
-                    trailing = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            state.profile?.let { profile ->
-                                ConnectionPill(
-                                    label = stringResource(
-                                        if (profile.usesCleartext) R.string.http_connection else R.string.https_connection,
-                                    ),
-                                    secure = !profile.usesCleartext,
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val dense = maxWidth < 720.dp
+            val summary = state.summary
+            LazyColumn(
+                modifier = Modifier.align(Alignment.TopCenter).fillMaxHeight()
+                    .widthIn(max = 1200.dp).fillMaxWidth(),
+                contentPadding = PaddingValues(
+                    start = if (dense) 16.dp else 20.dp,
+                    end = if (dense) 16.dp else 20.dp,
+                    top = contentPadding.calculateTopPadding() + if (dense) 12.dp else 24.dp,
+                    bottom = contentPadding.calculateBottomPadding() + if (dense) 20.dp else 28.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(if (dense) 10.dp else 16.dp),
+            ) {
+                item {
+                    val fallback = stringResource(R.string.nav_overview)
+                    PageHeader(
+                        eyebrow = state.profile?.let { profile ->
+                            safeServerName(profile.name, profile.baseUrl, hideAddresses, fallback)
+                        } ?: fallback,
+                        title = stringResource(R.string.overview_title),
+                        subtitle = if (dense) null else stringResource(R.string.overview_subtitle),
+                        trailing = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                state.profile?.let { profile ->
+                                    ConnectionPill(
+                                        label = stringResource(
+                                            if (profile.usesCleartext) R.string.http_connection else R.string.https_connection,
+                                        ),
+                                        secure = !profile.usesCleartext,
+                                    )
+                                }
+                                LoadingIconButton(
+                                    icon = Icons.Outlined.Refresh,
+                                    contentDescription = stringResource(R.string.refresh),
+                                    loading = state.refreshing,
+                                    onClick = viewModel::refresh,
                                 )
                             }
-                            LoadingIconButton(
-                                icon = Icons.Outlined.Refresh,
-                                contentDescription = stringResource(R.string.refresh),
-                                loading = state.refreshing,
-                                onClick = viewModel::refresh,
-                            )
-                        }
-                    },
-                )
-            }
-            if (state.fromCache || state.error != null) {
-                item { DashboardNotice(state) }
-            }
-            if (state.loading && summary == null) {
-                item {
-                    ContentStateCard(
-                        message = stringResource(R.string.content_loading),
-                        loading = true,
+                        },
                     )
                 }
-            }
-            summary?.let { data ->
-                item { DashboardMetrics(data) }
-                item {
-                    val nowMs = data.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis()
-                    DashboardTrafficChart(
-                        title = stringResource(R.string.preview_trend),
-                        points = buildTodayHourlyTrend(data.trafficTimeline, state.costTimeline, nowMs),
-                        nowMs = nowMs,
-                        emptyText = stringResource(R.string.no_traffic),
-                        compactToData = false,
-                    )
+                if (state.fromCache || state.error != null) {
+                    item { DashboardNotice(state) }
                 }
-                if (data.topModelsToday.isNotEmpty()) {
-                    topModelsSection(data.topModelsToday)
+                if (state.loading && summary == null) {
+                    item {
+                        ContentStateCard(
+                            message = stringResource(R.string.content_loading),
+                            loading = true,
+                        )
+                    }
+                }
+                summary?.let { data ->
+                    item { DashboardMetrics(data, dense) }
+                    item {
+                        val nowMs = data.generatedAtMs.takeIf { it > 0 } ?: System.currentTimeMillis()
+                        DashboardTrafficChart(
+                            title = stringResource(R.string.preview_trend),
+                            points = buildTodayHourlyTrend(data.trafficTimeline, state.costTimeline, nowMs),
+                            nowMs = nowMs,
+                            emptyText = stringResource(R.string.no_traffic),
+                            compactToData = false,
+                            chartHeight = if (dense) 136.dp else 220.dp,
+                            dense = dense,
+                        )
+                    }
+                    if (data.topModelsToday.isNotEmpty()) {
+                        topModelsSection(data.topModelsToday)
+                    }
                 }
             }
         }
@@ -182,7 +189,7 @@ internal fun buildTodayHourlyTrend(
 }
 
 @Composable
-private fun DashboardMetrics(data: DashboardSummaryDto) {
+private fun DashboardMetrics(data: DashboardSummaryDto, dense: Boolean) {
     val cards: List<@Composable (Modifier) -> Unit> = listOf(
         { modifier ->
             MetricCard(
@@ -196,6 +203,7 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
                 icon = Icons.Outlined.DataUsage,
                 modifier = modifier,
                 compact = true,
+                dense = dense,
             )
         },
         { modifier ->
@@ -207,6 +215,7 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
                 modifier = modifier,
                 accent = MaterialTheme.colorScheme.tertiary,
                 compact = true,
+                dense = dense,
             )
         },
         { modifier ->
@@ -217,6 +226,7 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
                 icon = Icons.Outlined.Speed,
                 modifier = modifier,
                 compact = true,
+                dense = dense,
             )
         },
         { modifier ->
@@ -230,10 +240,11 @@ private fun DashboardMetrics(data: DashboardSummaryDto) {
                 modifier = modifier,
                 accent = Warning,
                 compact = true,
+                dense = dense,
             )
         },
     )
-    ResponsiveMetricGrid(cards)
+    ResponsiveMetricGrid(cards, spacing = if (dense) 8.dp else 10.dp)
 }
 
 @Composable

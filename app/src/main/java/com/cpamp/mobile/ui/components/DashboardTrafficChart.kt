@@ -67,6 +67,7 @@ fun DashboardTrafficChart(
     modifier: Modifier = Modifier,
     compactToData: Boolean = true,
     chartHeight: Dp = 220.dp,
+    dense: Boolean = false,
     titleAction: (@Composable () -> Unit)? = null,
 ) {
     val chartColors = usageTrendChartColors()
@@ -80,18 +81,21 @@ fun DashboardTrafficChart(
         visiblePoints.sumOf(AnalyticsTrendPoint::requests),
     )
     var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
-    LaunchedEffect(visiblePoints) {
+    LaunchedEffect(visiblePoints, dense) {
         selectedIndex = if (visiblePoints.isEmpty()) {
             null
         } else {
-            selectedIndex?.coerceIn(visiblePoints.indices) ?: visiblePoints.lastIndex
+            selectedIndex?.coerceIn(visiblePoints.indices) ?: if (dense) null else visiblePoints.lastIndex
         }
     }
 
     AppCard(
         modifier = modifier,
     ) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            Modifier.fillMaxWidth().padding(if (dense) 12.dp else 16.dp),
+            verticalArrangement = Arrangement.spacedBy(if (dense) 8.dp else 12.dp),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -100,7 +104,7 @@ fun DashboardTrafficChart(
                 Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 titleAction?.invoke()
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(if (dense) 10.dp else 14.dp)) {
                 ChartLegend(chartColors.requests, stringResource(R.string.trend_requests))
                 ChartLegend(chartColors.tokens, stringResource(R.string.trend_tokens))
                 ChartLegend(chartColors.cost, stringResource(R.string.trend_cost))
@@ -234,7 +238,7 @@ fun DashboardTrafficChart(
                             ticks.lastIndex -> TextAlign.End
                             else -> TextAlign.Center
                         },
-                        maxLines = 2,
+                        maxLines = if (dense) 1 else 2,
                     )
                 }
             }
