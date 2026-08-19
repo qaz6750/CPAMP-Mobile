@@ -608,7 +608,8 @@ private fun AccountIdentitySummary(account: AccountHealth) {
                 Surface(
                     color = accent.copy(alpha = 0.12f),
                     contentColor = accent,
-                    shape = MaterialTheme.shapes.extraSmall,
+                    shape = CircleShape,
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.28f)),
                 ) {
                     Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                         CredentialProviderIcon(account.provider, modifier = Modifier.size(26.dp))
