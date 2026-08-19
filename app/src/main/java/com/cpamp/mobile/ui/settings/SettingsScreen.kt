@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.AlertDialog
@@ -26,17 +24,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,12 +68,12 @@ fun SettingsScreen(
     onDeleteServer: (String) -> Unit,
     onDisconnect: () -> Unit,
     onOpenUpdates: () -> Unit,
+    onOpenSourceLicenses: () -> Unit,
     updateViewModel: AppUpdateViewModel = hiltViewModel(),
     cacheViewModel: CacheCleanupViewModel = hiltViewModel(),
 ) {
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
     val cacheState by cacheViewModel.state.collectAsStateWithLifecycle()
-    var showUpstreamLicense by rememberSaveable { mutableStateOf(false) }
     var confirmClearCache by rememberSaveable { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -281,7 +276,7 @@ fun SettingsScreen(
                     onCheckForUpdates = updateViewModel::checkForUpdates,
                     onDownloadUpdate = updateViewModel::downloadUpdate,
                     onShowUpdate = onOpenUpdates,
-                    onOpenSourceLicenses = { showUpstreamLicense = true },
+                    onOpenSourceLicenses = onOpenSourceLicenses,
                 )
             }
             item(span = { GridItemSpan(maxLineSpan) }) {
@@ -295,29 +290,6 @@ fun SettingsScreen(
                 }
             }
         }
-    }
-    if (showUpstreamLicense) {
-        val context = LocalContext.current
-        val upstreamLicense = remember(context) {
-            context.resources.openRawResource(R.raw.cpa_manager_plus_license)
-                .bufferedReader().use { it.readText() }
-        }
-        AlertDialog(
-            onDismissRequest = { showUpstreamLicense = false },
-            title = { Text(stringResource(R.string.open_source_licenses)) },
-            text = {
-                Text(
-                    upstreamLicense,
-                    modifier = Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showUpstreamLicense = false }) {
-                    Text(stringResource(R.string.dismiss))
-                }
-            },
-        )
     }
     if (confirmClearCache) {
         AlertDialog(

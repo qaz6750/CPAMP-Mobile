@@ -29,6 +29,8 @@ import com.cpamp.mobile.ui.navigation.MainNavigationScaffold
 import com.cpamp.mobile.ui.security.AppLockUiState
 import com.cpamp.mobile.ui.settings.AppearanceUiState
 import com.cpamp.mobile.ui.settings.AppUpdateScreen
+import com.cpamp.mobile.ui.settings.OPEN_SOURCE_LICENSES_ROUTE
+import com.cpamp.mobile.ui.settings.OpenSourceLicensesScreen
 import com.cpamp.mobile.ui.settings.SettingsScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsScreen
 import com.cpamp.mobile.ui.usage.UsageAnalyticsViewModel
@@ -190,10 +192,17 @@ private fun ConnectedApp(
                     onDeleteServer = onDeleteServer,
                     onDisconnect = onDisconnect,
                     onOpenUpdates = { navController.navigate(APP_UPDATE_ROUTE) },
+                    onOpenSourceLicenses = { navController.navigate(OPEN_SOURCE_LICENSES_ROUTE) },
                 )
             }
             composable(APP_UPDATE_ROUTE) {
                 AppUpdateScreen(
+                    contentPadding = contentPadding,
+                    onBack = navController::popBackStack,
+                )
+            }
+            composable(OPEN_SOURCE_LICENSES_ROUTE) {
+                OpenSourceLicensesScreen(
                     contentPadding = contentPadding,
                     onBack = navController::popBackStack,
                 )

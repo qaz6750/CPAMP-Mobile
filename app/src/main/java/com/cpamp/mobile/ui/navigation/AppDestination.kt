@@ -25,6 +25,7 @@ enum class AppDestination(
             when (route) {
                 ACCOUNT_DETAIL_ROUTE -> Accounts
                 "app-update" -> Settings
+                "open-source-licenses" -> Settings
                 else -> entries.firstOrNull { it.route == route } ?: Overview
             }
     }
