@@ -933,9 +933,10 @@ private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
     val remaining = normalizedRemainingPercent(window.remainingPercent)
     val reset = window.resetAtMs?.takeIf { it > 0 }?.asDateTime()
         ?: window.resetLabel.trim().takeIf { it.isNotEmpty() && it != "-" }
-    val windowTitle = window.label.trim().takeIf(String::isNotEmpty)
-        ?.let { "$it · ${window.durationLabel()}" }
-        ?: window.durationLabel()
+    val durationLabel = window.durationLabel()
+    val windowTitle = window.label.trim().takeIf(String::isNotEmpty)?.let { label ->
+        if (window.durationSeconds > 0) "$label · $durationLabel" else label
+    } ?: durationLabel
     val levelColor = quotaLevelColor(quotaLevel(remaining))
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
@@ -1084,7 +1085,6 @@ internal fun quotaLevelColor(level: QuotaLevel) = when (level) {
 
 @Composable
 internal fun AccountQuotaWindow.durationLabel(): String = when {
-    label.isNotBlank() -> label
     durationSeconds > 0 && durationSeconds % SECONDS_PER_DAY == 0L ->
         stringResource(R.string.credential_quota_window_days, durationSeconds / SECONDS_PER_DAY)
     durationSeconds > 0 && durationSeconds % SECONDS_PER_HOUR == 0L ->
