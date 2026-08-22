@@ -126,7 +126,7 @@ class AccountHealthRepository @Inject constructor(
             .filter(String::isNotEmpty)
             .groupingBy { it }
             .eachCount()
-        val directTargets = files.filter { file -> file.supportsDirectQuota && !file.disabled }
+        val directTargets = files.filter { file -> file.supportsDirectQuota }
         val directAccounts = if (directTargets.isEmpty()) {
             emptyMap()
         } else {

@@ -46,24 +46,17 @@ internal suspend fun CPAMPApi.loadDirectCredentialQuotas(
     return coroutineScope {
         files.map { file ->
             async {
-                if (file.disabled) {
-                    file.baseQuota(
-                        windows = emptyList(),
-                        quotaState = AccountQuotaState.NotRequested,
-                    )
-                } else {
-                    semaphore.withPermit {
-                        try {
-                            file.loadQuota(this@loadDirectCredentialQuotas, json, fetchedAtMs)
-                        } catch (error: Exception) {
-                            if (error is CancellationException) throw error
-                            if (error is RemoteFailure.Unauthorized) throw error
-                            file.baseQuota(
-                                windows = emptyList(),
-                                quotaState = AccountQuotaState.Failed,
-                                failure = AccountHealthFailure.ProviderRequest,
-                            )
-                        }
+                semaphore.withPermit {
+                    try {
+                        file.loadQuota(this@loadDirectCredentialQuotas, json, fetchedAtMs)
+                    } catch (error: Exception) {
+                        if (error is CancellationException) throw error
+                        if (error is RemoteFailure.Unauthorized) throw error
+                        file.baseQuota(
+                            windows = emptyList(),
+                            quotaState = AccountQuotaState.Failed,
+                            failure = AccountHealthFailure.ProviderRequest,
+                        )
                     }
                 }
             }
