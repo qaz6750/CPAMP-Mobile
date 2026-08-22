@@ -44,7 +44,7 @@ class AccountsScreenTest {
 
         assertEquals("user@example.com", base.displayTitle())
         assertEquals("credential.json", base.copy(account = "").displayTitle())
-        assertEquals("OpenAI Codex", base.copy(account = "", name = "").displayTitle())
+        assertEquals("OpenAI", base.copy(account = "", name = "").displayTitle())
     }
 
     @Test
