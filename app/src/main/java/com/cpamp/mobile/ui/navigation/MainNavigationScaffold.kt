@@ -44,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -132,13 +133,13 @@ private fun FloatingNavigationBar(
     backdrop: Backdrop,
 ) {
     val renderEffectsSupported = isRenderEffectSupported()
-    val navigationBarHeight = 58.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.2f)
+    val navigationBarHeight = 68.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.15f)
     val navigationBarShape = RoundedCornerShape(percent = 50)
     val glassSurface = Brush.verticalGradient(
         colors = if (renderEffectsSupported) {
             listOf(
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.30f),
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.18f),
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.44f),
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.20f),
             )
         } else {
             listOf(
@@ -149,7 +150,7 @@ private fun FloatingNavigationBar(
     )
     Box(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding()
-            .padding(start = 40.dp, end = 40.dp, top = 6.dp, bottom = 8.dp),
+            .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         BoxWithConstraints(
@@ -161,14 +162,14 @@ private fun FloatingNavigationBar(
                     shape = { navigationBarShape },
                     effects = {
                         if (renderEffectsSupported) {
-                            blur(4.dp.toPx())
+                            blur(10.dp.toPx())
                         }
                     },
-                    highlight = { Highlight.Plain.copy(alpha = 0.52f) },
+                    highlight = { Highlight.Plain.copy(alpha = 0.68f) },
                     shadow = {
                         Shadow(
-                            radius = 12.dp,
-                            color = Color.Black.copy(alpha = 0.10f),
+                            radius = 18.dp,
+                            color = Color.Black.copy(alpha = 0.14f),
                         )
                     },
                     onDrawSurface = { drawRect(glassSurface) },
@@ -208,8 +209,8 @@ private fun FloatingNavigationBar(
             val indicatorSurface = Brush.verticalGradient(
                 colors = if (renderEffectsSupported) {
                     listOf(
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.46f),
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.22f),
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f),
                     )
                 } else {
                     listOf(
@@ -232,17 +233,23 @@ private fun FloatingNavigationBar(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = indicatorOffset - 4.dp)
-                    .width(itemWidth + 8.dp)
-                    .height(navigationBarHeight - 18.dp)
+                    .offset(x = indicatorOffset - 2.dp)
+                    .width(itemWidth + 4.dp)
+                    .height(navigationBarHeight - 6.dp)
                     .graphicsLayer {
                         scaleX = 1f + indicatorStretch.value * 0.06f
                         scaleY = pressScale - indicatorStretch.value * 0.02f
                     }
+                    .shadow(
+                        elevation = 10.dp,
+                        shape = indicatorShape,
+                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                        spotColor = Color.Black.copy(alpha = 0.16f),
+                    )
                     .background(indicatorSurface, indicatorShape)
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f),
                         shape = indicatorShape,
                     ),
             )
