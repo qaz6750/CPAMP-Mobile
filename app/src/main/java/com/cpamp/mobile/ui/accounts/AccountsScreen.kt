@@ -934,6 +934,9 @@ private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
     val remaining = normalizedRemainingPercent(window.remainingPercent)
     val reset = window.resetAtMs?.takeIf { it > 0 }?.asDateTime()
         ?: window.resetLabel.trim().takeIf { it.isNotEmpty() && it != "-" }
+    val windowTitle = window.label.trim().takeIf(String::isNotEmpty)
+        ?.let { "$it · ${window.durationLabel()}" }
+        ?: window.durationLabel()
     val levelColor = quotaLevelColor(quotaLevel(remaining))
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
@@ -951,7 +954,7 @@ private fun AccountQuotaWindowRow(window: AccountQuotaWindow) {
             ) {
                 Box(Modifier.size(8.dp).clip(CircleShape).background(levelColor))
                 Text(
-                    window.durationLabel(),
+                    windowTitle,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,

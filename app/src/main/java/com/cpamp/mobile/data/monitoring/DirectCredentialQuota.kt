@@ -98,7 +98,7 @@ private suspend fun AuthFileDto.loadCodexQuota(
     val plan = payload.value("plan_type", "planType").asString().orEmpty().ifBlank { resolvedPlanType }
     val windows = buildList {
         payload.value("rate_limit", "rateLimit").asObject()?.let { rateLimit ->
-            addAll(rateLimit.codexWindows(fetchedAtMs, ""))
+            addAll(rateLimit.codexWindows(fetchedAtMs, "GPT"))
         }
         payload.value("code_review_rate_limit", "codeReviewRateLimit").asObject()?.let { rateLimit ->
             addAll(rateLimit.codexWindows(fetchedAtMs, "Code review"))
