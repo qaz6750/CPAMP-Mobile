@@ -501,6 +501,8 @@ private fun AccountSectionTitle(@StringRes label: Int, count: Int) {
 private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
     val remaining = account.minimumRemainingPercent()
     val level = quotaLevel(remaining)
+    val showProviderLabel = !account.provider.isOpenAiProvider()
+    val plan = account.planType.trim().takeIf(String::isNotEmpty)
     Row(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(13.dp),
         horizontalArrangement = Arrangement.spacedBy(11.dp),
@@ -522,19 +524,28 @@ private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    providerBadgeLabel(account.provider),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
-                    Text("· $plan", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (showProviderLabel) {
+                    Text(
+                        providerBadgeLabel(account.provider),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                plan?.let {
+                    Text(
+                        if (showProviderLabel) "· $it" else it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 remaining?.let { value ->
                     Text(
-                        "· ${stringResource(R.string.credential_quota_remaining, value)}",
+                        buildString {
+                            if (showProviderLabel || plan != null) append("· ")
+                            append(stringResource(R.string.credential_quota_remaining, value))
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = quotaLevelColor(level),
                         fontWeight = FontWeight.SemiBold,
@@ -630,7 +641,9 @@ private fun AccountIdentitySummary(account: AccountHealth) {
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AccountProviderBadge(account.provider)
+                        if (!account.provider.isOpenAiProvider()) {
+                            AccountProviderBadge(account.provider)
+                        }
                         account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
                             AccountPlanBadge(plan, Modifier.weight(1f, fill = false))
                         }
@@ -1030,6 +1043,8 @@ internal fun normalizedRemainingPercent(remainingPercent: Double?): Double? =
 
 private fun String.normalizedProvider(): String = trim().lowercase()
 
+private fun String.isOpenAiProvider(): Boolean = normalizedProvider() in setOf("codex", "openai")
+
 @Composable
 internal fun AccountStatusBadge(account: AccountHealth) {
     val (label, color) = when {
@@ -1060,7 +1075,7 @@ internal fun AccountStatusBadge(account: AccountHealth) {
 internal fun AccountHealth.displayTitle(): String = account.trim().ifBlank { name.trim() }.ifBlank { providerLabel(provider) }
 
 internal fun providerLabel(provider: String): String = when (provider.trim().lowercase()) {
-    "codex", "openai" -> "OpenAI Codex"
+    "codex", "openai" -> "OpenAI"
     "xai", "grok" -> "xAI"
     "claude", "anthropic" -> "Anthropic"
     "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Google"
@@ -1071,7 +1086,7 @@ internal fun providerLabel(provider: String): String = when (provider.trim().low
 }
 
 internal fun providerBadgeLabel(provider: String): String = when (provider.trim().lowercase()) {
-    "codex", "openai" -> "Codex"
+    "codex", "openai" -> "OpenAI"
     "xai", "grok" -> "xAI"
     "claude", "anthropic" -> "Claude"
     "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Gemini"
