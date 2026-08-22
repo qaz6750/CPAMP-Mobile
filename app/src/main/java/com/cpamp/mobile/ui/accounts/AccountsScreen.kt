@@ -7,7 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -555,15 +553,12 @@ private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
                 }
             }
         }
-        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            AccountStatusBadge(account)
-            Icon(
-                Icons.Outlined.ChevronRight,
-                contentDescription = stringResource(R.string.accounts_open_details),
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Icon(
+            Icons.Outlined.ChevronRight,
+            contentDescription = stringResource(R.string.accounts_open_details),
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -608,52 +603,43 @@ private fun AccountPlanBadge(plan: String, modifier: Modifier = Modifier) {
 @Composable
 private fun AccountIdentitySummary(account: AccountHealth) {
     AccountPanel {
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val compact = maxWidth < 380.dp || LocalDensity.current.fontScale >= 1.3f
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val accent = providerAccentColor(account.provider)
+            Surface(
+                color = accent.copy(alpha = 0.12f),
+                contentColor = accent,
+                shape = CircleShape,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f)),
             ) {
-                val accent = providerAccentColor(account.provider)
-                Surface(
-                    color = accent.copy(alpha = 0.12f),
-                    contentColor = accent,
-                    shape = CircleShape,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f)),
-                ) {
-                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                        CredentialProviderIcon(account.provider, modifier = Modifier.size(26.dp))
-                    }
+                Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    CredentialProviderIcon(account.provider, modifier = Modifier.size(26.dp))
                 }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    account.displayTitle(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        account.displayTitle(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (!account.provider.isOpenAiProvider()) {
-                            AccountProviderBadge(account.provider)
-                        }
-                        account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
-                            AccountPlanBadge(plan, Modifier.weight(1f, fill = false))
-                        }
+                    if (!account.provider.isOpenAiProvider()) {
+                        AccountProviderBadge(account.provider)
                     }
-                    if (compact) {
-                        AccountStatusBadge(account)
+                    account.planType.trim().takeIf(String::isNotEmpty)?.let { plan ->
+                        AccountPlanBadge(plan, Modifier.weight(1f, fill = false))
                     }
-                }
-                if (!compact) {
-                    AccountStatusBadge(account)
                 }
             }
         }
@@ -1044,33 +1030,6 @@ internal fun normalizedRemainingPercent(remainingPercent: Double?): Double? =
 private fun String.normalizedProvider(): String = trim().lowercase()
 
 private fun String.isOpenAiProvider(): Boolean = normalizedProvider() in setOf("codex", "openai")
-
-@Composable
-internal fun AccountStatusBadge(account: AccountHealth) {
-    val (label, color) = when {
-        account.status == AccountStatus.Disabled -> R.string.credential_quota_disabled_badge to MaterialTheme.colorScheme.onSurfaceVariant
-        account.failure != null -> R.string.credential_quota_failed_badge to MaterialTheme.colorScheme.error
-        account.quotaState == AccountQuotaState.Available &&
-            quotaLevel(account.minimumRemainingPercent()) == QuotaLevel.Critical ->
-            R.string.accounts_health_quota_critical to MaterialTheme.colorScheme.error
-        account.quotaState == AccountQuotaState.Available &&
-            quotaLevel(account.minimumRemainingPercent()) == QuotaLevel.Warning ->
-            R.string.accounts_health_quota_warning to QuotaOrange
-        account.quotaState == AccountQuotaState.Available && account.minimumRemainingPercent() == null ->
-            R.string.accounts_health_basic to MaterialTheme.colorScheme.onSurfaceVariant
-        account.quotaState == AccountQuotaState.Available -> R.string.accounts_health_ready to MaterialTheme.colorScheme.tertiary
-        account.quotaState == AccountQuotaState.NotRequested -> R.string.accounts_health_not_refreshed to MaterialTheme.colorScheme.primary
-        else -> R.string.accounts_health_basic to MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    Surface(
-        color = color.copy(alpha = 0.12f),
-        contentColor = color,
-        shape = RoundedCornerShape(50),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.24f)),
-    ) {
-        Text(stringResource(label), modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall)
-    }
-}
 
 internal fun AccountHealth.displayTitle(): String = account.trim().ifBlank { name.trim() }.ifBlank { providerLabel(provider) }
 

@@ -22,11 +22,6 @@
     <string name="accounts_empty">No credentials were found on this server.</string>
     <string name="accounts_no_plan">Plan not reported</string>
     <string name="accounts_open_details">Open account details</string>
-    <string name="accounts_health_ready">Quota available</string>
-    <string name="accounts_health_quota_warning">Quota running low</string>
-    <string name="accounts_health_quota_critical">Quota nearly exhausted</string>
-    <string name="accounts_health_not_refreshed">Not refreshed</string>
-    <string name="accounts_health_basic">Basic status</string>
     <string name="accounts_filter_all">All</string>
     <string name="accounts_filter_provider">%1$s</string>
     <string name="accounts_filter_empty">No accounts match this provider.</string>
@@ -286,11 +281,9 @@
     <string name="credential_quota_server_result_error">The latest server inspection did not produce quota windows for this credential.</string>
     <string name="credential_quota_provider_request_error">The provider quota request failed for this credential.</string>
     <string name="credential_quota_temporarily_unavailable">Quota is temporarily unavailable. Refresh to try again.</string>
-    <string name="credential_quota_failed_badge">Failed</string>
     <string name="credential_quota_no_windows">No rate-limit window was reported for this credential.</string>
     <string name="credential_quota_active">Active</string>
     <string name="credential_quota_disabled">Disabled</string>
-    <string name="credential_quota_disabled_badge">Disabled</string>
     <string name="credential_quota_disabled_hint">This credential is disabled, so no quota is requested.</string>
     <string name="credential_quota_disabled_with_windows_hint">This credential is disabled. Showing quota reported by the latest server inspection.</string>
     <string name="dismiss">Dismiss</string>

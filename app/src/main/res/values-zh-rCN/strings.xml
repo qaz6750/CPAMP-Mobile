@@ -22,11 +22,6 @@
     <string name="accounts_empty">此服务器中未找到凭据。</string>
     <string name="accounts_no_plan">未提供套餐信息</string>
     <string name="accounts_open_details">打开账号详情</string>
-    <string name="accounts_health_ready">额度可用</string>
-    <string name="accounts_health_quota_warning">额度偏低</string>
-    <string name="accounts_health_quota_critical">额度将尽</string>
-    <string name="accounts_health_not_refreshed">尚未刷新</string>
-    <string name="accounts_health_basic">基础状态</string>
     <string name="accounts_filter_all">全部</string>
     <string name="accounts_filter_provider">%1$s</string>
     <string name="accounts_filter_empty">此提供商下暂无账号。</string>
@@ -286,11 +281,9 @@
     <string name="credential_quota_server_result_error">最近一次服务器巡检未生成此凭证的额度窗口。</string>
     <string name="credential_quota_provider_request_error">此凭证的提供商额度查询失败。</string>
     <string name="credential_quota_temporarily_unavailable">暂时无法获取额度，请稍后刷新重试。</string>
-    <string name="credential_quota_failed_badge">查询失败</string>
     <string name="credential_quota_no_windows">此凭证暂未返回额度窗口。</string>
     <string name="credential_quota_active">已启用</string>
     <string name="credential_quota_disabled">未启用</string>
-    <string name="credential_quota_disabled_badge">未启用</string>
     <string name="credential_quota_disabled_hint">该凭证已停用，不会查询额度。</string>
     <string name="credential_quota_disabled_with_windows_hint">该凭证已停用，以下为服务器最近一次巡检返回的额度。</string>
     <string name="dismiss">关闭</string>
