@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -69,7 +70,6 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.isRenderEffectSupported
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
-import com.kyant.shapes.Capsule
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -143,7 +143,9 @@ private fun FloatingNavigationBar(
     backdrop: Backdrop,
 ) {
     val renderEffectsSupported = isRenderEffectSupported()
-    val navigationBarHeight = 58.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.2f)
+    val density = LocalDensity.current
+    val navigationBarHeight = 58.dp * density.fontScale.coerceIn(1f, 1.2f)
+    val capsuleShape = RoundedCornerShape(percent = 50)
     val destinations = AppDestination.entries
     val selectedIndex = destinations.indexOf(currentDestination).coerceAtLeast(0)
     val interactionSources = remember {
@@ -186,7 +188,7 @@ private fun FloatingNavigationBar(
                 .fillMaxWidth()
                 .drawBackdrop(
                     backdrop = backdrop,
-                    shape = { Capsule() },
+                    shape = { capsuleShape },
                     effects = {
                         if (renderEffectsSupported) {
                             vibrancy()
@@ -219,7 +221,7 @@ private fun FloatingNavigationBar(
         ) {
             val itemWidth = maxWidth / destinations.size.toFloat()
             val itemWidthPx = constraints.maxWidth.toFloat() / destinations.size
-            val indicatorInsetPx = 4.dp.toPx()
+            val indicatorInsetPx = with(density) { 4.dp.toPx() }
             val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
             val tabsBackdrop = rememberLayerBackdrop()
             val indicatorBackdrop = rememberCombinedBackdrop(backdrop, tabsBackdrop)
@@ -329,7 +331,7 @@ private fun FloatingNavigationBar(
                     }
                     .drawBackdrop(
                         backdrop = indicatorBackdrop,
-                        shape = { Capsule() },
+                        shape = { capsuleShape },
                         effects = {
                             if (renderEffectsSupported) {
                                 vibrancy()
