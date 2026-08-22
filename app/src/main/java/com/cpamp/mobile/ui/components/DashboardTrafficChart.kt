@@ -1,6 +1,5 @@
 package com.cpamp.mobile.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -93,16 +92,6 @@ fun DashboardTrafficChart(
     AppCard(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (dense) 0.78f else 0.70f),
-        border = BorderStroke(
-            1.dp,
-            Brush.verticalGradient(
-                colors = listOf(
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.24f),
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f),
-                ),
-            ),
-        ),
     ) {
         Column(
             Modifier.fillMaxWidth().padding(if (dense) 12.dp else 16.dp),
