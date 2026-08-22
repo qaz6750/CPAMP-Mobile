@@ -133,7 +133,7 @@ private fun FloatingNavigationBar(
     backdrop: Backdrop,
 ) {
     val renderEffectsSupported = isRenderEffectSupported()
-    val navigationBarHeight = 68.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.15f)
+    val navigationBarHeight = 58.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.2f)
     val navigationBarShape = RoundedCornerShape(percent = 50)
     val glassSurface = Brush.verticalGradient(
         colors = if (renderEffectsSupported) {
@@ -150,7 +150,7 @@ private fun FloatingNavigationBar(
     )
     Box(
         modifier = Modifier.fillMaxWidth().navigationBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 8.dp),
+            .padding(start = 40.dp, end = 40.dp, top = 6.dp, bottom = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         BoxWithConstraints(
