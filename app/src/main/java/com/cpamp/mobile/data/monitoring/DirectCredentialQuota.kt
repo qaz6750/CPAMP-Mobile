@@ -109,12 +109,15 @@ private suspend fun AuthFileDto.loadCodexQuota(
 
 private fun JsonObject.codexWindows(fetchedAtMs: Long, label: String): List<AccountQuotaWindow> {
     val reached = value("limit_reached", "limitReached").asBoolean() == true
-    return listOfNotNull(
+    val nestedWindows = listOfNotNull(
         value("primary_window", "primaryWindow").asObject()
             ?.toUsedPercentWindow(fetchedAtMs, label, reached),
         value("secondary_window", "secondaryWindow").asObject()
             ?.toUsedPercentWindow(fetchedAtMs, label, reached),
     )
+    return nestedWindows.ifEmpty {
+        listOfNotNull(toUsedPercentWindow(fetchedAtMs, label, reached))
+    }
 }
 
 private fun JsonObject.toUsedPercentWindow(
@@ -662,8 +665,10 @@ private fun JsonElement.collectQuotaRecords(): List<JsonObject> {
 }
 
 private fun resolveResetAtMs(window: JsonObject, fetchedAtMs: Long): Long? {
-    val resetAt = window.value("reset_at", "resetAt").asLong()
+    val resetAtValue = window.value("reset_at", "resetAt")
+    val resetAt = resetAtValue.asLong()
     if (resetAt != null && resetAt > 0) return if (resetAt < 10_000_000_000L) resetAt * 1000 else resetAt
+    resetAtValue.asString().toEpochMs()?.let { return it }
     val resetAfter = window.value("reset_after_seconds", "resetAfterSeconds").asLong()
     return resetAfter?.takeIf { it > 0 }?.let { fetchedAtMs + it * 1000 }
 }
@@ -699,7 +704,9 @@ private fun JsonElement?.asDouble(): Double? = (this as? JsonPrimitive)?.let { p
 }
 
 private fun JsonElement?.asLong(): Long? = (this as? JsonPrimitive)?.let { primitive ->
-    primitive.longOrNull ?: primitive.contentOrNull?.toLongOrNull()
+    primitive.longOrNull
+        ?: primitive.doubleOrNull?.takeIf(Double::isFinite)?.toLong()
+        ?: primitive.contentOrNull?.toLongOrNull()
 }
 
 private fun JsonElement?.asBoolean(): Boolean? = (this as? JsonPrimitive)?.let { primitive ->
