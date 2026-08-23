@@ -243,11 +243,11 @@
 
     .account-row {
       display: grid;
-      grid-template-columns: 42px minmax(0, 1fr) auto;
-      gap: 11px;
+      grid-template-columns: 38px minmax(0, 1fr) 118px 10px;
+      gap: 9px;
       align-items: center;
-      min-height: 78px;
-      padding: 12px;
+      min-height: 68px;
+      padding: 9px 11px;
     }
 
     .account-row + .account-row { border-top: 1px solid var(--divider); }
@@ -255,8 +255,8 @@
     .provider-icon {
       display: grid;
       place-items: center;
-      width: 42px;
-      height: 42px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: #111827;
       color: white;
@@ -275,7 +275,7 @@
       align-items: center;
       gap: 5px;
       min-width: 0;
-      margin-top: 5px;
+      margin-top: 4px;
       color: var(--muted);
       font-size: 10px;
     }
@@ -291,38 +291,48 @@
     .disabled-plan { background: var(--disabled-soft); color: var(--disabled); }
     .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
 
-    .quota-mini {
-      display: flex;
+    .cycle-stack { display: grid; gap: 3px; }
+
+    .cycle-stat {
+      display: grid;
+      grid-template-columns: 26px minmax(24px, 1fr) 28px;
       align-items: center;
-      gap: 5px;
-      font-weight: 700;
-      white-space: nowrap;
+      gap: 4px;
+      min-height: 20px;
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
     }
 
-    .quota-mini::before {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      content: "";
-    }
-
-    .quota-mini.warn::before { background: var(--amber); }
-    .quota-mini.disabled { color: var(--disabled); }
-    .quota-mini.disabled::before { background: var(--disabled); }
-
-    .account-tail { display: flex; align-items: center; gap: 6px; }
-
-    .percent {
-      min-width: 42px;
-      color: var(--green);
-      font-size: 15px;
+    .cycle-stat span {
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: var(--surface-muted);
+      color: var(--muted);
       font-weight: 800;
-      text-align: right;
+      text-align: center;
+      text-transform: uppercase;
     }
 
-    .percent.warn { color: var(--amber); }
-    .percent.disabled { color: var(--disabled); font-size: 11px; }
+    .cycle-bar {
+      height: 4px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e4ebf1;
+    }
+
+    .cycle-bar i {
+      display: block;
+      width: var(--progress);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+    }
+
+    .cycle-stat strong { color: var(--green); font-size: 11px; text-align: right; }
+    .cycle-stat.warn .cycle-bar i { background: var(--amber); }
+    .cycle-stat.warn strong { color: var(--amber); }
+    .cycle-stat.disabled .cycle-bar i { display: none; }
+    .cycle-stat.disabled strong { color: var(--disabled); font-size: 10px; }
     .chevron { color: var(--faint); }
 
     .bottom-nav {
@@ -407,24 +417,79 @@
     .section-title h3 { font-size: 16px; }
     .section-title span { color: var(--muted); font-size: 10px; }
 
-    .quota-grid { display: grid; gap: 9px; }
+    .reset-credit {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(18, 104, 215, 0.14);
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(232, 242, 255, 0.96), rgba(255, 255, 255, 0.94));
+      box-shadow: 0 9px 24px rgba(43, 69, 96, 0.07);
+    }
 
-    .quota-card {
-      position: relative;
+    .reset-credit-head { display: flex; align-items: center; gap: 9px; }
+
+    .reset-credit-icon {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: var(--blue);
+      color: white;
+    }
+
+    .reset-credit-icon svg { width: 17px; height: 17px; }
+    .reset-credit strong { font-size: 13px; }
+    .reset-credit p { margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+
+    .reset-credit-meta {
+      display: flex;
+      gap: 12px;
+      margin: 8px 0 0 39px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .reset-credit-meta b { color: var(--ink); font-weight: 720; }
+
+    .reset-credit-action {
+      min-width: 54px;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--blue);
+      color: white;
+      font: inherit;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .quota-panel {
       overflow: hidden;
-      padding: 14px;
       border-radius: 8px;
       background: var(--surface);
       box-shadow: 0 9px 24px rgba(43, 69, 96, 0.07);
     }
 
+    .quota-card {
+      position: relative;
+      overflow: hidden;
+      padding: 11px 12px;
+    }
+
+    .quota-card + .quota-card { border-top: 1px solid var(--divider); }
+
     .quota-card::after {
       position: absolute;
       top: 0;
       right: 0;
-      width: 78px;
-      height: 78px;
-      border-radius: 0 0 0 78px;
+      width: 54px;
+      height: 54px;
+      border-radius: 0 0 0 54px;
       background: rgba(18, 104, 215, 0.06);
       content: "";
     }
@@ -437,40 +502,40 @@
       display: flex;
       align-items: start;
       justify-content: space-between;
-      gap: 12px;
+      gap: 9px;
     }
 
     .quota-product {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: 7px;
+      font-size: 12px;
       font-weight: 800;
     }
 
     .product-mark {
       display: grid;
       place-items: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
+      width: 25px;
+      height: 25px;
+      border-radius: 6px;
       background: var(--blue-soft);
       color: var(--blue);
     }
 
     .review .product-mark { background: var(--cyan-soft); color: var(--cyan); }
-    .product-mark svg { width: 16px; height: 16px; }
+    .product-mark svg { width: 15px; height: 15px; }
 
     .cycle {
-      margin-top: 3px;
+      margin-top: 2px;
       color: var(--muted);
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 500;
     }
 
     .quota-number {
       color: var(--green);
-      font-size: 27px;
+      font-size: 22px;
       line-height: 1;
       font-weight: 820;
       font-variant-numeric: tabular-nums;
@@ -479,8 +544,8 @@
     .quota-number small { color: var(--muted); font-size: 9px; font-weight: 600; }
 
     .progress {
-      height: 7px;
-      margin-top: 13px;
+      height: 5px;
+      margin-top: 9px;
       overflow: hidden;
       border-radius: 999px;
       background: #e7edf3;
@@ -489,22 +554,90 @@
     .progress span { display: block; height: 100%; border-radius: inherit; background: var(--green); }
     .review .progress span { background: var(--cyan); }
 
-    .time-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
+    .quota-reset-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 8px;
+      padding: 6px 8px;
+      border-radius: 5px;
+      background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 9px;
     }
 
-    .time-cell {
-      min-width: 0;
-      padding: 9px 10px;
+    .quota-reset-line strong { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; }
+
+    .usage-card {
+      display: grid;
+      gap: 8px;
+      overflow: hidden;
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 9px 24px rgba(43, 69, 96, 0.07);
+    }
+
+    .usage-range {
+      padding: 7px 10px;
       border-radius: 6px;
       background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 9px;
+      font-variant-numeric: tabular-nums;
     }
 
-    .time-cell span { display: block; color: var(--muted); font-size: 9px; }
-    .time-cell strong { display: block; margin-top: 3px; font-size: 11px; font-weight: 720; font-variant-numeric: tabular-nums; }
+    .usage-primary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .usage-metric {
+      min-width: 0;
+      padding: 11px;
+      border-radius: 7px;
+      background: rgba(244, 248, 252, 0.82);
+    }
+    .usage-metric span { color: var(--muted); font-size: 9px; }
+    .usage-metric strong { display: block; margin-top: 3px; font-size: 21px; font-variant-numeric: tabular-nums; }
+    .usage-metric strong.cost { color: var(--amber); }
+    .usage-metric small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+
+    .usage-secondary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .usage-secondary div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--divider);
+      border-radius: 7px;
+    }
+
+    .usage-secondary span { color: var(--muted); font-size: 9px; }
+    .usage-secondary strong { font-size: 12px; font-variant-numeric: tabular-nums; }
+    .usage-secondary strong.good { color: var(--green); }
+
+    .projection-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px;
+      border-radius: 7px;
+      background: rgba(18, 104, 215, 0.045);
+    }
+
+    .projection-row span { display: block; font-size: 10px; font-weight: 720; }
+    .projection-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .projection-row strong { color: var(--blue); font-size: 18px; font-variant-numeric: tabular-nums; }
 
     .disabled-note {
       display: none;
@@ -542,7 +675,8 @@
     body[data-account-state="disabled"] .state-pill.active-state { display: none; }
     body:not([data-account-state="disabled"]) .state-pill.disabled-state { display: none; }
     body[data-account-state="disabled"] .disabled-note { display: flex; }
-    body[data-account-state="disabled"] .quota-card { opacity: 0.74; }
+    body[data-account-state="disabled"] .quota-card,
+    body[data-account-state="disabled"] .reset-credit { opacity: 0.74; }
 
     @media (max-width: 900px) {
       .workspace { padding: 14px; }
@@ -571,6 +705,7 @@
       .device { min-height: calc(100vh - 51px); border: 0; border-radius: 0; box-shadow: none; }
       .device::before { display: none; }
       .screen { min-height: calc(100vh - 51px); }
+      .reset-credit-meta { gap: 8px; }
     }
   </style>
 </head>
@@ -621,41 +756,46 @@
               <div class="provider-icon">O</div>
               <div class="account-main">
                 <div class="account-name">user@example.com</div>
-                <div class="account-meta"><span class="plan">PRO</span><span class="dot"></span><span class="quota-mini">GPT 82%</span></div>
+                <div class="account-meta"><span class="plan">PRO</span></div>
               </div>
-              <div class="account-tail"><span class="percent">82%</span><span class="chevron">›</span></div>
+              <div class="cycle-stack"><div class="cycle-stat"><span>5h</span><span class="cycle-bar"><i style="--progress:82%"></i></span><strong>82%</strong></div><div class="cycle-stat"><span>7d</span><span class="cycle-bar"><i style="--progress:64%"></i></span><strong>64%</strong></div></div>
+              <span class="chevron">›</span>
             </div>
             <div class="account-row">
               <div class="provider-icon">O</div>
               <div class="account-main">
                 <div class="account-name">workspace@example.com</div>
-                <div class="account-meta"><span class="plan">PLUS</span><span class="dot"></span><span class="quota-mini warn">GPT 31%</span></div>
+                <div class="account-meta"><span class="plan">PLUS</span></div>
               </div>
-              <div class="account-tail"><span class="percent warn">31%</span><span class="chevron">›</span></div>
+              <div class="cycle-stack"><div class="cycle-stat warn"><span>5h</span><span class="cycle-bar"><i style="--progress:31%"></i></span><strong>31%</strong></div><div class="cycle-stat"><span>7d</span><span class="cycle-bar"><i style="--progress:76%"></i></span><strong>76%</strong></div></div>
+              <span class="chevron">›</span>
             </div>
             <div class="account-row disabled-row">
               <div class="provider-icon">O</div>
               <div class="account-main">
                 <div class="account-name">archived@example.com</div>
-                <div class="account-meta"><span class="plan disabled-plan">未启用</span><span class="dot"></span><span class="quota-mini disabled">保留上次额度</span></div>
+                <div class="account-meta"><span class="plan disabled-plan">未启用</span><span class="dot"></span><span>保留上次额度</span></div>
               </div>
-              <div class="account-tail"><span class="percent disabled">未启用</span><span class="chevron">›</span></div>
+              <div class="cycle-stack"><div class="cycle-stat disabled"><span>5h</span><span class="cycle-bar"><i></i></span><strong>--</strong></div><div class="cycle-stat disabled"><span>7d</span><span class="cycle-bar"><i></i></span><strong>--</strong></div></div>
+              <span class="chevron">›</span>
             </div>
             <div class="account-row">
               <div class="provider-icon anthropic">A</div>
               <div class="account-main">
                 <div class="account-name">claude-team</div>
-                <div class="account-meta"><span class="plan">MAX</span><span class="dot"></span><span class="quota-mini">5 小时 74%</span></div>
+                <div class="account-meta"><span class="plan">MAX</span></div>
               </div>
-              <div class="account-tail"><span class="percent">74%</span><span class="chevron">›</span></div>
+              <div class="cycle-stack"><div class="cycle-stat"><span>5h</span><span class="cycle-bar"><i style="--progress:74%"></i></span><strong>74%</strong></div><div class="cycle-stat"><span>7d</span><span class="cycle-bar"><i style="--progress:58%"></i></span><strong>58%</strong></div></div>
+              <span class="chevron">›</span>
             </div>
             <div class="account-row">
               <div class="provider-icon google">G</div>
               <div class="account-main">
                 <div class="account-name">gemini-workspace</div>
-                <div class="account-meta"><span>Google</span><span class="dot"></span><span class="quota-mini">模型额度 66%</span></div>
+                <div class="account-meta"><span>Google</span><span class="dot"></span><span>模型额度</span></div>
               </div>
-              <div class="account-tail"><span class="percent">66%</span><span class="chevron">›</span></div>
+              <div class="cycle-stack"><div class="cycle-stat"><span>Pro</span><span class="cycle-bar"><i style="--progress:66%"></i></span><strong>66%</strong></div><div class="cycle-stat"><span>Flash</span><span class="cycle-bar"><i style="--progress:91%"></i></span><strong>91%</strong></div></div>
+              <span class="chevron">›</span>
             </div>
           </section>
         </div>
@@ -684,7 +824,7 @@
             <div class="provider-icon">O</div>
             <div>
               <h2>user@example.com</h2>
-              <p>OpenAI · PRO</p>
+              <p>PRO</p>
             </div>
             <span class="state-pill active-state">已启用</span>
             <span class="state-pill disabled disabled-state">未启用</span>
@@ -696,46 +836,64 @@
           </div>
 
           <section class="detail-section">
-            <div class="section-title"><h3>额度与重置</h3><span>刚刚更新</span></div>
-            <div class="quota-grid">
+            <div class="section-title"><h3>额度周期</h3><span>刚刚更新</span></div>
+            <div class="quota-panel">
               <article class="quota-card">
                 <div class="quota-card-head">
                   <div class="quota-product">
                     <span class="product-mark"><svg viewBox="0 0 24 24"><path d="M8 9h8M8 13h5M6 4h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l-4 3v-3H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></span>
-                    <span>GPT<div class="cycle">5 小时额度周期</div></span>
+                    <span>GPT<div class="cycle">5h 使用限额</div></span>
                   </div>
                   <div class="quota-number">82% <small>剩余</small></div>
                 </div>
                 <div class="progress"><span style="width:82%"></span></div>
-                <div class="time-grid">
-                  <div class="time-cell"><span>重置于</span><strong>今天 18:30</strong></div>
-                  <div class="time-cell"><span>有效期至</span><strong>8 月 23 日 18:30</strong></div>
-                </div>
+                <div class="quota-reset-line"><span>预计重置</span><strong>今天 18:30 · 剩余 2 小时 18 分</strong></div>
               </article>
 
               <article class="quota-card review">
                 <div class="quota-card-head">
                   <div class="quota-product">
                     <span class="product-mark"><svg viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
-                    <span>Code review<div class="cycle">7 天额度周期</div></span>
+                    <span>Code review<div class="cycle">7d 每周使用限额</div></span>
                   </div>
                   <div class="quota-number">64% <small>剩余</small></div>
                 </div>
                 <div class="progress"><span style="width:64%"></span></div>
-                <div class="time-grid">
-                  <div class="time-cell"><span>重置于</span><strong>8 月 28 日 09:00</strong></div>
-                  <div class="time-cell"><span>有效期至</span><strong>8 月 28 日 09:00</strong></div>
-                </div>
+                <div class="quota-reset-line"><span>预计重置</span><strong>8 月 28 日 09:00 · 剩余 4 天</strong></div>
               </article>
             </div>
           </section>
 
           <section class="detail-section">
-            <div class="section-title"><h3>用量</h3><span>当前 GPT 周期</span></div>
-            <div class="summary-strip">
-              <div class="summary-cell"><span>请求</span><strong>1,284</strong></div>
-              <div class="summary-cell"><span>令牌</span><strong>8.6M</strong></div>
-              <div class="summary-cell"><span>成功率</span><strong class="good">99.2%</strong></div>
+            <div class="section-title"><h3>本轮凭证用量</h3><span>当前 5h 周期</span></div>
+            <div class="usage-card">
+              <div class="usage-range">统计范围：8 月 23 日 13:30 — 18:30</div>
+              <div class="usage-primary">
+                <div class="usage-metric"><span>请求</span><strong>1,284</strong><small>本周期累计调用</small></div>
+                <div class="usage-metric"><span>成本</span><strong class="cost">$12.84</strong><small>本周期已用成本</small></div>
+              </div>
+              <div class="usage-secondary">
+                <div><span>总令牌</span><strong>8.6M</strong></div>
+                <div><span>成功率</span><strong class="good">99.2%</strong></div>
+              </div>
+              <div class="projection-row">
+                <div><span>预计可用到的成本</span><small>按本轮已用成本与剩余额度推算</small></div>
+                <strong>$71.33</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="section-title"><h3>重置卡</h3><span>Codex 权益</span></div>
+            <div class="reset-credit">
+              <div>
+                <div class="reset-credit-head">
+                  <span class="reset-credit-icon"><svg viewBox="0 0 24 24"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M18.5 9a7 7 0 0 0-12-2.5L4 9"/><path d="M5.5 15a7 7 0 0 0 12 2.5L20 15"/></svg></span>
+                  <div><strong>1 次可用</strong><p>兑换后同时重置 5h 与 7d 使用限额</p></div>
+                </div>
+                <div class="reset-credit-meta"><span>兑换后周周期约 7 天后重置</span></div>
+              </div>
+              <button class="reset-credit-action">使用</button>
             </div>
           </section>
 
