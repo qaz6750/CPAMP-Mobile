@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CPA Manager Plus · 账号界面重设计</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --canvas: #dfe8f1;
+      --canvas-line: rgba(60, 85, 112, 0.08);
+      --screen: #f3f7fb;
+      --surface: rgba(255, 255, 255, 0.92);
+      --surface-strong: #ffffff;
+      --surface-muted: #eaf0f6;
+      --ink: #172033;
+      --muted: #657286;
+      --faint: #8d99aa;
+      --blue: #1268d7;
+      --blue-soft: #e6f0ff;
+      --cyan: #0b8aa0;
+      --cyan-soft: #e3f5f7;
+      --green: #208a4b;
+      --green-soft: #e7f6ed;
+      --amber: #c87505;
+      --amber-soft: #fff3dd;
+      --disabled: #6f7782;
+      --disabled-soft: #eceff3;
+      --divider: #dbe3ec;
+      --shadow: 0 18px 55px rgba(35, 62, 91, 0.14);
+      --font: "Noto Sans CJK SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font);
+      letter-spacing: 0;
+      background:
+        linear-gradient(var(--canvas-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--canvas-line) 1px, transparent 1px),
+        var(--canvas);
+      background-size: 28px 28px;
+    }
+
+    button { font: inherit; }
+    svg {
+      display: block;
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.9;
+    }
+
+    .workspace {
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .review-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(1120px, 100%);
+      min-height: 52px;
+      margin: 0 auto 18px;
+      padding: 8px 10px 8px 16px;
+      border: 1px solid rgba(101, 124, 148, 0.28);
+      border-radius: 8px;
+      background: rgba(249, 251, 253, 0.92);
+      box-shadow: 0 10px 30px rgba(37, 62, 88, 0.08);
+      backdrop-filter: blur(16px);
+    }
+
+    .review-title strong { display: block; font-size: 14px; }
+    .review-title span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+
+    .review-actions {
+      display: flex;
+      gap: 4px;
+      padding: 3px;
+      border-radius: 7px;
+      background: var(--surface-muted);
+    }
+
+    .review-action {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .review-action.active {
+      background: var(--surface-strong);
+      color: var(--blue);
+      box-shadow: 0 2px 8px rgba(34, 71, 112, 0.12);
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(340px, 430px));
+      justify-content: center;
+      gap: 28px;
+    }
+
+    .device {
+      position: relative;
+      min-height: 840px;
+      overflow: hidden;
+      border: 1px solid rgba(81, 103, 126, 0.36);
+      border-radius: 28px;
+      background: var(--screen);
+      box-shadow: var(--shadow);
+    }
+
+    .device::before {
+      position: absolute;
+      z-index: 4;
+      top: 9px;
+      left: 50%;
+      width: 82px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(27, 38, 52, 0.22);
+      content: "";
+      transform: translateX(-50%);
+    }
+
+    .screen {
+      min-height: 840px;
+      padding: 28px 16px 94px;
+      background:
+        radial-gradient(circle at 88% 0%, rgba(49, 132, 230, 0.13), transparent 24%),
+        linear-gradient(180deg, #f8fbfe 0%, var(--screen) 42%, #edf3f8 100%);
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 50px;
+      margin-bottom: 12px;
+    }
+
+    .app-header h1 {
+      font-size: 26px;
+      line-height: 1.1;
+      font-weight: 780;
+    }
+
+    .app-header p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      box-shadow: 0 5px 15px rgba(43, 69, 96, 0.08);
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-bottom: 13px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 8px 22px rgba(43, 69, 96, 0.07);
+    }
+
+    .summary-cell {
+      min-width: 0;
+      padding: 12px;
+    }
+
+    .summary-cell + .summary-cell { border-left: 1px solid var(--divider); }
+    .summary-cell span { display: block; color: var(--muted); font-size: 10px; }
+    .summary-cell strong { display: block; margin-top: 4px; font-size: 20px; font-variant-numeric: tabular-nums; }
+    .summary-cell strong.good { color: var(--green); }
+    .summary-cell strong.warn { color: var(--amber); }
+
+    .provider-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .provider-tabs::-webkit-scrollbar { display: none; }
+
+    .provider-tab {
+      flex: 0 0 auto;
+      min-height: 32px;
+      padding: 0 11px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .provider-tab.active { background: var(--blue); color: white; }
+
+    .list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 4px 8px;
+    }
+
+    .list-head h2 { font-size: 15px; }
+    .list-head span { color: var(--muted); font-size: 11px; }
+
+    .account-list {
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 10px 28px rgba(43, 69, 96, 0.08);
+    }
+
+    .account-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      gap: 11px;
+      align-items: center;
+      min-height: 78px;
+      padding: 12px;
+    }
+
+    .account-row + .account-row { border-top: 1px solid var(--divider); }
+
+    .provider-icon {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #111827;
+      color: white;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .provider-icon.google { background: #ffffff; color: #2875df; box-shadow: inset 0 0 0 1px #d8e0e9; }
+    .provider-icon.anthropic { background: #d97745; }
+
+    .account-main { min-width: 0; }
+    .account-name { overflow: hidden; font-size: 14px; font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
+
+    .account-meta {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .plan {
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .disabled-plan { background: var(--disabled-soft); color: var(--disabled); }
+    .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+
+    .quota-mini {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .quota-mini::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      content: "";
+    }
+
+    .quota-mini.warn::before { background: var(--amber); }
+    .quota-mini.disabled { color: var(--disabled); }
+    .quota-mini.disabled::before { background: var(--disabled); }
+
+    .account-tail { display: flex; align-items: center; gap: 6px; }
+
+    .percent {
+      min-width: 42px;
+      color: var(--green);
+      font-size: 15px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .percent.warn { color: var(--amber); }
+    .percent.disabled { color: var(--disabled); font-size: 11px; }
+    .chevron { color: var(--faint); }
+
+    .bottom-nav {
+      position: absolute;
+      z-index: 3;
+      right: 40px;
+      bottom: 16px;
+      left: 40px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 58px;
+      padding: 4px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 999px;
+      background: rgba(244, 249, 253, 0.76);
+      box-shadow: 0 14px 30px rgba(36, 63, 92, 0.18);
+      backdrop-filter: blur(18px) saturate(1.4);
+    }
+
+    .bottom-item {
+      display: grid;
+      place-items: center;
+      gap: 1px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .bottom-item.active {
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--blue);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75), 0 4px 12px rgba(40, 73, 108, 0.1);
+    }
+
+    .bottom-item svg { width: 19px; height: 19px; }
+
+    .detail-screen { display: flex; flex-direction: column; }
+
+    .detail-topbar {
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      align-items: center;
+      min-height: 52px;
+      margin-bottom: 10px;
+    }
+
+    .detail-topbar h1 { font-size: 20px; text-align: center; }
+
+    .identity-band {
+      display: grid;
+      grid-template-columns: 50px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 2px 16px;
+      border-bottom: 1px solid var(--divider);
+    }
+
+    .identity-band .provider-icon { width: 50px; height: 50px; font-size: 18px; }
+    .identity-band h2 { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+    .identity-band p { margin-top: 4px; color: var(--muted); font-size: 11px; }
+
+    .state-pill {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .state-pill.disabled { background: var(--disabled-soft); color: var(--disabled); }
+
+    .detail-section { margin-top: 17px; }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      margin: 0 3px 8px;
+    }
+
+    .section-title h3 { font-size: 16px; }
+    .section-title span { color: var(--muted); font-size: 10px; }
+
+    .quota-grid { display: grid; gap: 9px; }
+
+    .quota-card {
+      position: relative;
+      overflow: hidden;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: 0 9px 24px rgba(43, 69, 96, 0.07);
+    }
+
+    .quota-card::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 78px;
+      height: 78px;
+      border-radius: 0 0 0 78px;
+      background: rgba(18, 104, 215, 0.06);
+      content: "";
+    }
+
+    .quota-card.review::after { background: rgba(11, 138, 160, 0.07); }
+
+    .quota-card-head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .quota-product {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .product-mark {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .review .product-mark { background: var(--cyan-soft); color: var(--cyan); }
+    .product-mark svg { width: 16px; height: 16px; }
+
+    .cycle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .quota-number {
+      color: var(--green);
+      font-size: 27px;
+      line-height: 1;
+      font-weight: 820;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .quota-number small { color: var(--muted); font-size: 9px; font-weight: 600; }
+
+    .progress {
+      height: 7px;
+      margin-top: 13px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e7edf3;
+    }
+
+    .progress span { display: block; height: 100%; border-radius: inherit; background: var(--green); }
+    .review .progress span { background: var(--cyan); }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .time-cell {
+      min-width: 0;
+      padding: 9px 10px;
+      border-radius: 6px;
+      background: var(--surface-muted);
+    }
+
+    .time-cell span { display: block; color: var(--muted); font-size: 9px; }
+    .time-cell strong { display: block; margin-top: 3px; font-size: 11px; font-weight: 720; font-variant-numeric: tabular-nums; }
+
+    .disabled-note {
+      display: none;
+      align-items: start;
+      gap: 9px;
+      margin-top: 12px;
+      padding: 11px;
+      border-radius: 7px;
+      background: var(--disabled-soft);
+      color: #555e69;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .disabled-note svg { flex: 0 0 auto; width: 17px; height: 17px; margin-top: 1px; }
+
+    .data-list {
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 11px 13px;
+      font-size: 11px;
+    }
+
+    .data-row + .data-row { border-top: 1px solid var(--divider); }
+    .data-row span { color: var(--muted); }
+    .data-row strong { overflow: hidden; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+
+    body[data-account-state="disabled"] .state-pill.active-state { display: none; }
+    body:not([data-account-state="disabled"]) .state-pill.disabled-state { display: none; }
+    body[data-account-state="disabled"] .disabled-note { display: flex; }
+    body[data-account-state="disabled"] .quota-card { opacity: 0.74; }
+
+    @media (max-width: 900px) {
+      .workspace { padding: 14px; }
+      .review-bar { align-items: start; gap: 10px; }
+      .review-title span { max-width: 190px; }
+      .stage { grid-template-columns: minmax(320px, 430px); }
+      .device.secondary { display: none; }
+      body[data-view="detail"] .device.primary { display: none; }
+      body[data-view="detail"] .device.secondary { display: block; }
+    }
+
+    @media (max-width: 470px) {
+      .workspace { padding: 0; }
+      .review-bar {
+        position: sticky;
+        z-index: 10;
+        top: 0;
+        margin: 0;
+        border-width: 0 0 1px;
+        border-radius: 0;
+      }
+      .review-title { display: none; }
+      .review-actions { width: 100%; }
+      .review-action { flex: 1; }
+      .stage { display: block; }
+      .device { min-height: calc(100vh - 51px); border: 0; border-radius: 0; box-shadow: none; }
+      .device::before { display: none; }
+      .screen { min-height: calc(100vh - 51px); }
+    }
+  </style>
+</head>
+<body data-view="list" data-account-state="active">
+  <div class="workspace">
+    <header class="review-bar">
+      <div class="review-title">
+        <strong>账号界面重设计 · v2</strong>
+        <span>列表与 OpenAI 详情双视图</span>
+      </div>
+      <div class="review-actions" role="group" aria-label="参考稿视图">
+        <button class="review-action active" data-view-target="list">账号列表</button>
+        <button class="review-action" data-view-target="detail">OpenAI 详情</button>
+        <button class="review-action" data-state-toggle>模拟未启用</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <article class="device primary" aria-label="账号列表参考稿">
+        <div class="screen">
+          <header class="app-header">
+            <div>
+              <h1>账号</h1>
+              <p>本地服务器 · 刚刚同步</p>
+            </div>
+            <button class="icon-button" aria-label="刷新额度">
+              <svg viewBox="0 0 24 24"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M18.5 9a7 7 0 0 0-12-2.5L4 9"/><path d="M5.5 15a7 7 0 0 0 12 2.5L20 15"/></svg>
+            </button>
+          </header>
+
+          <section class="summary-strip" aria-label="账号总览">
+            <div class="summary-cell"><span>账号</span><strong>6</strong></div>
+            <div class="summary-cell"><span>额度正常</span><strong class="good">4</strong></div>
+            <div class="summary-cell"><span>需留意</span><strong class="warn">2</strong></div>
+          </section>
+
+          <nav class="provider-tabs" aria-label="提供商筛选">
+            <button class="provider-tab active">全部 6</button>
+            <button class="provider-tab">OpenAI 3</button>
+            <button class="provider-tab">Anthropic 2</button>
+            <button class="provider-tab">Google 1</button>
+          </nav>
+
+          <div class="list-head"><h2>凭据</h2><span>按最低剩余额度排序</span></div>
+
+          <section class="account-list">
+            <div class="account-row">
+              <div class="provider-icon">O</div>
+              <div class="account-main">
+                <div class="account-name">user@example.com</div>
+                <div class="account-meta"><span class="plan">PRO</span><span class="dot"></span><span class="quota-mini">GPT 82%</span></div>
+              </div>
+              <div class="account-tail"><span class="percent">82%</span><span class="chevron">›</span></div>
+            </div>
+            <div class="account-row">
+              <div class="provider-icon">O</div>
+              <div class="account-main">
+                <div class="account-name">workspace@example.com</div>
+                <div class="account-meta"><span class="plan">PLUS</span><span class="dot"></span><span class="quota-mini warn">GPT 31%</span></div>
+              </div>
+              <div class="account-tail"><span class="percent warn">31%</span><span class="chevron">›</span></div>
+            </div>
+            <div class="account-row disabled-row">
+              <div class="provider-icon">O</div>
+              <div class="account-main">
+                <div class="account-name">archived@example.com</div>
+                <div class="account-meta"><span class="plan disabled-plan">未启用</span><span class="dot"></span><span class="quota-mini disabled">保留上次额度</span></div>
+              </div>
+              <div class="account-tail"><span class="percent disabled">未启用</span><span class="chevron">›</span></div>
+            </div>
+            <div class="account-row">
+              <div class="provider-icon anthropic">A</div>
+              <div class="account-main">
+                <div class="account-name">claude-team</div>
+                <div class="account-meta"><span class="plan">MAX</span><span class="dot"></span><span class="quota-mini">5 小时 74%</span></div>
+              </div>
+              <div class="account-tail"><span class="percent">74%</span><span class="chevron">›</span></div>
+            </div>
+            <div class="account-row">
+              <div class="provider-icon google">G</div>
+              <div class="account-main">
+                <div class="account-name">gemini-workspace</div>
+                <div class="account-meta"><span>Google</span><span class="dot"></span><span class="quota-mini">模型额度 66%</span></div>
+              </div>
+              <div class="account-tail"><span class="percent">66%</span><span class="chevron">›</span></div>
+            </div>
+          </section>
+        </div>
+
+        <nav class="bottom-nav" aria-label="底部导航">
+          <div class="bottom-item"><svg viewBox="0 0 24 24"><path d="M3 12h7V3H3zM14 21h7v-9h-7zM3 21h7v-5H3zM14 8h7V3h-7z"/></svg><span>概览</span></div>
+          <div class="bottom-item active"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M17 11a4 4 0 0 1 4 4v2"/></svg><span>账号</span></div>
+          <div class="bottom-item"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>用量</span></div>
+          <div class="bottom-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/></svg><span>设置</span></div>
+        </nav>
+      </article>
+
+      <article class="device secondary" aria-label="OpenAI 账号详情参考稿">
+        <div class="screen detail-screen">
+          <header class="detail-topbar">
+            <button class="icon-button" aria-label="返回">
+              <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <h1>账号详情</h1>
+            <button class="icon-button" aria-label="刷新额度">
+              <svg viewBox="0 0 24 24"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M18.5 9a7 7 0 0 0-12-2.5L4 9"/><path d="M5.5 15a7 7 0 0 0 12 2.5L20 15"/></svg>
+            </button>
+          </header>
+
+          <section class="identity-band">
+            <div class="provider-icon">O</div>
+            <div>
+              <h2>user@example.com</h2>
+              <p>OpenAI · PRO</p>
+            </div>
+            <span class="state-pill active-state">已启用</span>
+            <span class="state-pill disabled disabled-state">未启用</span>
+          </section>
+
+          <div class="disabled-note">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+            <span>此凭据当前未启用。保留最后一次成功获取的额度和重置时间，不显示“额度查询失败”。</span>
+          </div>
+
+          <section class="detail-section">
+            <div class="section-title"><h3>额度与重置</h3><span>刚刚更新</span></div>
+            <div class="quota-grid">
+              <article class="quota-card">
+                <div class="quota-card-head">
+                  <div class="quota-product">
+                    <span class="product-mark"><svg viewBox="0 0 24 24"><path d="M8 9h8M8 13h5M6 4h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5l-4 3v-3H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></span>
+                    <span>GPT<div class="cycle">5 小时额度周期</div></span>
+                  </div>
+                  <div class="quota-number">82% <small>剩余</small></div>
+                </div>
+                <div class="progress"><span style="width:82%"></span></div>
+                <div class="time-grid">
+                  <div class="time-cell"><span>重置于</span><strong>今天 18:30</strong></div>
+                  <div class="time-cell"><span>有效期至</span><strong>8 月 23 日 18:30</strong></div>
+                </div>
+              </article>
+
+              <article class="quota-card review">
+                <div class="quota-card-head">
+                  <div class="quota-product">
+                    <span class="product-mark"><svg viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                    <span>Code review<div class="cycle">7 天额度周期</div></span>
+                  </div>
+                  <div class="quota-number">64% <small>剩余</small></div>
+                </div>
+                <div class="progress"><span style="width:64%"></span></div>
+                <div class="time-grid">
+                  <div class="time-cell"><span>重置于</span><strong>8 月 28 日 09:00</strong></div>
+                  <div class="time-cell"><span>有效期至</span><strong>8 月 28 日 09:00</strong></div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="section-title"><h3>用量</h3><span>当前 GPT 周期</span></div>
+            <div class="summary-strip">
+              <div class="summary-cell"><span>请求</span><strong>1,284</strong></div>
+              <div class="summary-cell"><span>令牌</span><strong>8.6M</strong></div>
+              <div class="summary-cell"><span>成功率</span><strong class="good">99.2%</strong></div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="section-title"><h3>数据详情</h3></div>
+            <div class="data-list">
+              <div class="data-row"><span>套餐</span><strong>PRO</strong></div>
+              <div class="data-row"><span>额度来源</span><strong>OpenAI 实时查询</strong></div>
+              <div class="data-row"><span>最近同步</span><strong>8 月 23 日 16:12</strong></div>
+            </div>
+          </section>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    const body = document.body;
+    const viewButtons = document.querySelectorAll("[data-view-target]");
+    const stateButton = document.querySelector("[data-state-toggle]");
+
+    viewButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        body.dataset.view = button.dataset.viewTarget;
+        viewButtons.forEach((item) => item.classList.toggle("active", item === button));
+      });
+    });
+
+    stateButton.addEventListener("click", () => {
+      const disabled = body.dataset.accountState === "disabled";
+      body.dataset.accountState = disabled ? "active" : "disabled";
+      stateButton.classList.toggle("active", !disabled);
+      stateButton.textContent = disabled ? "模拟未启用" : "恢复已启用";
+    });
+  </script>
+</body>
+</html>
