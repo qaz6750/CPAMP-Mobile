@@ -154,13 +154,12 @@ private fun FloatingNavigationBar(
     val pressedStates = destinations.map { destination ->
         interactionSources.getValue(destination).collectIsPressedAsState().value
     }
-    val pressedIndex = pressedStates.indexOfFirst { it }
     var isDragging by remember { mutableStateOf(false) }
     var interactionPosition by remember { mutableStateOf<Offset?>(null) }
     val indicatorPosition = remember { Animatable(selectedIndex.toFloat()) }
     val navigationScope = rememberCoroutineScope()
     val pressProgress by animateFloatAsState(
-        targetValue = if (pressedIndex >= 0 || isDragging) 1f else 0f,
+        targetValue = if (isDragging) 1f else 0f,
         animationSpec = spring(dampingRatio = 0.68f, stiffness = 420f),
         label = "navigationGlassPressProgress",
     )
@@ -200,19 +199,12 @@ private fun FloatingNavigationBar(
                             )
                         }
                     },
-                    highlight = {
-                        Highlight.Plain.copy(alpha = 0.56f + pressProgress * 0.18f)
-                    },
+                    highlight = { Highlight.Plain.copy(alpha = 0.58f) },
                     shadow = {
                         Shadow(
                             radius = 14.dp,
-                            color = Color.Black.copy(alpha = 0.10f + pressProgress * 0.04f),
+                            color = Color.Black.copy(alpha = 0.10f),
                         )
-                    },
-                    layerBlock = {
-                        val scale = 1f + pressProgress * 6.dp.toPx() / size.width
-                        scaleX = scale
-                        scaleY = scale
                     },
                     onDrawSurface = { drawRect(glassSurface) },
                 )
@@ -238,11 +230,10 @@ private fun FloatingNavigationBar(
                     )
                 },
             )
-            LaunchedEffect(selectedIndex, pressedIndex, isDragging) {
+            LaunchedEffect(selectedIndex, isDragging) {
                 if (!isDragging) {
-                    val targetIndex = pressedIndex.takeIf { it >= 0 } ?: selectedIndex
                     indicatorPosition.animateTo(
-                        targetValue = targetIndex.toFloat(),
+                        targetValue = selectedIndex.toFloat(),
                         animationSpec = spring(
                             dampingRatio = 0.72f,
                             stiffness = 360f,
