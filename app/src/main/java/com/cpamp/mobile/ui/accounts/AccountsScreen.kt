@@ -871,7 +871,7 @@ private fun AccountQuotaCard(account: AccountHealth) {
         Column(Modifier.fillMaxWidth()) {
             when {
                 account.windows.isNotEmpty() -> {
-                    account.failure?.let { failure ->
+                    account.failure?.takeIf { account.status != AccountStatus.Disabled }?.let { failure ->
                         Text(
                             stringResource(failure.messageResource()),
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
@@ -896,12 +896,12 @@ private fun AccountQuotaCard(account: AccountHealth) {
                         }
                     }
                 }
+                account.status == AccountStatus.Disabled -> AccountQuotaEmptyState(
+                    stringResource(R.string.credential_quota_disabled_hint),
+                )
                 account.quotaState == AccountQuotaState.Failed -> AccountQuotaEmptyState(
                     stringResource(account.failure.messageResource()),
                     MaterialTheme.colorScheme.error,
-                )
-                account.status == AccountStatus.Disabled -> AccountQuotaEmptyState(
-                    stringResource(R.string.credential_quota_disabled_hint),
                 )
                 account.quotaState == AccountQuotaState.NotRequested -> AccountQuotaEmptyState(
                     stringResource(R.string.accounts_quota_not_refreshed),
