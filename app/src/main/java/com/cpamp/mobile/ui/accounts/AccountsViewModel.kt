@@ -29,6 +29,7 @@ data class AccountsUiState(
     val loading: Boolean = true,
     val refreshing: Boolean = false,
     val error: AccountsError? = null,
+    val resetCreditAction: ResetCreditActionUiState = ResetCreditActionUiState(),
 )
 
 data class AccountDetailUiState(
@@ -39,9 +40,28 @@ data class AccountDetailUiState(
     val usageToMs: Long? = null,
     val fromCache: Boolean = false,
     val loading: Boolean = false,
+    val refreshing: Boolean = false,
+    val resetCreditAction: ResetCreditActionUiState = ResetCreditActionUiState(),
 )
 
 enum class AccountsError { Unauthorized, RateLimited, Network, Server }
+
+enum class ResetCreditActionPhase {
+    Idle,
+    Verifying,
+    Confirming,
+    Redeeming,
+    Success,
+    PartialSuccess,
+    NoCredits,
+    Failed,
+}
+
+data class ResetCreditActionUiState(
+    val accountId: String = "",
+    val phase: ResetCreditActionPhase = ResetCreditActionPhase.Idle,
+    val availableCount: Int = 0,
+)
 
 @HiltViewModel
 class AccountsViewModel @Inject constructor(
@@ -87,9 +107,120 @@ class AccountsViewModel @Inject constructor(
             usageToMs = account?.usageToMs?.takeIf { it > 0 },
             fromCache = snapshot?.fromCache == true,
             loading = accountsState.loading && snapshot == null,
+            refreshing = accountsState.refreshing,
+            resetCreditAction = accountsState.resetCreditAction.takeIf {
+                it.accountId == accountId
+            } ?: ResetCreditActionUiState(),
         )
     }.scan(AccountDetailUiState(loading = true)) { previous, current ->
         retainCachedAccountDetail(previous, current, accountId)
+    }
+
+    fun requestResetCredit(accountId: String) {
+        if (mutableState.value.resetCreditAction.phase in activeResetCreditPhases) return
+        viewModelScope.launch {
+            mutableState.update {
+                it.copy(
+                    resetCreditAction = ResetCreditActionUiState(
+                        accountId = accountId,
+                        phase = ResetCreditActionPhase.Verifying,
+                    ),
+                )
+            }
+            val session = sessionRepository.session.value
+            if (session == null) {
+                updateResetCreditAction(accountId, ResetCreditActionPhase.Failed)
+                return@launch
+            }
+            runSuspendCatching { repository.refreshCredentialQuota(session, accountId) }
+                .onSuccess { account ->
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
+                    val count = account.resetCreditsAvailable
+                        ?: account.resetCredits.size.takeIf { it > 0 }
+                    if (count == null) {
+                        updateResetCreditAction(accountId, ResetCreditActionPhase.Failed)
+                        return@onSuccess
+                    }
+                    mutableState.update {
+                        it.copy(
+                            error = null,
+                            resetCreditAction = ResetCreditActionUiState(
+                                accountId = accountId,
+                                phase = if (count > 0) {
+                                    ResetCreditActionPhase.Confirming
+                                } else {
+                                    ResetCreditActionPhase.NoCredits
+                                },
+                                availableCount = count,
+                            ),
+                        )
+                    }
+                }
+                .onFailure {
+                    updateResetCreditAction(accountId, ResetCreditActionPhase.Failed)
+                }
+        }
+    }
+
+    fun dismissResetCreditConfirmation(accountId: String) {
+        if (mutableState.value.resetCreditAction.accountId != accountId) return
+        updateResetCreditAction(accountId, ResetCreditActionPhase.Idle)
+    }
+
+    fun confirmResetCredit(accountId: String) {
+        val action = mutableState.value.resetCreditAction
+        if (action.accountId != accountId || action.phase != ResetCreditActionPhase.Confirming) return
+        viewModelScope.launch {
+            updateResetCreditAction(
+                accountId = accountId,
+                phase = ResetCreditActionPhase.Redeeming,
+                availableCount = action.availableCount,
+            )
+            val session = sessionRepository.session.value
+            if (session == null) {
+                updateResetCreditAction(accountId, ResetCreditActionPhase.Failed)
+                return@launch
+            }
+            val consumeResult = runSuspendCatching {
+                repository.consumeCodexResetCredit(session, accountId)
+            }
+            if (consumeResult.isFailure) {
+                updateResetCreditAction(accountId, ResetCreditActionPhase.Failed)
+                return@launch
+            }
+            runSuspendCatching { repository.refreshCredentialQuota(session, accountId) }
+                .onSuccess {
+                    if (sessionRepository.session.value?.profile?.id != session.profile.id) return@onSuccess
+                    mutableState.update {
+                        it.copy(
+                            error = null,
+                            resetCreditAction = ResetCreditActionUiState(
+                                accountId = accountId,
+                                phase = ResetCreditActionPhase.Success,
+                            ),
+                        )
+                    }
+                }
+                .onFailure {
+                    updateResetCreditAction(accountId, ResetCreditActionPhase.PartialSuccess)
+                }
+        }
+    }
+
+    private fun updateResetCreditAction(
+        accountId: String,
+        phase: ResetCreditActionPhase,
+        availableCount: Int = 0,
+    ) {
+        mutableState.update {
+            it.copy(
+                resetCreditAction = ResetCreditActionUiState(
+                    accountId = accountId,
+                    phase = phase,
+                    availableCount = availableCount,
+                ),
+            )
+        }
     }
 
     private suspend fun load() {
@@ -128,6 +259,12 @@ class AccountsViewModel @Inject constructor(
             }
     }
 }
+
+private val activeResetCreditPhases = setOf(
+    ResetCreditActionPhase.Verifying,
+    ResetCreditActionPhase.Confirming,
+    ResetCreditActionPhase.Redeeming,
+)
 
 internal fun retainCachedAccountDetail(
     previous: AccountDetailUiState,

@@ -5,6 +5,7 @@ import com.cpamp.mobile.data.accounts.AccountHealthFailure
 import com.cpamp.mobile.data.accounts.AccountHealthSource
 import com.cpamp.mobile.data.accounts.AccountQuotaState
 import com.cpamp.mobile.data.accounts.AccountQuotaWindow
+import com.cpamp.mobile.data.accounts.AccountResetCredit
 import com.cpamp.mobile.data.accounts.AccountStatus
 import com.cpamp.mobile.data.remote.CPAMPApi
 import com.cpamp.mobile.data.remote.RemoteFailure
@@ -14,6 +15,7 @@ import com.cpamp.mobile.data.remote.model.AuthFileDto
 import com.cpamp.mobile.data.remote.remoteCall
 import java.time.Instant
 import java.util.Base64
+import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -104,7 +106,94 @@ private suspend fun AuthFileDto.loadCodexQuota(
             addAll(rateLimit.codexWindows(fetchedAtMs, "Code review"))
         }
     }
-    return baseQuota(windows = windows, planType = plan)
+    val usageResetCreditsAvailable = payload.codexResetCreditsAvailable()
+    val resetCredits = try {
+        val resetCreditHeaders = headers + mapOf(
+            "Accept" to "application/json",
+            "OpenAI-Beta" to "codex-1",
+            "Originator" to "Codex Desktop",
+        )
+        api.requestQuota(
+            json = json,
+            authIndex = requiredAuthIndex,
+            method = "GET",
+            url = "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits",
+            headers = resetCreditHeaders,
+        ).normalizeCodexResetCredits()
+    } catch (error: Exception) {
+        if (error is CancellationException) throw error
+        if (error is RemoteFailure.Unauthorized) throw error
+        CodexResetCredits()
+    }
+    val resetCreditsAvailable = resetCredits.availableCount
+        ?: resetCredits.credits.size.takeIf { it > 0 }
+        ?: usageResetCreditsAvailable
+    return baseQuota(
+        windows = windows,
+        planType = plan,
+        resetCreditsAvailable = resetCreditsAvailable,
+        resetCredits = resetCredits.credits,
+    )
+}
+
+internal suspend fun AuthFileDto.consumeCodexResetCredit(
+    api: CPAMPApi,
+    json: Json,
+) {
+    val headers = linkedMapOf(
+        "Authorization" to "Bearer \$TOKEN\$",
+        "Content-Type" to "application/json",
+        "User-Agent" to "codex_cli_rs/0.76.0 (Debian 13.0.0; x86_64) WindowsTerminal",
+    )
+    resolveCodexAccountId(json)?.let { headers["Chatgpt-Account-Id"] = it }
+    val response = remoteCall {
+        api.apiCall(
+            ApiCallRequestDto(
+                authIndex = requiredAuthIndex,
+                method = "POST",
+                url = "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits/consume",
+                header = headers,
+                data = JsonObject(
+                    mapOf("redeem_request_id" to JsonPrimitive(UUID.randomUUID().toString())),
+                ).toString(),
+            ),
+        )
+    }
+    response.resolvedStatusCode?.let { statusCode ->
+        if (statusCode !in 200..299) throw DirectQuotaRequestException(statusCode)
+    }
+}
+
+private data class CodexResetCredits(
+    val availableCount: Int? = null,
+    val credits: List<AccountResetCredit> = emptyList(),
+)
+
+private fun JsonObject.codexResetCreditsAvailable(): Int? =
+    value("rate_limit_reset_credits", "rateLimitResetCredits")
+        .asObject()
+        ?.value("available_count", "availableCount")
+        .asCount()
+
+private fun JsonElement.normalizeCodexResetCredits(): CodexResetCredits {
+    val payload = asObject() ?: return CodexResetCredits()
+    val credits = payload.value("credits").asArray().orEmpty().mapNotNull { element ->
+        val credit = element.asObject() ?: return@mapNotNull null
+        if (credit.value("reset_type", "resetType").asString() != "codex_rate_limits") {
+            return@mapNotNull null
+        }
+        if (credit.value("status").asString() != "available") return@mapNotNull null
+        val expiresAtMs = credit.value("expires_at", "expiresAt").asString().toEpochMs()
+            ?: return@mapNotNull null
+        AccountResetCredit(
+            id = credit.value("id").asString().orEmpty(),
+            expiresAtMs = expiresAtMs,
+        )
+    }
+    return CodexResetCredits(
+        availableCount = payload.value("available_count", "availableCount").asCount(),
+        credits = credits,
+    )
 }
 
 private fun JsonObject.codexWindows(fetchedAtMs: Long, label: String): List<AccountQuotaWindow> {
@@ -505,6 +594,8 @@ private fun AuthFileDto.baseQuota(
     quotaState: AccountQuotaState = AccountQuotaState.Available,
     failure: AccountHealthFailure? = null,
     planType: String = resolvedPlanType,
+    resetCreditsAvailable: Int? = null,
+    resetCredits: List<AccountResetCredit> = emptyList(),
 ): AccountHealth = AccountHealth(
     stableId = stableAccountId,
     authIndex = resolvedAuthIndex,
@@ -517,6 +608,8 @@ private fun AuthFileDto.baseQuota(
     quotaState = quotaState,
     failure = failure,
     source = AccountHealthSource.Direct,
+    resetCreditsAvailable = resetCreditsAvailable,
+    resetCredits = resetCredits,
 )
 
 internal val AuthFileDto.resolvedProvider: String
@@ -708,6 +801,10 @@ private fun JsonElement?.asLong(): Long? = (this as? JsonPrimitive)?.let { primi
         ?: primitive.doubleOrNull?.takeIf(Double::isFinite)?.toLong()
         ?: primitive.contentOrNull?.toLongOrNull()
 }
+
+private fun JsonElement?.asCount(): Int? = asDouble()
+    ?.takeIf { it.isFinite() && it >= 0.0 && it <= Int.MAX_VALUE.toDouble() }
+    ?.toInt()
 
 private fun JsonElement?.asBoolean(): Boolean? = (this as? JsonPrimitive)?.let { primitive ->
     primitive.booleanOrNull ?: primitive.contentOrNull?.toBooleanStrictOrNull()

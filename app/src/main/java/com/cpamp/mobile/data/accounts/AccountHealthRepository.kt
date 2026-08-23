@@ -3,7 +3,9 @@ package com.cpamp.mobile.data.accounts
 import com.cpamp.mobile.data.cache.CacheDao
 import com.cpamp.mobile.data.cache.CacheEntity
 import com.cpamp.mobile.data.monitoring.loadDirectCredentialQuotas
+import com.cpamp.mobile.data.monitoring.consumeCodexResetCredit
 import com.cpamp.mobile.data.monitoring.resolvedAuthIndex
+import com.cpamp.mobile.data.monitoring.resolvedProvider
 import com.cpamp.mobile.data.monitoring.stableAccountId
 import com.cpamp.mobile.data.monitoring.supportsDirectQuota
 import com.cpamp.mobile.data.monitoring.toBaseAccountHealth
@@ -65,6 +67,12 @@ data class AccountUsage(
 )
 
 @Serializable
+data class AccountResetCredit(
+    val id: String = "",
+    val expiresAtMs: Long = 0,
+)
+
+@Serializable
 data class AccountHealth(
     val stableId: String,
     val authIndex: String,
@@ -81,6 +89,8 @@ data class AccountHealth(
     val usageState: AccountUsageState = AccountUsageState.Unavailable,
     val usageFromMs: Long = 0,
     val usageToMs: Long = 0,
+    val resetCreditsAvailable: Int? = null,
+    val resetCredits: List<AccountResetCredit> = emptyList(),
 )
 
 @Serializable
@@ -194,6 +204,78 @@ class AccountHealthRepository @Inject constructor(
         return snapshot
     }
 
+    suspend fun consumeCodexResetCredit(
+        session: AuthenticatedSession,
+        accountId: String,
+    ) {
+        val api = clientFactory.api(session)
+        val file = remoteCall { api.authFiles() }.files.firstOrNull { candidate ->
+            candidate.stableAccountId == accountId && candidate.resolvedProvider == "codex"
+        } ?: error("Codex credential is no longer available")
+        file.consumeCodexResetCredit(api, json)
+
+        val current = mutableSnapshots.value[session.profile.id] ?: return
+        val updated = current.copy(
+            accounts = current.accounts.map { account ->
+                if (account.stableId == accountId) {
+                    account.copy(resetCreditsAvailable = null, resetCredits = emptyList())
+                } else {
+                    account
+                }
+            },
+            cachedAtMs = System.currentTimeMillis(),
+        )
+        cacheDao.upsert(
+            CacheEntity(
+                profileId = session.profile.id,
+                kind = CACHE_KIND,
+                payload = json.encodeToString(updated.toCacheSafeSnapshot()),
+                updatedAt = updated.cachedAtMs,
+            ),
+        )
+        publish(session.profile.id, updated)
+    }
+
+    suspend fun refreshCredentialQuota(
+        session: AuthenticatedSession,
+        accountId: String,
+    ): AccountHealth {
+        val api = clientFactory.api(session)
+        val file = remoteCall { api.authFiles() }.files.firstOrNull { candidate ->
+            candidate.stableAccountId == accountId
+        } ?: error("Credential is no longer available")
+        val observedAtMs = System.currentTimeMillis()
+        val refreshed = api.loadDirectCredentialQuotas(json, observedAtMs, listOf(file)).single()
+        val current = mutableSnapshots.value[session.profile.id]
+        val previous = current?.accountForDetail(accountId)
+        val account = refreshed.copy(
+            usage = previous?.usage,
+            usageState = previous?.usageState ?: AccountUsageState.Unavailable,
+            usageFromMs = previous?.usageFromMs ?: 0,
+            usageToMs = previous?.usageToMs ?: 0,
+        )
+        if (current != null) {
+            val updated = current.copy(
+                observedAtMs = observedAtMs,
+                accounts = current.accounts.map { existing ->
+                    if (existing.stableId == accountId) account else existing
+                },
+                cachedAtMs = observedAtMs,
+                fromCache = false,
+            )
+            cacheDao.upsert(
+                CacheEntity(
+                    profileId = session.profile.id,
+                    kind = CACHE_KIND,
+                    payload = json.encodeToString(updated.toCacheSafeSnapshot()),
+                    updatedAt = observedAtMs,
+                ),
+            )
+            publish(session.profile.id, updated)
+        }
+        return account
+    }
+
     private fun publish(profileId: String, snapshot: AccountHealthSnapshot) {
         mutableSnapshots.update { current -> current + (profileId to snapshot) }
     }
@@ -280,6 +362,7 @@ internal fun AccountHealthSnapshot.toCacheSafeSnapshot(): AccountHealthSnapshot 
             windows = account.windows.map { window ->
                 window.copy(resetLabel = "", label = "")
             },
+            resetCredits = account.resetCredits.map { credit -> credit.copy(id = "") },
             failure = account.failure?.takeUnless { it == AccountHealthFailure.Inspection },
             source = AccountHealthSource.Cache,
         )

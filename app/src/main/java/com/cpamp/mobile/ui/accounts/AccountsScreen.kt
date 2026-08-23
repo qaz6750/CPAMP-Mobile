@@ -34,11 +34,14 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Token
 import androidx.compose.material.icons.automirrored.outlined.TrendingUp
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -211,7 +214,11 @@ fun AccountDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                AccountDetailHeader(onBack)
+                AccountDetailHeader(
+                    onBack = onBack,
+                    refreshing = state.refreshing,
+                    onRefresh = viewModel::refresh,
+                )
             }
             if (state.fromCache) {
                 item { AccountsNotice(stringResource(R.string.accounts_detail_cached), false) }
@@ -236,15 +243,55 @@ fun AccountDetailScreen(
                     if (account.usage != null) {
                         item { AccountUsageCard(account, state.usageFromMs, state.usageToMs) }
                     }
+                    if (account.shouldShowResetCredits() || state.resetCreditAction.phase != ResetCreditActionPhase.Idle) {
+                        item {
+                            AccountResetCreditsCard(
+                                account = account,
+                                action = state.resetCreditAction,
+                                allowAction = !state.fromCache,
+                                onUse = { viewModel.requestResetCredit(account.stableId) },
+                            )
+                        }
+                    }
                     item { AccountDataDetailsCard(account, state.observedAtMs) }
                 }
             }
         }
     }
+
+    if (account != null && state.resetCreditAction.phase == ResetCreditActionPhase.Confirming) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissResetCreditConfirmation(account.stableId) },
+            title = { Text(stringResource(R.string.accounts_reset_credits_confirm_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.accounts_reset_credits_confirm_body,
+                        state.resetCreditAction.availableCount,
+                        account.displayTitle(),
+                    ),
+                )
+            },
+            confirmButton = {
+                Button(onClick = { viewModel.confirmResetCredit(account.stableId) }) {
+                    Text(stringResource(R.string.accounts_reset_credits_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissResetCreditConfirmation(account.stableId) }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
-private fun AccountDetailHeader(onBack: () -> Unit) {
+private fun AccountDetailHeader(
+    onBack: () -> Unit,
+    refreshing: Boolean,
+    onRefresh: () -> Unit,
+) {
     PageHeader(
         eyebrow = stringResource(R.string.nav_accounts),
         title = stringResource(R.string.accounts_detail_title),
@@ -255,6 +302,14 @@ private fun AccountDetailHeader(onBack: () -> Unit) {
                     contentDescription = stringResource(R.string.back),
                 )
             }
+        },
+        trailing = {
+            LoadingIconButton(
+                icon = Icons.Outlined.Refresh,
+                contentDescription = stringResource(R.string.accounts_refresh_quotas),
+                loading = refreshing,
+                onClick = onRefresh,
+            )
         },
     )
 }
@@ -375,20 +430,9 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
             color = MaterialTheme.colorScheme.tertiary,
         ),
         AccountHealthMetric(
-            label = R.string.accounts_overview_risk,
-            count = states.count { it == AccountOverviewState.QuotaRisk },
-            color = QuotaOrange,
-        ),
-        AccountHealthMetric(
             label = R.string.accounts_overview_attention,
-            count = states.count {
-                it in setOf(
-                    AccountOverviewState.NeedsAttention,
-                    AccountOverviewState.Disabled,
-                    AccountOverviewState.Pending,
-                )
-            },
-            color = MaterialTheme.colorScheme.error,
+            count = states.count { it != AccountOverviewState.Healthy },
+            color = QuotaOrange,
         ),
     )
     AccountCard {
@@ -497,8 +541,6 @@ private fun AccountSectionTitle(@StringRes label: Int, count: Int) {
 
 @Composable
 private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
-    val remaining = account.minimumRemainingPercent()
-    val level = quotaLevel(remaining)
     val showProviderLabel = !account.provider.isOpenAiProvider()
     val plan = account.planType.trim().takeIf(String::isNotEmpty)
     Row(
@@ -538,27 +580,68 @@ private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                remaining?.let { value ->
-                    Text(
-                        buildString {
-                            if (showProviderLabel || plan != null) append("· ")
-                            append(stringResource(R.string.credential_quota_remaining, value))
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = quotaLevelColor(level),
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
         }
+        AccountCompactQuotaStack(account, Modifier.width(126.dp))
         Icon(
             Icons.Outlined.ChevronRight,
             contentDescription = stringResource(R.string.accounts_open_details),
             modifier = Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+private fun AccountCompactQuotaStack(account: AccountHealth, modifier: Modifier = Modifier) {
+    val windows = account.windows.take(2)
+    if (windows.isEmpty()) {
+        if (account.status == AccountStatus.Disabled) {
+            Box(modifier, contentAlignment = Alignment.CenterEnd) {
+                Text(
+                    "--",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+        return
+    }
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        windows.forEach { window ->
+            val remaining = normalizedRemainingPercent(window.remainingPercent)
+                .takeUnless { account.status == AccountStatus.Disabled }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    window.compactLabel(),
+                    modifier = Modifier.widthIn(min = 28.dp, max = 48.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                QuotaProgressBar(
+                    remainingPercent = remaining,
+                    modifier = Modifier.weight(1f).height(5.dp),
+                )
+                Text(
+                    remaining?.let { stringResource(R.string.accounts_quota_remaining_value, it) }
+                        ?: "--",
+                    modifier = Modifier.width(34.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = quotaLevelColor(quotaLevel(remaining)),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                )
+            }
+        }
     }
 }
 
@@ -642,7 +725,31 @@ private fun AccountIdentitySummary(account: AccountHealth) {
                     }
                 }
             }
+            AccountStatusBadge(account.status)
         }
+    }
+}
+
+@Composable
+private fun AccountStatusBadge(status: AccountStatus) {
+    val active = status == AccountStatus.Active
+    val color = if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline
+    Surface(
+        color = color.copy(alpha = 0.10f),
+        contentColor = color,
+        shape = RoundedCornerShape(50),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.22f)),
+    ) {
+        Text(
+            stringResource(
+                if (active) R.string.credential_quota_active
+                else R.string.credential_quota_disabled,
+            ),
+            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
     }
 }
 
@@ -665,28 +772,30 @@ private fun AccountDetailSection(
     subtitle: String? = null,
     content: @Composable () -> Unit,
 ) {
-    AccountPanel {
-        Column(Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Text(
+                stringResource(title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            subtitle?.let {
                 Text(
-                    stringResource(title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    it,
+                    modifier = Modifier.weight(1f).padding(start = 12.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.End,
                 )
-                subtitle?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
-            AccountDetailDivider()
+        }
+        AccountPanel {
             content()
         }
     }
@@ -733,16 +842,16 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
             MaterialTheme.colorScheme.primary,
         ),
         AccountUsageMetric(
-            R.string.usage_tokens,
-            usage.totalTokens.compactTokens(),
-            Icons.Outlined.Token,
-            MaterialTheme.colorScheme.primary,
-        ),
-        AccountUsageMetric(
             R.string.usage_cost,
             usage.cost.asCost(),
             Icons.Outlined.Payments,
             QuotaOrange,
+        ),
+        AccountUsageMetric(
+            R.string.usage_tokens,
+            usage.totalTokens.compactTokens(),
+            Icons.Outlined.Token,
+            MaterialTheme.colorScheme.primary,
         ),
         AccountUsageMetric(
             R.string.health_success_rate,
@@ -809,6 +918,110 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
             }
         }
     }
+}
+
+@Composable
+private fun AccountResetCreditsCard(
+    account: AccountHealth,
+    action: ResetCreditActionUiState,
+    allowAction: Boolean,
+    onUse: () -> Unit,
+) {
+    val available = account.resetCreditsAvailable
+        ?: account.resetCredits.size.takeIf { it > 0 }
+    val expiries = account.resetCredits
+        .filter { it.expiresAtMs > System.currentTimeMillis() }
+        .sortedBy { it.expiresAtMs }
+    val busy = action.phase in setOf(
+        ResetCreditActionPhase.Verifying,
+        ResetCreditActionPhase.Redeeming,
+    )
+    AccountDetailSection(
+        title = R.string.accounts_reset_credits,
+        subtitle = stringResource(R.string.accounts_reset_credits_subtitle),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AccountMetricIcon(Icons.Outlined.Refresh, MaterialTheme.colorScheme.primary)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        available?.let {
+                            stringResource(R.string.accounts_reset_credits_available, it)
+                        } ?: stringResource(R.string.accounts_reset_credits_unknown),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        stringResource(R.string.accounts_reset_credits_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Button(
+                    onClick = onUse,
+                    enabled = allowAction &&
+                        account.status == AccountStatus.Active &&
+                        available != null &&
+                        available > 0 &&
+                        !busy,
+                ) {
+                    Text(
+                        stringResource(
+                            when (action.phase) {
+                                ResetCreditActionPhase.Verifying -> R.string.accounts_reset_credits_verifying
+                                ResetCreditActionPhase.Redeeming -> R.string.accounts_reset_credits_redeeming
+                                else -> R.string.accounts_reset_credits_use
+                            },
+                        ),
+                    )
+                }
+            }
+            if (expiries.isNotEmpty()) {
+                AccountDetailDivider()
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.accounts_reset_credits_expiry),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    expiries.forEach { credit ->
+                        Text(
+                            credit.expiresAtMs.asDateTime(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                }
+            }
+            resetCreditActionMessage(action.phase)?.let { message ->
+                AccountDetailDivider()
+                Text(
+                    stringResource(message),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = when (action.phase) {
+                        ResetCreditActionPhase.Failed -> MaterialTheme.colorScheme.error
+                        ResetCreditActionPhase.Success -> MaterialTheme.colorScheme.tertiary
+                        ResetCreditActionPhase.PartialSuccess -> QuotaOrange
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+        }
+    }
+}
+
+@StringRes
+private fun resetCreditActionMessage(phase: ResetCreditActionPhase): Int? = when (phase) {
+    ResetCreditActionPhase.NoCredits -> R.string.accounts_reset_credits_none
+    ResetCreditActionPhase.Failed -> R.string.accounts_reset_credits_failed
+    ResetCreditActionPhase.Success -> R.string.accounts_reset_credits_success
+    ResetCreditActionPhase.PartialSuccess -> R.string.accounts_reset_credits_partial_success
+    else -> null
 }
 
 private data class AccountUsageMetric(
@@ -1025,6 +1238,10 @@ private fun QuotaProgressBar(remainingPercent: Double?, modifier: Modifier = Mod
 private fun AccountHealth.minimumRemainingPercent(): Double? =
     windows.mapNotNull { normalizedRemainingPercent(it.remainingPercent) }.minOrNull()
 
+private fun AccountHealth.shouldShowResetCredits(): Boolean =
+    provider.normalizedProvider() == "codex" &&
+        (resetCreditsAvailable != null || resetCredits.isNotEmpty())
+
 internal fun normalizedRemainingPercent(remainingPercent: Double?): Double? =
     remainingPercent?.takeIf(Double::isFinite)?.coerceIn(0.0, 100.0)
 
@@ -1090,6 +1307,15 @@ internal fun AccountQuotaWindow.durationLabel(): String = when {
     durationSeconds > 0 && durationSeconds % SECONDS_PER_HOUR == 0L ->
         stringResource(R.string.credential_quota_window_hours, durationSeconds / SECONDS_PER_HOUR)
     else -> stringResource(R.string.credential_quota_window_other)
+}
+
+@Composable
+private fun AccountQuotaWindow.compactLabel(): String = when {
+    durationSeconds > 0 && durationSeconds % SECONDS_PER_DAY == 0L ->
+        stringResource(R.string.accounts_quota_compact_days, durationSeconds / SECONDS_PER_DAY)
+    durationSeconds > 0 && durationSeconds % SECONDS_PER_HOUR == 0L ->
+        stringResource(R.string.accounts_quota_compact_hours, durationSeconds / SECONDS_PER_HOUR)
+    else -> label.trim().ifBlank { stringResource(R.string.credential_quota_window_other) }
 }
 
 internal val QuotaOrange = androidx.compose.ui.graphics.Color(0xFFF59E0B)
