@@ -19,7 +19,6 @@ import com.cpamp.mobile.BuildConfig
 import com.cpamp.mobile.R
 import com.cpamp.mobile.common.MILLIS_PER_DAY
 import com.cpamp.mobile.ui.common.asCost
-import com.cpamp.mobile.ui.common.asLatency
 import com.cpamp.mobile.ui.common.asPercent
 import com.cpamp.mobile.ui.common.compactNumber
 import com.cpamp.mobile.ui.common.compactTokens
@@ -67,7 +66,6 @@ class UsageShareImageWriter @Inject constructor(
         drawHeader(canvas, paint, report)
         drawMetrics(canvas, paint, report)
         drawTrendSection(canvas, paint, report)
-        drawHealthSection(canvas, paint, report)
         drawTokenSection(canvas, paint, report)
         drawModels(canvas, paint, report)
         drawFooter(canvas, paint, report)
@@ -376,91 +374,20 @@ class UsageShareImageWriter @Inject constructor(
         }
     }
 
-    private fun drawHealthSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
-        drawSectionHeading(
-            canvas,
-            paint,
-            context.getString(R.string.request_health_trend),
-            context.getString(R.string.request_health_subtitle),
-            1310f,
-            GREEN,
-        )
-        drawHealthChart(canvas, paint, report.timeline, RectF(56f, 1366f, 1024f, 1716f))
-        drawLegend(canvas, paint, 170f, 1760f, HEALTH_SUCCESS, context.getString(R.string.health_success_rate))
-        drawLegend(canvas, paint, 430f, 1760f, HEALTH_FAILURE, context.getString(R.string.health_failure_rate))
-        drawLegend(canvas, paint, 690f, 1760f, HEALTH_LATENCY, context.getString(R.string.health_average_latency))
-    }
-
-    private fun drawHealthChart(
-        canvas: Canvas,
-        paint: Paint,
-        points: List<UsageSharePoint>,
-        bounds: RectF,
-    ) {
-        paint.style = Paint.Style.FILL
-        drawSurface(canvas, paint, bounds, 32f)
-        val hasData = points.any {
-            it.successfulRequests > 0 || it.failedRequests > 0 || it.averageLatencyMs != null
-        }
-        if (!hasData) {
-            drawEmptyChart(canvas, paint, bounds, context.getString(R.string.no_range_traffic))
-            return
-        }
-        val plot = RectF(bounds.left + 78f, bounds.top + 30f, bounds.right - 108f, bounds.bottom - 58f)
-        val maxLatency = points.maxOf { it.averageLatencyMs ?: 0.0 }.coerceAtLeast(1.0)
-        repeat(4) { index ->
-            val fraction = index / 3f
-            val y = plot.top + plot.height() * fraction
-            paint.style = Paint.Style.STROKE
-            paint.color = GRID
-            paint.strokeWidth = 2f
-            paint.pathEffect = DashPathEffect(floatArrayOf(8f, 7f), 0f)
-            canvas.drawLine(plot.left, y, plot.right, y, paint)
-            paint.style = Paint.Style.FILL
-            paint.pathEffect = null
-            paint.textSize = 18f
-            paint.color = MUTED
-            paint.textAlign = Paint.Align.RIGHT
-            canvas.drawText("${((1f - fraction) * 100).toInt()}%", plot.left - 12f, y + 6f, paint)
-            paint.color = HEALTH_LATENCY
-            paint.textAlign = Paint.Align.LEFT
-            canvas.drawText((maxLatency * (1f - fraction)).asLatency(), plot.right + 12f, y + 6f, paint)
-        }
-        val groupWidth = plot.width() / points.size.coerceAtLeast(1)
-        val barWidth = (groupWidth * 0.48f).coerceIn(2f, 16f)
-        points.forEachIndexed { index, point ->
-            val latency = point.averageLatencyMs ?: 0.0
-            if (latency <= 0.0) return@forEachIndexed
-            val center = categoryChartX(index, points.size, plot)
-            val top = plot.bottom - plot.height() * (latency / maxLatency).toFloat()
-            paint.color = Color.argb(164, Color.red(HEALTH_LATENCY), Color.green(HEALTH_LATENCY), Color.blue(HEALTH_LATENCY))
-            canvas.drawRect(center - barWidth / 2f, top, center + barWidth / 2f, plot.bottom, paint)
-        }
-        val successPoints = points.mapIndexed { index, point ->
-            categoryChartPoint(index, points.size, point.successRate, 1.0, plot)
-        }
-        val failurePoints = points.mapIndexed { index, point ->
-            categoryChartPoint(index, points.size, point.failureRate, 1.0, plot)
-        }
-        drawTrendLine(canvas, paint, successPoints, HEALTH_SUCCESS, showPoints = false)
-        drawTrendLine(canvas, paint, failurePoints, HEALTH_FAILURE, showPoints = false)
-        drawTimeLabels(canvas, paint, points, plot, bounds.bottom - 18f, categoryAxis = true)
-    }
-
     private fun drawTokenSection(canvas: Canvas, paint: Paint, report: UsageShareReport) {
         drawSectionHeading(
             canvas,
             paint,
             context.getString(R.string.token_structure),
             context.getString(R.string.token_structure_subtitle),
-            1800f,
+            1310f,
             CYAN_BLUE,
         )
-        drawTokenChart(canvas, paint, report.timeline, RectF(56f, 1856f, 1024f, 2206f))
-        drawLegend(canvas, paint, 100f, 2250f, TOKEN_INPUT, context.getString(R.string.token_input))
-        drawLegend(canvas, paint, 350f, 2250f, TOKEN_OUTPUT, context.getString(R.string.token_output))
-        drawLegend(canvas, paint, 600f, 2250f, TOKEN_CACHED, context.getString(R.string.token_cached))
-        drawLegend(canvas, paint, 830f, 2250f, TOKEN_REASONING, context.getString(R.string.token_reasoning))
+        drawTokenChart(canvas, paint, report.timeline, RectF(56f, 1366f, 1024f, 1716f))
+        drawLegend(canvas, paint, 100f, 1760f, TOKEN_INPUT, context.getString(R.string.token_input))
+        drawLegend(canvas, paint, 350f, 1760f, TOKEN_OUTPUT, context.getString(R.string.token_output))
+        drawLegend(canvas, paint, 600f, 1760f, TOKEN_CACHED, context.getString(R.string.token_cached))
+        drawLegend(canvas, paint, 830f, 1760f, TOKEN_REASONING, context.getString(R.string.token_reasoning))
     }
 
     private fun drawTokenChart(
@@ -578,25 +505,25 @@ class UsageShareImageWriter @Inject constructor(
         paint.style = Paint.Style.FILL
         paint.pathEffect = null
         paint.color = ORANGE
-        canvas.drawRoundRect(RectF(56f, 2283f, 66f, 2311f), 5f, 5f, paint)
+        canvas.drawRoundRect(RectF(56f, 1793f, 66f, 1821f), 5f, 5f, paint)
         paint.color = TEXT
         paint.textSize = 32f
         paint.isFakeBoldText = true
-        canvas.drawText(context.getString(R.string.share_top_models, report.shortRangeLabel()), 82f, 2310f, paint)
+        canvas.drawText(context.getString(R.string.share_top_models, report.shortRangeLabel()), 82f, 1820f, paint)
         paint.isFakeBoldText = false
-        drawSurface(canvas, paint, RectF(56f, 2340f, 1024f, 2780f), 32f)
+        drawSurface(canvas, paint, RectF(56f, 1850f, 1024f, 2290f), 32f)
 
         if (report.topModels.isEmpty()) {
             paint.color = MUTED
             paint.textSize = 25f
             paint.textAlign = Paint.Align.CENTER
-            canvas.drawText(context.getString(R.string.share_no_traffic), 540f, 2566f, paint)
+            canvas.drawText(context.getString(R.string.share_no_traffic), 540f, 2076f, paint)
             paint.textAlign = Paint.Align.LEFT
             return
         }
 
         report.topModels.forEachIndexed { index, model ->
-            val top = 2360f + index * 82f
+            val top = 1870f + index * 82f
             drawProviderIcon(canvas, paint, model.name, 94f, top + 34f)
 
             paint.color = TEXT
@@ -623,12 +550,12 @@ class UsageShareImageWriter @Inject constructor(
         paint.color = MUTED
         paint.textSize = 21f
         paint.textAlign = Paint.Align.LEFT
-        canvas.drawText(context.getString(R.string.share_privacy_footer), 56f, 2852f, paint)
+        canvas.drawText(context.getString(R.string.share_privacy_footer), 56f, 2362f, paint)
         paint.textAlign = Paint.Align.RIGHT
         canvas.drawText(
             context.getString(R.string.share_generated_at, report.generatedAtMs.generatedLabel()),
             1024f,
-            2852f,
+            2362f,
             paint,
         )
         paint.textAlign = Paint.Align.LEFT
@@ -678,24 +605,15 @@ class UsageShareImageWriter @Inject constructor(
         return (0..4).map { step -> points[points.lastIndex * step / 4] }.distinct()
     }
 
-    private fun categoryChartPoint(
-        index: Int,
-        count: Int,
-        value: Double,
-        maximum: Double,
-        plot: RectF,
-    ): Pair<Float, Float> =
-        categoryChartX(index, count, plot) to (plot.bottom - plot.height() * (value / maximum).toFloat())
-
     private fun categoryChartX(index: Int, count: Int, plot: RectF): Float =
         if (count <= 1) plot.centerX() else plot.left + plot.width() * (index + 0.5f) / count
 
     private companion object {
         const val WIDTH = 1080
-        const val HEIGHT = 2900
+        const val HEIGHT = 2410
         const val RENDER_SCALE = 2f
         const val OUTPUT_WIDTH = 2160
-        const val OUTPUT_HEIGHT = 5800
+        const val OUTPUT_HEIGHT = 4820
         val BACKGROUND_TOP = Color.rgb(246, 248, 252)
         val BACKGROUND_BOTTOM = Color.rgb(238, 243, 249)
         val CARD = Color.rgb(255, 255, 255)
@@ -706,9 +624,6 @@ class UsageShareImageWriter @Inject constructor(
         val CYAN_BLUE = Color.rgb(0, 174, 239)
         val GREEN = Color.rgb(0, 191, 165)
         val ORANGE = Color.rgb(255, 146, 43)
-        val HEALTH_SUCCESS = Color.rgb(42, 190, 118)
-        val HEALTH_FAILURE = Color.rgb(255, 93, 93)
-        val HEALTH_LATENCY = Color.rgb(0, 174, 239)
         val TOKEN_INPUT = Color.rgb(36, 104, 242)
         val TOKEN_OUTPUT = Color.rgb(42, 190, 118)
         val TOKEN_CACHED = Color.rgb(0, 174, 239)
