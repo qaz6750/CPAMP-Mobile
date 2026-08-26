@@ -544,11 +544,11 @@ private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
     val showProviderLabel = !account.provider.isOpenAiProvider()
     val plan = account.planType.trim().takeIf(String::isNotEmpty)
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(13.dp),
-        horizontalArrangement = Arrangement.spacedBy(11.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(11.dp),
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CredentialProviderIcon(account.provider, modifier = Modifier.size(42.dp))
+        CredentialProviderIcon(account.provider, modifier = Modifier.size(38.dp))
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -582,7 +582,7 @@ private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
                 }
             }
         }
-        AccountCompactQuotaStack(account, Modifier.width(126.dp))
+        AccountCompactQuotaStack(account, Modifier.widthIn(min = 100.dp, max = 126.dp).weight(0.32f))
         Icon(
             Icons.Outlined.ChevronRight,
             contentDescription = stringResource(R.string.accounts_open_details),
@@ -619,7 +619,7 @@ private fun AccountCompactQuotaStack(account: AccountHealth, modifier: Modifier 
             ) {
                 Text(
                     window.compactLabel(),
-                    modifier = Modifier.widthIn(min = 28.dp, max = 48.dp),
+                    modifier = Modifier.widthIn(min = 24.dp, max = 40.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold,
@@ -628,12 +628,12 @@ private fun AccountCompactQuotaStack(account: AccountHealth, modifier: Modifier 
                 )
                 QuotaProgressBar(
                     remainingPercent = remaining,
-                    modifier = Modifier.weight(1f).height(5.dp),
+                    modifier = Modifier.weight(1f).height(4.5.dp),
                 )
                 Text(
                     remaining?.let { stringResource(R.string.accounts_quota_remaining_value, it) }
                         ?: "--",
-                    modifier = Modifier.width(34.dp),
+                    modifier = Modifier.width(30.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = quotaLevelColor(quotaLevel(remaining)),
                     fontWeight = FontWeight.Bold,
