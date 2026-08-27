@@ -88,11 +88,18 @@ internal fun modelProviderVisual(model: String): ModelProviderVisual {
         listOf("gemini", "vertex", "palm").any(normalized::contains) ->
             ModelProviderVisual("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4))
         listOf("grok", "xai").any(normalized::contains) ->
-            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI", useThemeForeground = true)
+            ModelProviderVisual(
+                "xAI",
+                R.drawable.ic_provider_xai,
+                Color(0xFF111111),
+                useThemeForeground = true,
+            )
         "deepseek" in normalized ->
             ModelProviderVisual("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6))
         listOf("qwen", "qwq", "tongyi").any(normalized::contains) ->
             ModelProviderVisual("Qwen", R.drawable.ic_provider_qwen, Color(0xFF6950EF))
+        listOf("kimi", "moonshot").any(normalized::contains) ->
+            ModelProviderVisual("Kimi", R.drawable.ic_provider_kimi, Color(0xFF027AFF))
         else -> ModelProviderVisual("AI model", null, Color(0xFF356AE6), "AI")
     }
 }
@@ -109,14 +116,21 @@ internal fun credentialProviderVisual(provider: String): ModelProviderVisual {
             )
         "claude", "anthropic" ->
             ModelProviderVisual("Anthropic", R.drawable.ic_provider_anthropic, Color(0xFFD97757))
-        "gemini", "gemini-cli", "aistudio", "vertex" ->
+        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" ->
             ModelProviderVisual("Google Gemini", R.drawable.ic_provider_gemini, Color(0xFF6750A4))
         "xai", "x-ai", "grok" ->
-            ModelProviderVisual("xAI", null, Color(0xFF111111), "xAI", useThemeForeground = true)
+            ModelProviderVisual(
+                "xAI",
+                R.drawable.ic_provider_xai,
+                Color(0xFF111111),
+                useThemeForeground = true,
+            )
         "deepseek" ->
             ModelProviderVisual("DeepSeek", R.drawable.ic_provider_deepseek, Color(0xFF356AE6))
         "qwen", "qwq", "tongyi" ->
             ModelProviderVisual("Qwen", R.drawable.ic_provider_qwen, Color(0xFF6950EF))
+        "kimi", "moonshot" ->
+            ModelProviderVisual("Kimi", R.drawable.ic_provider_kimi, Color(0xFF027AFF))
         else -> ModelProviderVisual("AI provider", null, Color(0xFF356AE6), "AI")
     }
 }

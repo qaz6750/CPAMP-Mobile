@@ -1250,37 +1250,40 @@ private fun AccountHealth.shouldShowResetCredits(): Boolean =
 internal fun normalizedRemainingPercent(remainingPercent: Double?): Double? =
     remainingPercent?.takeIf(Double::isFinite)?.coerceIn(0.0, 100.0)
 
-private fun String.normalizedProvider(): String = trim().lowercase()
+private fun String.normalizedProvider(): String = trim().lowercase().replace('_', '-')
 
-private fun String.isOpenAiProvider(): Boolean = normalizedProvider() in setOf("codex", "openai")
+private fun String.isOpenAiProvider(): Boolean = normalizedProvider() in setOf("codex", "openai", "chatgpt")
 
 internal fun AccountHealth.displayTitle(): String = account.trim().ifBlank { name.trim() }.ifBlank { providerLabel(provider) }
 
-internal fun providerLabel(provider: String): String = when (provider.trim().lowercase()) {
-    "codex", "openai" -> "OpenAI"
-    "xai", "grok" -> "xAI"
+internal fun providerLabel(provider: String): String = when (provider.trim().lowercase().replace('_', '-')) {
+    "codex", "openai", "chatgpt" -> "OpenAI"
+    "xai", "x-ai", "grok" -> "xAI"
     "claude", "anthropic" -> "Anthropic"
     "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Google"
-    "qwen" -> "Qwen"
+    "qwen", "qwq", "tongyi" -> "Qwen"
     "deepseek" -> "DeepSeek"
-    "kimi" -> "Kimi"
+    "kimi", "moonshot" -> "Kimi"
     else -> provider.trim().replaceFirstChar { it.titlecase() }.ifBlank { "AI" }
 }
 
-internal fun providerBadgeLabel(provider: String): String = when (provider.trim().lowercase()) {
-    "codex", "openai" -> "OpenAI"
-    "xai", "grok" -> "xAI"
+internal fun providerBadgeLabel(provider: String): String = when (provider.trim().lowercase().replace('_', '-')) {
+    "codex", "openai", "chatgpt" -> "OpenAI"
+    "xai", "x-ai", "grok" -> "xAI"
     "claude", "anthropic" -> "Claude"
     "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Gemini"
+    "qwen", "qwq", "tongyi" -> "Qwen"
+    "deepseek" -> "DeepSeek"
+    "kimi", "moonshot" -> "Kimi"
     else -> providerLabel(provider)
 }
 
 @Composable
-private fun providerAccentColor(provider: String): Color = when (provider.trim().lowercase()) {
+private fun providerAccentColor(provider: String): Color = when (provider.trim().lowercase().replace('_', '-')) {
     "claude", "anthropic" -> Color(0xFFD97757)
-    "qwen" -> Color(0xFF8B5CF6)
-    "xai", "grok" -> MaterialTheme.colorScheme.onSurface
-    "kimi" -> Color(0xFF027AFF)
+    "qwen", "qwq", "tongyi" -> Color(0xFF8B5CF6)
+    "xai", "x-ai", "grok" -> MaterialTheme.colorScheme.onSurface
+    "kimi", "moonshot" -> Color(0xFF027AFF)
     "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> Color(0xFF3186FF)
     else -> MaterialTheme.colorScheme.primary
 }
