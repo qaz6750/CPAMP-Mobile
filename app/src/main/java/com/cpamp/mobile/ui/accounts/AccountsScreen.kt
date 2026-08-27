@@ -91,7 +91,9 @@ fun AccountsScreen(
     val providers = accounts.map { it.provider.normalizedProvider() }.distinct().sorted()
     var selectedProvider by rememberSaveable { mutableStateOf<String?>(null) }
     val effectiveProvider = selectedProvider?.takeIf(providers::contains)
-    val visibleAccounts = accounts.filter { effectiveProvider == null || it.provider.normalizedProvider() == effectiveProvider }
+    val visibleAccounts = accounts.filter { account ->
+        effectiveProvider == null || account.provider.normalizedProvider() == effectiveProvider
+    }
     val error = state.error
     val notice = when {
         error != null && state.snapshot?.fromCache == true -> stringResource(
@@ -406,11 +408,6 @@ private fun AccountCard(
 }
 
 @Composable
-private fun AccountPanel(content: @Composable () -> Unit) {
-    AppCard(content = content)
-}
-
-@Composable
 private fun AccountHealthOverview(accounts: List<AccountHealth>) {
     val states = accounts.map(AccountHealth::overviewState)
     val metrics = listOf(
@@ -677,49 +674,11 @@ private fun AccountSummaryStatusBadge(status: AccountStatus) {
 }
 
 @Composable
-private fun AccountProviderBadge(provider: String) {
-    val accent = providerAccentColor(provider)
-    Surface(
-        color = accent.copy(alpha = 0.10f),
-        contentColor = accent,
-        shape = MaterialTheme.shapes.extraSmall,
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.18f)),
-    ) {
-        Text(
-            providerBadgeLabel(provider),
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}
-
-@Composable
-private fun AccountPlanBadge(plan: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        shape = RoundedCornerShape(50),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Text(
-            plan,
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
 private fun AccountIdentitySummary(account: AccountHealth) {
     val metadata = listOf(providerLabel(account.provider), account.planType.trim())
         .filter(String::isNotEmpty)
         .joinToString(" · ")
-    AccountPanel {
+    AccountCard {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -828,7 +787,7 @@ private fun AccountDetailSection(
                 )
             }
         }
-        AccountPanel { content() }
+        AccountCard { content() }
     }
 }
 
@@ -1252,40 +1211,48 @@ internal fun normalizedRemainingPercent(remainingPercent: Double?): Double? =
 
 private fun String.normalizedProvider(): String = trim().lowercase().replace('_', '-')
 
-private fun String.isOpenAiProvider(): Boolean = normalizedProvider() in setOf("codex", "openai", "chatgpt")
+internal fun AccountHealth.displayTitle(): String =
+    account.trim().ifBlank { name.trim() }.ifBlank { providerLabel(provider) }
 
-internal fun AccountHealth.displayTitle(): String = account.trim().ifBlank { name.trim() }.ifBlank { providerLabel(provider) }
-
-internal fun providerLabel(provider: String): String = when (provider.trim().lowercase().replace('_', '-')) {
-    "codex", "openai", "chatgpt" -> "OpenAI"
-    "xai", "x-ai", "grok" -> "xAI"
-    "claude", "anthropic" -> "Anthropic"
-    "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Google"
-    "qwen", "qwq", "tongyi" -> "Qwen"
-    "deepseek" -> "DeepSeek"
-    "kimi", "moonshot" -> "Kimi"
-    else -> provider.trim().replaceFirstChar { it.titlecase() }.ifBlank { "AI" }
+internal fun providerLabel(provider: String): String {
+    val normalized = provider.normalizedProvider()
+    return when (normalized) {
+        "codex", "openai", "chatgpt" -> "OpenAI"
+        "xai", "x-ai", "grok" -> "xAI"
+        "claude", "anthropic" -> "Anthropic"
+        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Google"
+        "qwen", "qwq", "tongyi" -> "Qwen"
+        "deepseek" -> "DeepSeek"
+        "kimi", "moonshot" -> "Kimi"
+        else -> provider.trim().replaceFirstChar { it.titlecase() }.ifBlank { "AI" }
+    }
 }
 
-internal fun providerBadgeLabel(provider: String): String = when (provider.trim().lowercase().replace('_', '-')) {
-    "codex", "openai", "chatgpt" -> "OpenAI"
-    "xai", "x-ai", "grok" -> "xAI"
-    "claude", "anthropic" -> "Claude"
-    "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Gemini"
-    "qwen", "qwq", "tongyi" -> "Qwen"
-    "deepseek" -> "DeepSeek"
-    "kimi", "moonshot" -> "Kimi"
-    else -> providerLabel(provider)
+internal fun providerBadgeLabel(provider: String): String {
+    val normalized = provider.normalizedProvider()
+    return when (normalized) {
+        "codex", "openai", "chatgpt" -> "OpenAI"
+        "xai", "x-ai", "grok" -> "xAI"
+        "claude", "anthropic" -> "Claude"
+        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "Gemini"
+        "qwen", "qwq", "tongyi" -> "Qwen"
+        "deepseek" -> "DeepSeek"
+        "kimi", "moonshot" -> "Kimi"
+        else -> providerLabel(provider)
+    }
 }
 
 @Composable
-private fun providerAccentColor(provider: String): Color = when (provider.trim().lowercase().replace('_', '-')) {
-    "claude", "anthropic" -> Color(0xFFD97757)
-    "qwen", "qwq", "tongyi" -> Color(0xFF8B5CF6)
-    "xai", "x-ai", "grok" -> MaterialTheme.colorScheme.onSurface
-    "kimi", "moonshot" -> Color(0xFF027AFF)
-    "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> Color(0xFF3186FF)
-    else -> MaterialTheme.colorScheme.primary
+private fun providerAccentColor(provider: String): Color {
+    val normalized = provider.normalizedProvider()
+    return when (normalized) {
+        "claude", "anthropic" -> Color(0xFFD97757)
+        "qwen", "qwq", "tongyi" -> Color(0xFF8B5CF6)
+        "xai", "x-ai", "grok" -> MaterialTheme.colorScheme.onSurface
+        "kimi", "moonshot" -> Color(0xFF027AFF)
+        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> Color(0xFF3186FF)
+        else -> MaterialTheme.colorScheme.primary
+    }
 }
 
 internal enum class QuotaLevel { Healthy, Warning, Critical, Unknown }
