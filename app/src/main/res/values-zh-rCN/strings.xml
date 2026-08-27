@@ -25,7 +25,10 @@
     <string name="accounts_filter_all">全部</string>
     <string name="accounts_filter_provider">%1$s</string>
     <string name="accounts_filter_empty">此提供商下暂无账号。</string>
-    <string name="accounts_credentials">凭证 / 账号</string>
+    <string name="accounts_credentials">凭据与账户</string>
+    <string name="accounts_tap_for_details">点按查看详情</string>
+    <string name="accounts_quota_status">配额状态</string>
+    <string name="accounts_quota_hidden_disabled">账户停用时隐藏</string>
     <string name="accounts_credential_unknown">凭据文件不可用</string>
     <string name="accounts_overview_total">总账号</string>
     <string name="accounts_overview_healthy">正常可用</string>

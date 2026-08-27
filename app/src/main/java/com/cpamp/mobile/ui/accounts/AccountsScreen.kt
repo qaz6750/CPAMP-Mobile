@@ -166,14 +166,11 @@ fun AccountsScreen(
                     ContentStateCard(stringResource(R.string.accounts_filter_empty))
                 }
                 else -> {
-                    item { AccountSectionTitle(R.string.accounts_credentials, visibleAccounts.size) }
+                    item { AccountSectionTitle(R.string.accounts_credentials) }
                     item {
-                        AccountListPanel {
-                            visibleAccounts.forEachIndexed { index, account ->
-                                AccountSummaryRow(account) { onOpenAccount(account.stableId) }
-                                if (index < visibleAccounts.lastIndex) {
-                                    AccountDetailDivider()
-                                }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            visibleAccounts.forEach { account ->
+                                AccountSummaryCard(account) { onOpenAccount(account.stableId) }
                             }
                         }
                     }
@@ -422,7 +419,7 @@ private fun AccountHealthOverview(accounts: List<AccountHealth>) {
         AccountHealthMetric(
             label = R.string.accounts_overview_total,
             count = accounts.size,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onSurface,
         ),
         AccountHealthMetric(
             label = R.string.accounts_overview_healthy,
@@ -466,30 +463,15 @@ private fun AccountHealthMetricItem(metric: AccountHealthMetric, modifier: Modif
             color = metric.color,
             fontWeight = FontWeight.Bold,
         )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.size(6.dp).clip(CircleShape).background(metric.color))
-            Text(
-                stringResource(metric.label),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-@Composable
-private fun AccountListPanel(content: @Composable () -> Unit) {
-    AccountCard {
-        Column(Modifier.fillMaxWidth()) {
-            content()
-        }
+        Text(
+            stringResource(metric.label),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -528,67 +510,86 @@ private fun AccountsNotice(message: String, isError: Boolean) {
 }
 
 @Composable
-private fun AccountSectionTitle(@StringRes label: Int, count: Int) {
+private fun AccountSectionTitle(@StringRes label: Int) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(stringResource(label), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-        Text(count.toString(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            stringResource(R.string.accounts_tap_for_details),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
 @Composable
-private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
-    val showProviderLabel = !account.provider.isOpenAiProvider()
+private fun AccountSummaryCard(account: AccountHealth, onClick: () -> Unit) {
     val plan = account.planType.trim().takeIf(String::isNotEmpty)
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(11.dp),
-        horizontalArrangement = Arrangement.spacedBy(9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CredentialProviderIcon(account.provider, modifier = Modifier.size(38.dp))
+    AccountCard {
         Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text(
-                account.displayTitle(),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
             Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (showProviderLabel) {
+                AccountListProviderMark(account.provider)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
                     Text(
-                        providerBadgeLabel(account.provider),
-                        style = MaterialTheme.typography.labelSmall,
+                        account.displayTitle(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        listOfNotNull(providerLabel(account.provider), plan).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                plan?.let {
+                AccountSummaryStatusBadge(account.status)
+                Icon(
+                    Icons.Outlined.ChevronRight,
+                    contentDescription = stringResource(R.string.accounts_open_details),
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            AccountDetailDivider()
+            if (account.status == AccountStatus.Disabled) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        if (showProviderLabel) "· $it" else it,
-                        style = MaterialTheme.typography.labelSmall,
+                        stringResource(R.string.accounts_quota_status),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Text(
+                        stringResource(R.string.accounts_quota_hidden_disabled),
+                        modifier = Modifier.weight(1f).padding(start = 16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.End,
+                    )
                 }
+            } else {
+                AccountCompactQuotaStack(account)
             }
         }
-        AccountCompactQuotaStack(account, Modifier.widthIn(min = 100.dp, max = 126.dp).weight(0.32f))
-        Icon(
-            Icons.Outlined.ChevronRight,
-            contentDescription = stringResource(R.string.accounts_open_details),
-            modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
@@ -596,51 +597,93 @@ private fun AccountSummaryRow(account: AccountHealth, onClick: () -> Unit) {
 private fun AccountCompactQuotaStack(account: AccountHealth, modifier: Modifier = Modifier) {
     val windows = account.windows.take(2)
     if (windows.isEmpty()) {
-        if (account.status == AccountStatus.Disabled) {
-            Box(modifier, contentAlignment = Alignment.CenterEnd) {
-                Text(
-                    "--",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
         return
     }
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(7.dp)) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
         windows.forEach { window ->
             val remaining = normalizedRemainingPercent(window.remainingPercent)
-                .takeUnless { account.status == AccountStatus.Disabled }
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     window.compactLabel(),
-                    modifier = Modifier.widthIn(min = 24.dp, max = 40.dp),
-                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.width(62.dp),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 QuotaProgressBar(
                     remainingPercent = remaining,
-                    modifier = Modifier.weight(1f).height(4.5.dp),
+                    modifier = Modifier.weight(1f).height(6.dp),
                 )
                 Text(
                     remaining?.let { stringResource(R.string.accounts_quota_remaining_value, it) }
                         ?: "--",
-                    modifier = Modifier.width(30.dp),
-                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.width(38.dp),
+                    style = MaterialTheme.typography.bodySmall,
                     color = quotaLevelColor(quotaLevel(remaining)),
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.End,
                     maxLines = 1,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun AccountListProviderMark(provider: String) {
+    val color = when (provider.normalizedProvider()) {
+        "codex", "openai", "xai", "grok" -> MaterialTheme.colorScheme.onSurface
+        "claude", "anthropic" -> Color(0xFFD06339)
+        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> Color(0xFF0F8B86)
+        else -> providerAccentColor(provider)
+    }
+    val label = when (provider.normalizedProvider()) {
+        "codex", "openai" -> "OA"
+        "claude", "anthropic" -> "A"
+        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "G"
+        else -> providerBadgeLabel(provider).take(2).uppercase()
+    }
+    Surface(
+        modifier = Modifier.size(44.dp),
+        color = color,
+        contentColor = Color.White,
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black)
+        }
+    }
+}
+
+@Composable
+private fun AccountSummaryStatusBadge(status: AccountStatus) {
+    val active = status == AccountStatus.Active
+    val color = if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline
+    Surface(
+        color = color.copy(alpha = 0.10f),
+        contentColor = color,
+        shape = RoundedCornerShape(50),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.size(7.dp).clip(CircleShape).background(color))
+            Text(
+                stringResource(
+                    if (active) R.string.credential_quota_active
+                    else R.string.credential_quota_disabled,
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+            )
         }
     }
 }

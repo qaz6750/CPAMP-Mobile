@@ -25,7 +25,10 @@
     <string name="accounts_filter_all">All</string>
     <string name="accounts_filter_provider">%1$s</string>
     <string name="accounts_filter_empty">No accounts match this provider.</string>
-    <string name="accounts_credentials">Credentials / accounts</string>
+    <string name="accounts_credentials">Credentials and accounts</string>
+    <string name="accounts_tap_for_details">Tap to view details</string>
+    <string name="accounts_quota_status">Quota status</string>
+    <string name="accounts_quota_hidden_disabled">Hidden while account is disabled</string>
     <string name="accounts_credential_unknown">Credential file unavailable</string>
     <string name="accounts_overview_total">Total accounts</string>
     <string name="accounts_overview_healthy">Healthy</string>
