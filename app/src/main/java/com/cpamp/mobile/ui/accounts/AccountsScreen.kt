@@ -231,26 +231,24 @@ fun AccountDetailScreen(
                 }
                 else -> {
                     item { AccountIdentitySummary(account) }
-                    item {
-                        Column {
-                            AccountQuotaCard(account)
-                            if (account.usage != null) {
-                                AccountUsageCard(account, state.usageFromMs, state.usageToMs)
-                            }
-                            if (
-                                account.shouldShowResetCredits() ||
-                                state.resetCreditAction.phase != ResetCreditActionPhase.Idle
-                            ) {
-                                AccountResetCreditsCard(
-                                    account = account,
-                                    action = state.resetCreditAction,
-                                    allowAction = !state.fromCache,
-                                    onUse = { viewModel.requestResetCredit(account.stableId) },
-                                )
-                            }
-                            AccountDataDetailsCard(account, state.observedAtMs)
+                    item { AccountQuotaCard(account) }
+                    if (account.usage != null) {
+                        item { AccountUsageCard(account, state.usageFromMs, state.usageToMs) }
+                    }
+                    if (
+                        account.shouldShowResetCredits() ||
+                        state.resetCreditAction.phase != ResetCreditActionPhase.Idle
+                    ) {
+                        item {
+                            AccountResetCreditsCard(
+                                account = account,
+                                action = state.resetCreditAction,
+                                allowAction = !state.fromCache,
+                                onUse = { viewModel.requestResetCredit(account.stableId) },
+                            )
                         }
                     }
+                    item { AccountDataDetailsCard(account, state.observedAtMs) }
                 }
             }
         }
@@ -636,26 +634,16 @@ private fun AccountCompactQuotaStack(account: AccountHealth, modifier: Modifier 
 
 @Composable
 private fun AccountListProviderMark(provider: String) {
-    val color = when (provider.normalizedProvider()) {
-        "codex", "openai", "xai", "grok" -> MaterialTheme.colorScheme.onSurface
-        "claude", "anthropic" -> Color(0xFFD06339)
-        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> Color(0xFF0F8B86)
-        else -> providerAccentColor(provider)
-    }
-    val label = when (provider.normalizedProvider()) {
-        "codex", "openai" -> "OA"
-        "claude", "anthropic" -> "A"
-        "gemini", "gemini-cli", "aistudio", "vertex", "antigravity" -> "G"
-        else -> providerBadgeLabel(provider).take(2).uppercase()
-    }
+    val color = providerAccentColor(provider)
     Surface(
         modifier = Modifier.size(44.dp),
-        color = color,
-        contentColor = Color.White,
+        color = color.copy(alpha = 0.10f),
+        contentColor = color,
         shape = MaterialTheme.shapes.small,
+        border = BorderStroke(1.dp, color.copy(alpha = 0.16f)),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black)
+            CredentialProviderIcon(provider, modifier = Modifier.size(30.dp))
         }
     }
 }
@@ -814,16 +802,18 @@ private fun AccountDetailSection(
     subtitle: String? = null,
     content: @Composable () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, top = 12.dp, bottom = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom,
         ) {
             Text(
                 stringResource(title),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
             subtitle?.let {
@@ -838,9 +828,7 @@ private fun AccountDetailSection(
                 )
             }
         }
-        content()
-        Spacer(Modifier.height(12.dp))
-        AccountDetailDivider()
+        AccountPanel { content() }
     }
 }
 
