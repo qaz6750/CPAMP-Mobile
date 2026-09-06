@@ -198,14 +198,14 @@ fun AccountDetailScreen(
     AppBackground {
         LazyColumn(
             modifier = Modifier.align(Alignment.TopCenter).fillMaxHeight()
-                .widthIn(max = 900.dp).fillMaxWidth(),
+                .widthIn(max = 820.dp).fillMaxWidth(),
             contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
+                start = 20.dp,
+                end = 20.dp,
                 top = contentPadding.calculateTopPadding() + 18.dp,
                 bottom = contentPadding.calculateBottomPadding() + 28.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             item {
                 AccountDetailHeader(
@@ -678,31 +678,36 @@ private fun AccountIdentitySummary(account: AccountHealth) {
     val metadata = listOf(providerLabel(account.provider), account.planType.trim())
         .filter(String::isNotEmpty)
         .joinToString(" · ")
-    AccountCard {
+    val accent = providerAccentColor(account.provider)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.20f)),
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val accent = providerAccentColor(account.provider)
             Surface(
                 color = accent.copy(alpha = 0.12f),
                 contentColor = accent,
-                shape = MaterialTheme.shapes.small,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f)),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, accent.copy(alpha = 0.20f)),
             ) {
-                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                    CredentialProviderIcon(account.provider, modifier = Modifier.size(24.dp))
+                Box(Modifier.size(52.dp), contentAlignment = Alignment.Center) {
+                    CredentialProviderIcon(account.provider, modifier = Modifier.size(30.dp))
                 }
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
                     account.displayTitle(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -766,15 +771,25 @@ private fun AccountDetailSection(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                stringResource(title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    Modifier.width(3.dp).height(16.dp).clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.primary),
+                )
+                Text(
+                    stringResource(title),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
             subtitle?.let {
                 Text(
                     it,
@@ -787,7 +802,7 @@ private fun AccountDetailSection(
                 )
             }
         }
-        AccountCard { content() }
+        content()
     }
 }
 
@@ -852,9 +867,12 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
             val rows = metrics.chunked(2)
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-                shape = MaterialTheme.shapes.small,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
+                ),
             ) {
                 Column {
                     rows.forEachIndexed { rowIndex, rowMetrics ->
