@@ -198,14 +198,14 @@ fun AccountDetailScreen(
     AppBackground {
         LazyColumn(
             modifier = Modifier.align(Alignment.TopCenter).fillMaxHeight()
-                .widthIn(max = 820.dp).fillMaxWidth(),
+                .widthIn(max = 900.dp).fillMaxWidth(),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 end = 20.dp,
-                top = contentPadding.calculateTopPadding() + 18.dp,
+                top = contentPadding.calculateTopPadding() + 20.dp,
                 bottom = contentPadding.calculateBottomPadding() + 28.dp,
             ),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
                 AccountDetailHeader(
@@ -678,36 +678,21 @@ private fun AccountIdentitySummary(account: AccountHealth) {
     val metadata = listOf(providerLabel(account.provider), account.planType.trim())
         .filter(String::isNotEmpty)
         .joinToString(" · ")
-    val accent = providerAccentColor(account.provider)
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.20f)),
-    ) {
+    AccountCard {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                color = accent.copy(alpha = 0.12f),
-                contentColor = accent,
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(1.dp, accent.copy(alpha = 0.20f)),
-            ) {
-                Box(Modifier.size(52.dp), contentAlignment = Alignment.Center) {
-                    CredentialProviderIcon(account.provider, modifier = Modifier.size(30.dp))
-                }
-            }
+            AccountListProviderMark(account.provider)
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(
                     account.displayTitle(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -719,31 +704,8 @@ private fun AccountIdentitySummary(account: AccountHealth) {
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            AccountStatusBadge(account.status)
+            AccountSummaryStatusBadge(account.status)
         }
-    }
-}
-
-@Composable
-private fun AccountStatusBadge(status: AccountStatus) {
-    val active = status == AccountStatus.Active
-    val color = if (active) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline
-    Surface(
-        color = color.copy(alpha = 0.10f),
-        contentColor = color,
-        shape = RoundedCornerShape(50),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.22f)),
-    ) {
-        Text(
-            stringResource(
-                if (active) R.string.credential_quota_active
-                else R.string.credential_quota_disabled,
-            ),
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-        )
     }
 }
 
@@ -766,43 +728,37 @@ private fun AccountDetailSection(
     subtitle: String? = null,
     content: @Composable () -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+    AccountCard {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom,
             ) {
-                Box(
-                    Modifier.width(3.dp).height(16.dp).clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.primary),
-                )
                 Text(
                     stringResource(title),
-                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
+                subtitle?.let {
+                    Text(
+                        it,
+                        modifier = Modifier.weight(1f).padding(start = 12.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.End,
+                    )
+                }
             }
-            subtitle?.let {
-                Text(
-                    it,
-                    modifier = Modifier.weight(1f).padding(start = 12.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.End,
-                )
-            }
+            AccountDetailDivider()
+            content()
         }
-        content()
     }
 }
 
@@ -865,38 +821,27 @@ private fun AccountUsageCard(account: AccountHealth, fromMs: Long?, toMs: Long?)
     AccountDetailSection(R.string.accounts_usage, range) {
         Column(Modifier.fillMaxWidth()) {
             val rows = metrics.chunked(2)
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f),
-                ),
-            ) {
-                Column {
-                    rows.forEachIndexed { rowIndex, rowMetrics ->
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            rowMetrics.forEachIndexed { columnIndex, metric ->
-                                AccountUsageMetricCell(metric, Modifier.weight(1f))
-                                if (columnIndex < rowMetrics.lastIndex) {
-                                    Box(
-                                        Modifier.width(1.dp).heightIn(min = 72.dp)
-                                            .background(MaterialTheme.colorScheme.outlineVariant),
-                                    )
-                                }
-                            }
-                            if (rowMetrics.size == 1) {
-                                Spacer(Modifier.weight(1f))
-                            }
-                        }
-                        if (rowIndex < rows.lastIndex) {
-                            AccountDetailDivider()
+            rows.forEachIndexed { rowIndex, rowMetrics ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    rowMetrics.forEachIndexed { columnIndex, metric ->
+                        AccountUsageMetricCell(metric, Modifier.weight(1f))
+                        if (columnIndex < rowMetrics.lastIndex) {
+                            Box(
+                                Modifier.width(1.dp).heightIn(min = 72.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant),
+                            )
                         }
                     }
+                    if (rowMetrics.size == 1) {
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
+                if (rowIndex < rows.lastIndex) {
+                    AccountDetailDivider()
                 }
             }
             projectedCost?.let { cost ->
+                AccountDetailDivider()
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
