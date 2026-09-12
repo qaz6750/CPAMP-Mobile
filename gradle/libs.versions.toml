@@ -19,7 +19,7 @@ coreKtx = "1.16.0"
 coreSplash = "1.0.1"
 junit = "4.13.2"
 androidxJunit = "1.2.1"
-espresso = "3.6.1"
+espresso = "3.7.0"
 mockWebServer = "5.4.0"
 backdrop = "2.0.0"
 
