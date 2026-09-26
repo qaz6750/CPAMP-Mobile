@@ -9,6 +9,7 @@ import com.cpamp.mobile.data.cache.CacheDao
 import com.cpamp.mobile.data.cache.CacheEntity
 import com.cpamp.mobile.data.dashboard.DashboardRepository
 import com.cpamp.mobile.data.profile.ServerProfileStore
+import com.cpamp.mobile.data.remote.RemoteFailure
 import com.cpamp.mobile.data.security.AppLockRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
@@ -79,13 +80,20 @@ class UsageWidgetRepository @Inject constructor(
             .toEpochMilli()
         val (usage, quota) = coroutineScope {
             val usage = async {
-                runSuspendCatching { dashboardRepository.refresh(session, todayStartMs, attemptedAtMs) }
+                fetchWithReconnect { dashboardRepository.refresh(session, todayStartMs, attemptedAtMs) }
             }
-            val quota = async { runSuspendCatching { accountHealthRepository.load(session) } }
+            val quota = async { fetchWithReconnect { accountHealthRepository.load(session) } }
             usage.await() to quota.await()
         }
         val profileId = session.profile.id
         write(profileId, (read(profileId) ?: UsageWidgetCache()).withRefreshResult(usage, quota, attemptedAtMs))
+    }
+
+    // Widget refreshes are minutes apart, so the shared client's pooled connections are often
+    // already dropped by the network; the client does not retry those on its own.
+    private suspend fun <T> fetchWithReconnect(block: suspend () -> T): Result<T> {
+        val first = runSuspendCatching { block() }
+        return if (first.exceptionOrNull() is RemoteFailure.Network) runSuspendCatching { block() } else first
     }
 
     private suspend fun read(profileId: String): UsageWidgetCache? {
