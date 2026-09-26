@@ -31,6 +31,24 @@ class SessionRepository @Inject constructor(
         connect(profile)
     }
 
+    /**
+     * Session for background work (the home-screen widget). Reuses the live session when it
+     * belongs to the active profile; otherwise builds one from the saved Admin Key without
+     * probing the server or replacing the app's session state.
+     */
+    suspend fun backgroundSession(): Result<AuthenticatedSession> = runSuspendCatching {
+        val stored = profileStore.snapshot()
+        val profile = stored.profiles.firstOrNull { it.id == stored.activeProfileId }
+            ?: throw SessionException(SessionException.Reason.NoActiveProfile)
+        mutableSession.value?.takeIf { it.profile.id == profile.id }
+            ?: AuthenticatedSession(
+                profile = profile,
+                adminKey = profileStore.secret(profile.id)?.takeIf(String::isNotBlank)
+                    ?: throw SessionException(SessionException.Reason.SavedKeyUnavailable),
+                service = "",
+            )
+    }
+
     suspend fun login(
         name: String,
         rawAddress: String,

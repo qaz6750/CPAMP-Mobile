@@ -309,4 +309,27 @@
     <string name="credential_quota_disabled_with_windows_hint">该凭证已停用，以下为服务器最近一次巡检返回的额度。</string>
     <string name="dismiss">关闭</string>
     <string name="confirm_change">确认更改</string>
+    <string name="widget_title">CPA 用量</string>
+    <string name="widget_description">当前服务器的今日用量与凭证额度</string>
+    <string name="widget_refresh">刷新小组件数据</string>
+    <string name="widget_refreshing">正在刷新…</string>
+    <string name="widget_updated">更新于 %1$s</string>
+    <string name="widget_locked">已开启应用锁。请打开 CPAMP Mobile 查看用量。</string>
+    <string name="widget_not_connected">请先在 CPAMP Mobile 中登录服务器。</string>
+    <string name="widget_no_data">暂无数据。点按刷新以加载。</string>
+    <string name="widget_metric_calls">调用</string>
+    <string name="widget_metric_success">成功率</string>
+    <string name="widget_metric_tokens">Tokens</string>
+    <string name="widget_metric_cost">费用</string>
+    <string name="widget_metric_rpm">RPM</string>
+    <string name="widget_quota_title">凭证额度</string>
+    <string name="widget_quota_empty">没有返回额度的启用凭证。</string>
+    <string name="widget_credential_title">%1$s #%2$d</string>
+    <string name="widget_credential_plan">%1$s · %2$s</string>
+    <string name="widget_quota_window">%1$s %2$d%%</string>
+    <string name="widget_error_key">已保存的 Admin Key 不可用。请打开应用重新登录。</string>
+    <string name="widget_error_unauthorized">Admin Key 被拒绝。显示上次数据。</string>
+    <string name="widget_error_rate_limited">服务器限流中。显示上次数据。</string>
+    <string name="widget_error_network">无法连接服务器。显示上次数据。</string>
+    <string name="widget_error_server">服务器错误。显示上次数据。</string>
 </resources>

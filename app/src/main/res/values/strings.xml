@@ -309,4 +309,27 @@
     <string name="credential_quota_disabled_with_windows_hint">This credential is disabled. Showing quota reported by the latest server inspection.</string>
     <string name="dismiss">Dismiss</string>
     <string name="confirm_change">Confirm change</string>
+    <string name="widget_title">CPA usage</string>
+    <string name="widget_description">Today\'s usage and credential quota for the active server</string>
+    <string name="widget_refresh">Refresh widget data</string>
+    <string name="widget_refreshing">Refreshing…</string>
+    <string name="widget_updated">Updated %1$s</string>
+    <string name="widget_locked">App lock is on. Open CPAMP Mobile to view usage.</string>
+    <string name="widget_not_connected">Sign in to a server in CPAMP Mobile first.</string>
+    <string name="widget_no_data">No data yet. Tap refresh to load.</string>
+    <string name="widget_metric_calls">Calls</string>
+    <string name="widget_metric_success">Success</string>
+    <string name="widget_metric_tokens">Tokens</string>
+    <string name="widget_metric_cost">Cost</string>
+    <string name="widget_metric_rpm">RPM</string>
+    <string name="widget_quota_title">Credential quota</string>
+    <string name="widget_quota_empty">No active credentials report quota.</string>
+    <string name="widget_credential_title">%1$s #%2$d</string>
+    <string name="widget_credential_plan">%1$s · %2$s</string>
+    <string name="widget_quota_window">%1$s %2$d%%</string>
+    <string name="widget_error_key">Saved Admin Key is unavailable. Open the app to sign in again.</string>
+    <string name="widget_error_unauthorized">The Admin Key was rejected. Showing last values.</string>
+    <string name="widget_error_rate_limited">Server is rate limiting. Showing last values.</string>
+    <string name="widget_error_network">Server unreachable. Showing last values.</string>
+    <string name="widget_error_server">Server error. Showing last values.</string>
 </resources>
